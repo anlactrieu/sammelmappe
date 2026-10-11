@@ -45,7 +45,8 @@ export default function Home() {
       </Empty>
     </div>
   )
-  const diff = totals.value - totals.cost
+  // Gewinn/Verlust nur für Einträge mit Kaufpreis – sonst würde der Gesamtwert gegen einen Teil der Kosten verglichen
+  const diff = totals.costedValue - totals.cost
   const pct = totals.cost > 0 ? (diff / totals.cost) * 100 : null
   const top = [...rows].filter((r) => r.price.value != null).sort((a, b) => b.price.value! * b.item.qty - a.price.value! * a.item.qty).slice(0, 5)
   const stale = rows.some((r) => r.price.stale)
@@ -67,7 +68,7 @@ export default function Home() {
         <p className="hero-value">{formatEur(totals.value)}</p>
         <p className="muted">{totals.count} Stück{totals.missing ? ` · ${totals.missing} ohne Preis` : ''}</p>
         {totals.cost > 0 && (
-          <p className={`pill ${diff >= 0 ? 'up' : 'down'}`}>{diff >= 0 ? '▲' : '▼'} {formatEur(Math.abs(diff))}{pct != null ? ` (${formatPct(pct)})` : ''} ggü. Kaufpreis</p>
+          <p className={`pill ${diff >= 0 ? 'up' : 'down'}`}>{diff >= 0 ? '▲' : '▼'} {formatEur(Math.abs(diff))}{pct != null ? ` (${formatPct(pct)})` : ''} ggü. Kaufpreis{totals.costed < totals.count ? ` (nur ${totals.costed} von ${totals.count} Stück mit Kaufpreis)` : ''}</p>
         )}
         <Sparkline points={(snaps ?? []).slice(-30).map((s) => s.value)} />
         <div className="sync-row">
@@ -78,7 +79,7 @@ export default function Home() {
 
       <div className="actions" style={{ marginTop: 0 }}><Link className="btn primary" to="/add">Karte hinzufügen</Link><Link className="btn" to="/add?mode=product">Produkt hinzufügen</Link></div>
 
-      {totals.missing > 0 && <Link to="/collection?filter=missing" className="banner">⚠ {totals.missing} Einträge ohne Preis – jetzt ergänzen →</Link>}
+      {totals.missing > 0 && <Link to="/collection?filter=missing" className="banner">⚠ {totals.missing} {totals.missing === 1 ? 'Eintrag' : 'Einträge'} ohne Preis – jetzt ergänzen →</Link>}
 
       {bySet.length > 0 && <section>
         <h2>Wert nach Set</h2>
@@ -102,7 +103,7 @@ export default function Home() {
           {top.map((r, i) => (
             <li key={r.item.id}>
               <span className="rank">{i + 1}</span>
-              {r.image ? <img crossOrigin="anonymous" src={imageUrl(r.image)} alt="" loading="lazy" /> : <span className="thumb-ph"><Icon name="box" /></span>}
+              {r.image ? <img src={imageUrl(r.image)} alt="" loading="lazy" /> : <span className="thumb-ph"><Icon name="box" /></span>}
               <div className="grow"><strong>{r.name}</strong><small className="muted">{r.sub}{r.item.qty > 1 ? ` · ${r.item.qty}×` : ''}</small></div>
               <strong>{formatEur(r.price.value! * r.item.qty)}</strong>
             </li>))}

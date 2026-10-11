@@ -99,7 +99,7 @@ export function AddCardSheet({ card, onClose, onAdded }: { card: CardRef | null;
       <button className="btn ghost" onClick={wish}>Merken</button>
     </>}>
       <div className="add-head">
-        {card.image && <img crossOrigin="anonymous" src={imageUrl(card.image, 'low')} alt={`Karte ${card.name}`} className="add-img" />}
+        {card.image && <img src={imageUrl(card.image, 'low')} alt={`Karte ${card.name}`} className="add-img" />}
         <div>
           {card.lang && <p><b className="langtag">{langTag(card.lang)}</b> <span className="muted small">{langLabel(card.lang)}e Karte{cardNames(card).alt ? ` · ${cardNames(card).alt}` : ''}</span></p>}
           <p className="muted">{card.setName}</p>
@@ -189,7 +189,7 @@ export function ItemSheet({ item, card, product, onClose }: { item: Item | null;
       <button className="btn danger" onClick={del}>Entfernen</button>
     </>}>
       <div className="add-head">
-        {card?.image && <img crossOrigin="anonymous" src={imageUrl(card.image, 'low')} alt={`Karte ${name}`} className="add-img" />}
+        {card?.image && <img src={imageUrl(card.image, 'low')} alt={`Karte ${name}`} className="add-img" />}
         <div>
           <p className="muted">{card ? `${card.lang ? langTag(card.lang) + ' · ' : ''}${cardNames(card).alt ? cardNames(card).alt + ' · ' : ''}${card.setName} · ${card.localId}` : product?.type}</p>
           <p className="big"><PriceLine price={price} qty={f.qty} compact /></p>

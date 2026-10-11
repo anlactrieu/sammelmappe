@@ -115,7 +115,7 @@ export default function Scan() {
             <ul className="grid">
               {res.cards.map((c) => (
                 <li key={c.id}><button className="tile" onClick={() => setCard(c)}>
-                  <div className="tile-img">{c.image ? <img crossOrigin="anonymous" src={imageUrl(c.image)} alt="" /> : <span className="thumb-ph big">{c.localId}</span>}</div>
+                  <div className="tile-img">{c.image ? <img src={imageUrl(c.image)} alt="" /> : <span className="thumb-ph big">{c.localId}</span>}</div>
                   <strong className="tile-name">{c.lang && <><b className="langtag">{langTag(c.lang)}</b> </>}{cardNames(c).name}</strong>
                   <small className="muted tile-sub">{c.setName} · {c.localId}</small>
                 </button></li>))}

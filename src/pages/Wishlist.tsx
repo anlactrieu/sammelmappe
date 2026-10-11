@@ -30,7 +30,7 @@ export default function Wishlist() {
           const hit = p != null && w.targetPrice != null && p <= w.targetPrice
           return (
             <li key={w.id} className={`wish${hit ? ' hit' : ''}`}>
-              <img crossOrigin="anonymous" src={imageUrl(c.image)} alt="" loading="lazy" />
+              <img src={imageUrl(c.image)} alt="" loading="lazy" />
               <div className="grow"><strong>{cardNames(c).name}{c.lang && <> <b className="langtag">{langTag(c.lang)}</b></>}</strong><small className="muted">{c.setName} · {c.localId}</small>
                 <small>{formatEur(p)}{hit && <b className="up"> · unter Zielpreis!</b>}</small>
                 <label className="inline">Zielpreis <input inputMode="decimal" defaultValue={w.targetPrice != null ? String(w.targetPrice).replace('.', ',') : ''} placeholder="€"

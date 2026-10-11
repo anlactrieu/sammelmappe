@@ -67,6 +67,11 @@ describe('pricing', () => {
     const t = totals([{ item: base({ qty: 2, buyPrice: 1 }), price: { value: 5, source: 'cardmarket' } }])
     expect(t).toMatchObject({ value: 10, cost: 2 })
   })
+  it('Gewinn nur über Einträge mit Kaufpreis', () => {
+    const rows = [{ item: base({ qty: 3, buyPrice: 20 }), price: { value: 30, source: 'manual' as const } }, { item: base({ qty: 1 }), price: { value: 500, source: 'manual' as const } }]
+    const t = totals(rows)
+    expect(t).toMatchObject({ value: 590, cost: 60, costed: 3, costedValue: 90 })
+  })
   it('Preisänderung', () => expect(priceChange(card, 7)).toBeCloseTo(20))
   it('Produktpreis', () => expect(unitPrice({ ...base({ kind: 'product', refId: 'p1' }) }, undefined, { id: 'p1', name: 'x', type: 'Booster', price: 4.5, priceUpdated: Date.now() }).value).toBe(4.5))
 })

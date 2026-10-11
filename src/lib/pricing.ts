@@ -57,16 +57,16 @@ export function unitPrice(item: Item, card?: CardRef, product?: Product, now = D
   }
 }
 
-export interface Totals { value: number; cost: number; count: number; missing: number }
+export interface Totals { value: number; cost: number; count: number; missing: number; costed: number; costedValue: number }
 export function totals(rows: { item: Item; price: UnitPrice }[]): Totals {
-  let value = 0, cost = 0, count = 0, missing = 0
+  let value = 0, cost = 0, count = 0, missing = 0, costed = 0, costedValue = 0
   for (const { item, price } of rows) {
     count += item.qty
-    cost += (item.buyPrice ?? 0) * item.qty
+    if (item.buyPrice != null) { cost += item.buyPrice * item.qty; costed += item.qty; if (price.value != null) costedValue += price.value * item.qty }
     if (price.value == null) missing += item.qty
     else value += price.value * item.qty
   }
-  return { value: r2(value), cost: r2(cost), count, missing }
+  return { value: r2(value), cost: r2(cost), count, missing, costed, costedValue: r2(costedValue) }
 }
 
 /** Preisänderung in % von avg7 bzw. avg30 zum aktuellen Trend. */

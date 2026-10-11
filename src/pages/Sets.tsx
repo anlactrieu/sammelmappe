@@ -49,7 +49,7 @@ export function SetList() {
           const n = baseCount(s), pct = s.official ? Math.min(100, (n / s.official) * 100) : 0
           return (
             <li key={s.key}><Link to={`/sets/${s.lang}/${s.id}`} className="set-row">
-              {s.logo ? <img crossOrigin="anonymous" src={`${s.logo}.webp`} alt="" loading="lazy" /> : <span className="thumb-ph"><Icon name="card" /></span>}
+              {s.logo ? <img src={`${s.logo}.webp`} alt="" loading="lazy" /> : <span className="thumb-ph"><Icon name="card" /></span>}
               <div className="grow"><strong>{s.name}</strong>
                 <div className="bar" role="progressbar" aria-valuenow={Math.round(pct)} aria-valuemin={0} aria-valuemax={100} aria-label={`${s.name} Fortschritt`}><i style={{ width: `${pct}%` }} /></div>
               </div>
@@ -99,7 +99,7 @@ export function SetDetail() {
       <ul className="grid">
         {shown.map((c) => (
           <li key={c.id} className="tile-wrap"><button className="quick" onClick={() => quickAdd(c.id)} aria-label={`${c.name} direkt hinzufügen`}>＋</button><button className={`tile${owned.has(c.id) ? '' : ' ghosted'}`} onClick={() => pick(c)} aria-label={`${c.name} ${c.localId}${owned.has(c.id) ? ', vorhanden' : ', fehlt'}`}>
-            <div className="tile-img">{c.image ? <img crossOrigin="anonymous" src={imageUrl(c.image)} alt="" loading="lazy" /> : <span className="thumb-ph big"><Icon name="card" size={40} /></span>}
+            <div className="tile-img">{c.image ? <img src={imageUrl(c.image)} alt="" loading="lazy" /> : <span className="thumb-ph big"><Icon name="card" size={40} /></span>}
               {owned.has(c.id) && <span className="badge ok">✓</span>}</div>
             <strong className="tile-name">{c.name}</strong><small className="muted tile-sub">{c.localId}</small></button></li>))}
       </ul>

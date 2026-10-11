@@ -44,7 +44,7 @@ export default function Settings() {
       <header className="page-head"><h1>Profil & Daten</h1></header>
       <section className="card">
         <h2>Preise</h2>
-        <p className="muted">Quelle: Cardmarket (EUR) über TCGdex, täglich aktualisiert. Letzter Abruf: {relativeTime(last)}. Beim Öffnen der App wird automatisch aktualisiert, wenn die Preise älter als 24 Std. sind.</p>
+        <p className="muted">Quelle: Cardmarket (EUR) über TCGdex, täglich aktualisiert. Letzter Abruf: {relativeTime(last).replace(/\.$/, '')}. Beim Öffnen der App wird automatisch aktualisiert, wenn die Preise älter als 24 Std. sind.</p>
         <RefreshButton className="btn primary" />
       </section>
       <section className="card">
@@ -54,7 +54,7 @@ export default function Settings() {
       </section>
       <section className="card">
         <h2>Sicherung</h2>
-        <p className="muted">Deine Daten liegen nur auf diesem Gerät. Sichere sie regelmäßig. Letztes Backup: {relativeTime(lastBackup)}.</p>
+        <p className="muted">Deine Daten liegen nur auf diesem Gerät. Sichere sie regelmäßig. Letztes Backup: {relativeTime(lastBackup).replace(/\.$/, '')}.</p>
         <div className="actions">
           <button className="btn" onClick={async () => { download(`sammelmappe-${date()}.json`, await exportJson(), 'application/json'); await setSetting('lastBackup', Date.now()) }}>Backup (JSON)</button>
           <button className="btn" onClick={async () => download(`sammlung-${date()}.csv`, await exportCsv(), 'text/csv;charset=utf-8')}>Export (CSV/Excel)</button>

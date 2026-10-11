@@ -90,7 +90,7 @@ export default function Add() {
         <ul className="grid">
           {(res ?? []).slice(0, limit).map((b) => (
             <li key={b.id} className="tile-wrap"><button className="quick" onClick={() => quickAdd(b.id)} aria-label={`${b.name} direkt hinzufügen`}>＋</button><button className="tile" onClick={() => pick(b)}>
-              <div className="tile-img">{b.image ? <img crossOrigin="anonymous" src={imageUrl(b.image)} alt="" loading="lazy" /> : <span className="thumb-ph big"><Icon name="card" size={40} /></span>}</div>
+              <div className="tile-img">{b.image ? <img src={imageUrl(b.image)} alt="" loading="lazy" /> : <span className="thumb-ph big"><Icon name="card" size={40} /></span>}</div>
               <strong className="tile-name">{b.name}</strong><small className="muted tile-sub">{lang !== 'de' && <b className="langtag">{langTag(lang)}</b>} {b.id.replace(/^(en|ja|zh-tw|zh-cn):/, '').replace(/-[^-]+$/, '').toUpperCase()} · {b.localId}</small>
             </button></li>))}
         </ul>

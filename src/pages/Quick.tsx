@@ -71,15 +71,15 @@ export default function Quick() {
         {products.map((p) => (
           <li key={p.id}><button className="rowbtn" onClick={() => addProduct(p)}>
             <img src={catalogImage(p)} alt="" loading="lazy" />
-            <div className="grow"><strong>{p.l && <><b className="langtag">{p.l}</b> </>}{p.n}</strong><small className="muted">{cat?.groups[p.g]}</small></div>
-            <span className="price"><strong>{catalogEur(p, rate) != null ? `${p.e != null ? '' : '≈ '}${formatEur(catalogEur(p, rate))}` : 'kein Preis'}</strong></span>
+            <div className="grow"><strong>{p.l && <><b className="langtag">{p.l}</b> </>}{p.n}</strong><small className="muted">{cat?.groups[p.g]}</small>
+              <span className="price"><strong>{catalogEur(p, rate) != null ? `${p.e != null ? '' : '≈ '}${formatEur(catalogEur(p, rate))}` : 'kein Preis'}</strong></span></div>
             <span className="quick-plus" aria-hidden><Icon name="plus" size={22} /></span>
           </button></li>))}
       </ul>
       {mode === 'card' && <ul className="list">
         {cards.map((c) => (
           <li key={c.id}><button className="rowbtn" onClick={() => addCard(c)}>
-            {c.image ? <img crossOrigin="anonymous" src={imageUrl(c.image)} alt="" loading="lazy" /> : <span className="thumb-ph"><Icon name="card" /></span>}
+            {c.image ? <img src={imageUrl(c.image)} alt="" loading="lazy" /> : <span className="thumb-ph"><Icon name="card" /></span>}
             <div className="grow"><strong>{c.name}</strong><small className="muted">{c.id.replace(/^(en|ja|zh-tw|zh-cn):/, '').replace(/-[^-]+$/, '').toUpperCase()} · {c.localId}</small></div>
             <span className="quick-plus" aria-hidden><Icon name="plus" size={22} /></span>
           </button></li>))}

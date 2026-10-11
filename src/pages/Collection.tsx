@@ -57,7 +57,7 @@ export default function Collection() {
           <option value="added">Neueste zuerst</option><option value="value">Wert</option><option value="name">Name A–Z</option></select>
       </div>
       {missingOnly && <button className="chip on" onClick={() => setParams({})}>Nur ohne Preis ✕</button>}
-      {ready && <div className="toolbar"><p className="muted small">{list.length} Einträge · {formatEur(list.reduce((s, r) => s + (r.price.value ?? 0) * r.item.qty, 0))}{list.length === rows.length ? ' gesamt' : ' (gefiltert)'}</p>
+      {ready && <div className="toolbar"><p className="muted small">{list.length} {list.length === 1 ? 'Eintrag' : 'Einträge'} · {formatEur(list.reduce((s, r) => s + (r.price.value ?? 0) * r.item.qty, 0))}{list.length === rows.length ? ' gesamt' : ' (gefiltert)'}</p>
         <Segmented label="Ansicht" value={view} onChange={changeView} options={[{ value: 'grid', label: 'Raster' }, { value: 'list', label: 'Liste' }]} /></div>}
 
       {ready && rows.length === 0 && <Empty icon="🗂️" title="Noch nichts hier" text="Füge deine erste Karte oder dein erstes Produkt hinzu – per Scan oder Suche." ><div className="actions"><Link className="btn primary" to="/add">Karte suchen</Link><Link className="btn" to="/add?mode=product">Produkt hinzufügen</Link></div></Empty>}
@@ -68,14 +68,14 @@ export default function Collection() {
           <li key={r.item.id}>
             {view === 'list' ? (
               <button className="rowbtn" onClick={() => setOpen(r)} aria-label={`${r.name}, ${r.item.qty} Stück`}>
-                {r.image ? <img crossOrigin="anonymous" src={imageUrl(r.image)} alt="" loading="lazy" /> : <span className="thumb-ph"><Icon name="box" /></span>}
+                {r.image ? <img src={imageUrl(r.image)} alt="" loading="lazy" /> : <span className="thumb-ph"><Icon name="box" /></span>}
                 <div className="grow"><strong>{r.name}</strong><small className="muted">{r.sub}{r.item.kind === 'card' ? ` · ${r.item.condition}` : ''}{r.item.qty > 1 ? ` · ${r.item.qty}×` : ''}</small></div>
                 <PriceLine price={r.price} qty={r.item.qty} compact />
               </button>
             ) : (
             <button className="tile" onClick={() => setOpen(r)} aria-label={`${r.name}, ${r.item.qty} Stück`}>
               <div className={`tile-img${isFoil(r) ? ' foil' : ''}`}>
-                {r.image ? <img crossOrigin="anonymous" src={imageUrl(r.image)} alt="" loading="lazy" /> : <span className="thumb-ph big"><Icon name="box" size={40} /></span>}
+                {r.image ? <img src={imageUrl(r.image)} alt="" loading="lazy" /> : <span className="thumb-ph big"><Icon name="box" size={40} /></span>}
                 {r.tag && <span className="badge lang">{r.tag}</span>}
                 {r.item.qty > 1 && <span className="badge">{r.item.qty}×</span>}
                 {r.item.graded && <span className="badge grade">{r.item.graded.company} {r.item.graded.grade}</span>}
@@ -90,7 +90,7 @@ export default function Collection() {
         <label className="field">Set<select value={fSet} onChange={(e) => setFSet(e.target.value)}><option value="">Alle Sets</option>{setNames.map((n) => <option key={n}>{n}</option>)}</select></label>
         <label className="field">Zustand<select value={fCond} onChange={(e) => setFCond(e.target.value)}><option value="">Alle</option>{['M', 'NM', 'EX', 'GD', 'LP', 'PL', 'PO'].map((c) => <option key={c}>{c}</option>)}</select></label>
         <label className="field">Sprache<select value={fLang} onChange={(e) => setFLang(e.target.value)}><option value="">Alle</option>{langs.map((l) => <option key={l}>{l}</option>)}</select></label>
-        <div className="actions"><button className="btn primary" onClick={() => setFOpen(false)}>{list.length} Treffer anzeigen</button>
+        <div className="actions"><button className="btn primary" onClick={() => setFOpen(false)}>{list.length} {list.length === 1 ? 'Treffer' : 'Treffer'} anzeigen</button>
           <button className="btn ghost" onClick={() => { setFSet(''); setFCond(''); setFLang('') }}>Zurücksetzen</button></div>
       </Sheet>
       <ItemSheet item={live?.item ?? null} card={live?.card} product={live?.product} onClose={() => setOpen(null)} />
