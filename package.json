@@ -11,7 +11,9 @@
     "preview": "vite preview --host",
     "test": "vitest run",
     "catalog": "node scripts/build-catalog.mjs",
-    "lint": "tsc --noEmit"
+    "lint": "tsc --noEmit",
+    "embeddings": "node scripts/build-embeddings.mjs",
+    "emb:pull": "curl -sf -o public/catalog-emb.json https://anlactrieu.github.io/sammelmappe/catalog-emb.json && curl -sf -o public/catalog-emb.bin https://anlactrieu.github.io/sammelmappe/catalog-emb.bin"
   },
   "dependencies": {
     "dexie": "^4.4.6",
@@ -23,6 +25,7 @@
     "zxing-wasm": "^3.1.5"
   },
   "devDependencies": {
+    "@huggingface/transformers": "^4.3.1",
     "@types/node": "^26.6.5",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",

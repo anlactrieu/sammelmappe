@@ -19,6 +19,7 @@ concurrency:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    timeout-minutes: 120
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
@@ -30,6 +31,7 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run catalog        # Produktkatalog erneuern (höchstens 1 Abruf/Tag, eigener User-Agent)
+      - run: npm run embeddings     # Bild-Vektoren für die Foto-Suche (nur neue Produkte werden berechnet)
       - run: npm test
       - run: npm run build
       - uses: actions/configure-pages@v5

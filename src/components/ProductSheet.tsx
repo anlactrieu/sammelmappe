@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { db } from '../db'
 import { fileToThumb } from '../lib/photo'
-import { suggestNamesFromCanvas } from '../services/ocr'
+import { findByPhoto } from '../services/photoFind'
 import { ProductPicker } from './ProductPicker'
 import { catalogTime, guessType, loadCatalog, productImage, type CatalogProduct } from '../services/catalog'
 import { loadSets } from '../services/tcgdex'
@@ -28,13 +28,14 @@ export function ProductSheet({ open, ean, prefill, onClose, onAdded }: { open: b
   const [touched, setTouched] = useState(false)
   const [photo, setPhoto] = useState<string | undefined>()
   const [sugg, setSugg] = useState<string[]>([])
+  const [rankedIds, setRankedIds] = useState<number[]>([])
   const [reading, setReading] = useState(false)
   const [query, setQuery] = useState('')
   const [catalog, setCatalog] = useState<{ id: number; price: number | null; at?: number } | null>(null)
 
   useEffect(() => {
     if (!open) return
-    setTouched(false); setPickedSet(''); setPhoto(undefined); setSugg([]); setQuery(''); setCatalog(null); loadSets().then((s) => setSets([...s].reverse())).catch(() => undefined)
+    setTouched(false); setPickedSet(''); setPhoto(undefined); setSugg([]); setRankedIds([]); setQuery(''); setCatalog(null); loadSets().then((s) => setSets([...s].reverse())).catch(() => undefined)
     setName(''); setType('Booster'); setQty(1); setPrice(''); setBuy(''); setKnown(false)
     if (prefill) pickCatalog(prefill.c, prefill.eur)
     if (ean) db.products.where('ean').equals(ean).first().then((p) => {
@@ -51,8 +52,9 @@ export function ProductSheet({ open, ean, prefill, onClose, onAdded }: { open: b
       const { dataUrl, canvas } = await fileToThumb(file, 900)
       setPhoto(canvas.width > 600 ? (await fileToThumb(file, 480)).dataUrl : dataUrl)
       setReading(true); setSugg([])
-      const names = await suggestNamesFromCanvas(canvas)
-      setSugg(names)
+      const r = await findByPhoto(canvas)
+      const names = r.texts
+      setSugg(names); setRankedIds(r.ids)
       setQuery('')
       if (!names.length) toast('Im Foto kein Text erkannt – Namen bitte tippen')
     } catch (e) { toast(`Foto konnte nicht verarbeitet werden: ${(e as Error).message || 'Texterkennung nicht geladen (offline?)'}`) }
@@ -81,7 +83,7 @@ export function ProductSheet({ open, ean, prefill, onClose, onAdded }: { open: b
       {!known && <>
         <h2 style={{ marginTop: 8 }}>Im Katalog suchen</h2>
         {catalog ? <p className="hint">Aus dem Katalog übernommen. Preis ≈ umgerechnet aus dem US-Markt (TCGplayer) – passe ihn an, wenn dein Markt abweicht.</p> : null}
-        {!catalog && <ProductPicker query={query} onQuery={setQuery} onPick={pickCatalog} photoTexts={sugg} />}
+        {!catalog && <ProductPicker query={query} onQuery={setQuery} onPick={pickCatalog} photoTexts={sugg} rankedIds={rankedIds} />}
       </>}
       {!known && !catalog && <div className="photo-box">
         {photo ? <img src={photo} alt="Produktfoto" /> : <span className="muted small">Noch kein Foto</span>}

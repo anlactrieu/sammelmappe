@@ -43,9 +43,11 @@ export default defineConfig({
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,svg,wasm,json,png}'],
-        globIgnores: ['**/catalog.json'],
+        globIgnores: ['**/catalog.json', '**/catalog-emb.*', '**/ort-wasm*'],
         maximumFileSizeToCacheInBytes: 8 * 1024 * 1024,
         runtimeCaching: [
+          { urlPattern: /(ort-wasm.*\.(wasm|mjs)|catalog-emb\.(bin|json))$/, handler: 'CacheFirst', options: { cacheName: 'imagesearch', expiration: { maxEntries: 8 }, cacheableResponse: { statuses: [200] } } },
+          { urlPattern: /^https:\/\/(huggingface\.co|cdn-lfs[\w.-]*\.(hf|huggingface)\.co|[\w-]+\.hf\.co)\/.*/, handler: 'CacheFirst', options: { cacheName: 'models', expiration: { maxEntries: 20 }, cacheableResponse: { statuses: [200] } } },
           { urlPattern: /\/catalog\.json$/, handler: 'NetworkFirst', options: { cacheName: 'catalog', networkTimeoutSeconds: 5 } },
           { urlPattern: /^https:\/\/assets\.tcgdex\.net\/.*/, handler: 'CacheFirst',
             options: { cacheName: 'card-images', expiration: { maxEntries: 600, maxAgeSeconds: 60 * 60 * 24 * 60 }, cacheableResponse: { statuses: [200] } } },

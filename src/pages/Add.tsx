@@ -7,7 +7,7 @@ import { AddCardSheet } from '../components/CardSheets'
 import { ProductSheet } from '../components/ProductSheet'
 import { ProductPicker } from '../components/ProductPicker'
 import { fileToThumb } from '../lib/photo'
-import { suggestNamesFromCanvas } from '../services/ocr'
+import { findByPhoto } from '../services/photoFind'
 import type { CatalogProduct } from '../services/catalog'
 import type { CardRef } from '../types'
 
@@ -23,15 +23,19 @@ export default function Add() {
   const [productOpen, setProductOpen] = useState(false)
   const [pq, setPq] = useState('')
   const [texts, setTexts] = useState<string[]>([])
+  const [ranked, setRanked] = useState<number[]>([])
+  const [status, setStatus] = useState('')
   const [reading, setReading] = useState(false)
   const onPhoto = async (file?: File) => {
     if (!file) return
-    setReading(true); setTexts([]); setPq('')
+    setReading(true); setTexts([]); setRanked([]); setPq('')
     try {
-      const { canvas } = await fileToThumb(file, 1400)
-      const t = await suggestNamesFromCanvas(canvas)
-      setTexts(t)
-      if (!t.length) toast('Auf dem Foto war kein Text lesbar – Namen bitte eintippen')
+      const { canvas } = await fileToThumb(file, 1000)
+      const r = await findByPhoto(canvas, setStatus)
+      setTexts(r.texts); setRanked(r.ids)
+      if (r.imageSearch === 'unavailable') toast('Bildsuche noch nicht verfügbar – nutze Text oder Namen')
+      else if (r.imageSearch === 'error') toast('Bilderkennung konnte nicht geladen werden (offline?)')
+      else if (!r.ids.length && !r.texts.length) toast('Nichts erkannt – Namen bitte eintippen')
     } catch (e) { toast(`Foto konnte nicht verarbeitet werden: ${(e as Error).message || 'Texterkennung nicht geladen (offline?)'}`) }
     finally { setReading(false) }
   }
@@ -65,8 +69,8 @@ export default function Add() {
             <input type="file" accept="image/*" capture="environment" className="file-overlay" onChange={(e) => { onPhoto(e.target.files?.[0]); e.target.value = '' }} /></label>
           <button className="btn ghost" onClick={() => { setPrefill(undefined); setProductOpen(true) }}>Manuell</button>
         </div>
-        {reading && <p className="muted small" role="status">Lese Packung … (beim ersten Mal lädt die Texterkennung ca. 10 s)</p>}
-        <ProductPicker query={pq} onQuery={setPq} photoTexts={texts} onPick={(c, eur) => { setPrefill({ c, eur }); setProductOpen(true) }} autoFocus />
+        {reading && <p className="muted small" role="status">{status || 'Werte Foto aus …'}</p>}
+        <ProductPicker query={pq} onQuery={setPq} photoTexts={texts} rankedIds={ranked} onPick={(c, eur) => { setPrefill({ c, eur }); setProductOpen(true) }} autoFocus />
       </>) : (<>
         <input className="search" type="search" placeholder="Kartenname, z. B. Glurak, Pikachu …" value={q} autoFocus
           onChange={(e) => setQ(e.target.value)} aria-label="Karte suchen" />

@@ -4,7 +4,8 @@ import { Segmented, Sheet } from '../components/ui'
 import { AddCardSheet } from '../components/CardSheets'
 import { ProductSheet } from '../components/ProductSheet'
 import { detectEan } from '../services/barcode'
-import { readCardNumber, suggestNamesFromCanvas } from '../services/ocr'
+import { readCardNumber } from '../services/ocr'
+import { findByPhoto } from '../services/photoFind'
 import { ProductPicker } from '../components/ProductPicker'
 import type { CatalogProduct } from '../services/catalog'
 import { imageUrl, resolveByNumber } from '../services/tcgdex'
@@ -33,7 +34,7 @@ export default function Scan() {
   const cooldown = useRef({ keys: new Set<string>(), until: 0 })
   const streamRef = useRef<MediaStream | null>(null)
   const [stream, setStream] = useState<MediaStream | null>(null)
-  const [finder, setFinder] = useState<{ texts: string[] } | null>(null)
+  const [finder, setFinder] = useState<{ texts: string[]; ids: number[] } | null>(null)
   const [fq, setFq] = useState('')
   const [prefill, setPrefill] = useState<{ c: CatalogProduct; eur: number | null } | undefined>()
   const [live, setLive] = useState(false)
@@ -126,13 +127,14 @@ export default function Scan() {
     const v = video.current
     if (!v || !v.videoWidth || busy.current) return
     busy.current = true
-    setStatus('Lese Packung … (beim ersten Mal lädt die Texterkennung ca. 10 s)')
+    setStatus('Werte Foto aus …')
     try {
       const k = Math.min(1, 1400 / Math.max(v.videoWidth, v.videoHeight))
       const c = document.createElement('canvas'); c.width = Math.round(v.videoWidth * k); c.height = Math.round(v.videoHeight * k)
       c.getContext('2d')!.drawImage(v, 0, 0, c.width, c.height)
-      const texts = await suggestNamesFromCanvas(c).catch(() => [] as string[])
-      setFq(''); setFinder({ texts })
+      const r = await findByPhoto(c, setStatus)
+      if (r.imageSearch === 'error') setStatus('Bilderkennung nicht geladen (offline?)')
+      setFq(''); setFinder({ texts: r.texts, ids: r.ids })
       setStatus('Bereit')
     } finally { busy.current = false }
   }
@@ -188,8 +190,8 @@ export default function Scan() {
       </Sheet>
 
       <Sheet open={finder != null && !prefill} onClose={() => { setFinder(null); setFq('') }} title="Welches Produkt?">
-        <p className="muted small">{finder?.texts.length ? 'Passende Produkte zur Packung. Tippe auf das richtige.' : 'Auf dem Foto war kein Text lesbar. Tippe den Namen ein.'}</p>
-        <ProductPicker query={fq} onQuery={setFq} photoTexts={finder?.texts} onPick={(c, eur) => setPrefill({ c, eur })} autoFocus={!finder?.texts.length} />
+        <p className="muted small">{finder?.texts.length || finder?.ids.length ? 'Ähnlichste Produkte zur Packung. Tippe auf das richtige.' : 'Nichts erkannt. Tippe den Namen ein.'}</p>
+        <ProductPicker query={fq} onQuery={setFq} photoTexts={finder?.texts} rankedIds={finder?.ids} onPick={(c, eur) => setPrefill({ c, eur })} autoFocus={!finder?.texts.length && !finder?.ids.length} />
         <div className="actions"><button className="btn ghost" onClick={() => { setPrefill(undefined); setEan(''); setFinder(null) }}>Manuell eingeben</button></div>
       </Sheet>
       <AddCardSheet card={card} onClose={closeAll} onAdded={afterAdd} />
