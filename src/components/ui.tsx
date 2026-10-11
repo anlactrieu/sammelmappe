@@ -1,42 +1,49 @@
-import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react'
+import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 import { formatEur, relativeTime } from '../lib/format'
 import type { UnitPrice } from '../types'
 
 /* ---------- Toast ---------- */
-const ToastCtx = createContext<(msg: string) => void>(() => {})
+export interface ToastAction { label: string; run: () => void }
+type ToastFn = (msg: string, action?: ToastAction) => void
+const ToastCtx = createContext<ToastFn>(() => {})
 export const useToast = () => useContext(ToastCtx)
 export function ToastProvider({ children }: { children: ReactNode }) {
-  const [msg, setMsg] = useState<string | null>(null)
-  const show = useCallback((m: string) => setMsg(m), [])
-  useEffect(() => { if (!msg) return; const t = setTimeout(() => setMsg(null), 2600); return () => clearTimeout(t) }, [msg])
+  const [t, setT] = useState<{ msg: string; action?: ToastAction; n: number } | null>(null)
+  const show = useCallback<ToastFn>((msg, action) => setT((p) => ({ msg, action, n: (p?.n ?? 0) + 1 })), [])
+  useEffect(() => { if (!t) return; const id = setTimeout(() => setT(null), t.action ? 5000 : 2600); return () => clearTimeout(id) }, [t])
   return (
     <ToastCtx.Provider value={show}>
       {children}
-      <div className="toast-region" role="status" aria-live="polite">{msg && <div className="toast">{msg}</div>}</div>
+      <div className="toast-region" role="status" aria-live="polite">{t && (
+        <div className="toast">{t.msg}{t.action && <button className="toast-action" onClick={() => { t.action!.run(); setT(null) }}>{t.action.label}</button>}</div>)}</div>
     </ToastCtx.Provider>
   )
 }
 
 /* ---------- Bottom Sheet ---------- */
-export function Sheet({ open, onClose, title, children }: { open: boolean; onClose: () => void; title?: string; children: ReactNode }) {
+export function Sheet({ open, onClose, title, children, footer }: { open: boolean; onClose: () => void; title?: string; children: ReactNode; footer?: ReactNode }) {
+  const dlg = useRef<HTMLDivElement>(null)
   useEffect(() => {
     if (!open) return
+    const prev = document.activeElement as HTMLElement | null
+    const t = setTimeout(() => { if (!dlg.current?.contains(document.activeElement)) dlg.current?.focus({ preventScroll: true }) }, 0)
     const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onClose()
     document.addEventListener('keydown', onKey)
     document.body.style.overflow = 'hidden'
-    return () => { document.removeEventListener('keydown', onKey); document.body.style.overflow = '' }
+    return () => { clearTimeout(t); document.removeEventListener('keydown', onKey); document.body.style.overflow = ''; prev?.focus?.({ preventScroll: true }) }
   }, [open, onClose])
   if (!open) return null
   return createPortal(
     <div className="sheet-backdrop" onClick={onClose}>
-      <div className="sheet" role="dialog" aria-modal="true" aria-label={title} onClick={(e) => e.stopPropagation()}>
+      <div className="sheet" ref={dlg} tabIndex={-1} role="dialog" aria-modal="true" aria-label={title} onClick={(e) => e.stopPropagation()}>
         <div className="sheet-grip" aria-hidden />
         <div className="sheet-head">
           <h2>{title}</h2>
           <button className="icon-btn" onClick={onClose} aria-label="Schließen">✕</button>
         </div>
         <div className="sheet-body">{children}</div>
+        {footer && <div className="sheet-foot">{footer}</div>}
       </div>
     </div>, document.body)
 }

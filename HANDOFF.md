@@ -8,6 +8,9 @@ Review-Runden 1+2 (Subagent) und 2 Advisor-Runden abgearbeitet. OCR im Browser-P
 ## Online
 Live: https://anlactrieu.github.io/sammelmappe/ (Repo anlactrieu/sammelmappe, öffentlich, Pages via Actions). Täglicher Katalog-Refresh per Cron 21:30 UTC. Sammlung bleibt lokal pro Gerät (kein Sync). Produktkatalog: `scripts/build-catalog.mjs` (tcgcsv.com, eigener User-Agent, 100 ms Pause). Produkt-Foto-Suche: Scan → „Produkt“ → „Packung fotografieren“.
 
+## Internationale Karten (neu, lokal – noch nicht committet/gepusht)
+Sprachen de/en/ja/zh-tw/zh-cn (TCGdex `/v2/{lang}`; ko bewusst nicht: 239 Karten, keine Bilder). Karten-Schlüssel: de roh (`sv01-025`), sonst `ja:SV2a-025` (`src/lib/lang.ts`). `CardRef.lang/dexId/nameDe`; deutsche Namen über Pokédex-Nr. (PokeAPI, Cache-Tabelle `dex`, Dexie v2: Sets-Cache `setcache` je Sprache). Suche fremdsprachig: DE/EN-Name → dexId → Zielsprachen-Name (`searchCards`). Preise = Cardmarket-Richtwert aus TCGdex (bei ja/zh JP-Produkt). Scan: Sprachwahl in `Scan.tsx`, `resolveByNumber(..., lang)`. Offen: JP-Bilder fehlen zu ~70 % (Idee: TCGCSV-Kategorie 85 als Fallback), Bild-Index für Karten, ko/zh-cn kaum Daten.
+
 ## Letzte 3 Entscheidungen
 1. **OCR über enge Streifen** (`src/lib/strips.ts`, `src/services/ocr.ts`): Node-Test auf echten DE-Karten – Vollkarte/breite Bereiche liefern keine Nummer, enge Streifen unten links/rechts (4× skaliert, Whitelist `0-9/`, PSM 11) lesen `025/198`. Rahmen→Videopixel via `frameToVideo`.
 2. **HashRouter + `base: './'`**: kein Server-Rewrite für Deep-Links nötig; HTTPS für Kamera via `npm run dev:https` (basic-ssl).

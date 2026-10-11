@@ -1,6 +1,6 @@
 import { getSetting, setSetting } from '../db'
 
-export interface CatalogProduct { id: number; g: number; n: string; p: number | null }
+export interface CatalogProduct { id: number; g: number; n: string; p: number | null; l?: string }
 export interface Catalog { source: string; generatedAt: string; groups: Record<string, string>; products: CatalogProduct[] }
 
 let cache: Promise<Catalog | null> | null = null

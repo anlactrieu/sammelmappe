@@ -31,11 +31,12 @@ export function ProductSheet({ open, ean, prefill, onClose, onAdded }: { open: b
   const [rankedIds, setRankedIds] = useState<number[]>([])
   const [reading, setReading] = useState(false)
   const [query, setQuery] = useState('')
+  const [region, setRegion] = useState('DE')
   const [catalog, setCatalog] = useState<{ id: number; price: number | null; at?: number } | null>(null)
 
   useEffect(() => {
     if (!open) return
-    setTouched(false); setPickedSet(''); setPhoto(undefined); setSugg([]); setRankedIds([]); setQuery(''); setCatalog(null); loadSets().then((s) => setSets([...s].reverse())).catch(() => undefined)
+    setTouched(false); setPickedSet(''); setPhoto(undefined); setSugg([]); setRankedIds([]); setQuery(''); setCatalog(null); setRegion('DE'); loadSets().then((s) => setSets([...s].reverse())).catch(() => undefined)
     setName(''); setType('Booster'); setQty(1); setPrice(''); setBuy(''); setKnown(false)
     if (prefill) pickCatalog(prefill.c, prefill.eur)
     if (ean) db.products.where('ean').equals(ean).first().then((p) => {
@@ -61,7 +62,7 @@ export function ProductSheet({ open, ean, prefill, onClose, onAdded }: { open: b
     finally { setReading(false) }
   }
   function pickCatalog(c: CatalogProduct, eur: number | null) {
-    setCatalog({ id: c.id, price: eur }); loadCatalog().then((cat) => cat && setCatalog((cur) => (cur && cur.id === c.id ? { ...cur, at: catalogTime(cat) } : cur)))
+    setRegion(c.l ?? 'EN'); setCatalog({ id: c.id, price: eur }); loadCatalog().then((cat) => cat && setCatalog((cur) => (cur && cur.id === c.id ? { ...cur, at: catalogTime(cat) } : cur)))
     setTouched(true); setName(c.n); setType(guessType(c.n))
     setPrice(eur != null ? String(eur).replace('.', ',') : ''); setQuery('')
   }
@@ -72,13 +73,13 @@ export function ProductSheet({ open, ean, prefill, onClose, onAdded }: { open: b
     if (isBadAmount(price) || isBadAmount(buy)) return toast('Bitte gültige Beträge eingeben, z. B. 12,50')
     setSaving(true)
     try {
-      await addProduct({ name: name.trim(), type, ean, image: photo ?? (catalog ? productImage(catalog.id, 400) : undefined), catalogId: catalog?.id, priceUpdated: catalog?.at, priceSource: catalog && parseEur(price) === catalog.price ? 'catalog' : 'manual', setName: pickedSet || undefined, price: parseEur(price) }, qty, parseEur(buy))
+      await addProduct({ name: name.trim(), type, ean, image: photo ?? (catalog ? productImage(catalog.id, 400) : undefined), catalogId: catalog?.id, priceUpdated: catalog?.at, region, priceSource: catalog && parseEur(price) === catalog.price ? 'catalog' : 'manual', setName: pickedSet || undefined, price: parseEur(price) }, qty, parseEur(buy))
       toast(`${qty}× ${name.trim()} hinzugefügt`)
       onAdded?.(); onClose()
     } finally { setSaving(false) }
   }
   return (
-    <Sheet open={open} onClose={onClose} title={known ? 'Bekanntes Produkt' : 'Produkt hinzufügen'}>
+    <Sheet open={open} onClose={onClose} title={known ? 'Bekanntes Produkt' : 'Produkt hinzufügen'} footer={<button className="btn primary grow-btn" disabled={saving} onClick={save}>{qty > 1 ? `${qty}× hinzufügen` : 'Hinzufügen'}</button>}>
       {ean && <p className="muted small">Barcode (EAN): <code>{ean}</code>{known ? ' – erkannt, Daten übernommen' : ' – wird für das nächste Mal gemerkt'}</p>}
       {!known && <>
         <h2 style={{ marginTop: 8 }}>Im Katalog suchen</h2>
@@ -99,8 +100,12 @@ export function ProductSheet({ open, ean, prefill, onClose, onAdded }: { open: b
         <select value={pickedSet} onChange={(e) => { setPickedSet(e.target.value); suggest(e.target.value, type) }}>
           <option value="">– optional –</option>{sets.map((s) => <option key={s.id}>{s.name}</option>)}</select></label>}
       <label className="field">Name
-        <input value={name} onChange={(e) => { setTouched(true); setName(e.target.value) }} placeholder="z. B. Karmesin & Purpur Top-Trainer-Box" autoFocus />
+        <input value={name} onChange={(e) => { setTouched(true); setName(e.target.value) }} placeholder="z. B. Karmesin & Purpur Top-Trainer-Box" autoFocus={!catalog && !!ean || known} />
       </label>
+      <div className="field" role="group">Sprache der Ausgabe
+        <div className="chips tight">{['DE', 'EN', 'JA', 'ZH', 'KO'].map((r) => <button key={r} className={`chip${r === region ? ' on' : ''}`} aria-pressed={r === region} onClick={() => setRegion(r)}>{r}</button>)}</div>
+        {(region === 'ZH' || region === 'KO') && <small className="muted">Für chinesische und koreanische Produkte gibt es keine offene Preisquelle – trage den Preis selbst ein (z. B. von Cardmarket, eBay oder dem Kaufbeleg).</small>}
+      </div>
       <div className="field" role="group">Art
         <div className="chips">{TYPES.map((t) => <button key={t} aria-pressed={t === type} className={`chip${t === type ? ' on' : ''}`} onClick={() => { setType(t); suggest(pickedSet, t) }}>{t}</button>)}</div>
       </div>
@@ -116,7 +121,6 @@ export function ProductSheet({ open, ean, prefill, onClose, onAdded }: { open: b
       <a className="link" target="_blank" rel="noreferrer" href={cardmarketSearchUrl(name || 'Pokemon')}>Preis auf Cardmarket nachschauen ↗</a>
       {ean && <a className="link" target="_blank" rel="noreferrer" href={`https://www.google.com/search?q=${encodeURIComponent(ean + ' pokemon')}`}>Barcode im Web nachschlagen ↗</a>}
       <p className="hint">Für versiegelte Produkte gibt es keine freie Preis-API. Trage den Preis einmal ein – du kannst ihn später in der Sammlung mit einem Tap aktualisieren.</p>
-      <div className="actions"><button className="btn primary" disabled={saving} onClick={save}>Hinzufügen</button></div>
     </Sheet>
   )
 }

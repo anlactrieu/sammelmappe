@@ -8,6 +8,8 @@ import { exportCsv, exportJson, importJson } from '../services/backup'
 import { nameSuggestions } from '../lib/photo'
 import { frameToVideo, numberStrips } from '../lib/strips'
 import { mapCard } from '../services/tcgdex'
+import { cardKey, langTag, parseKey } from '../lib/lang'
+import { cardNames } from '../services/names'
 import { catalogTime, guessType, searchCatalog, searchLoose, toEur } from '../services/catalog'
 import type { CardRef, Item } from '../types'
 
@@ -185,5 +187,22 @@ describe('Produktkatalog', () => {
     expect(unitPrice(it, undefined, p)).toMatchObject({ source: 'catalog', estimated: true, value: 64.25 })
     await setProductPrice(p.id, 70)
     expect(unitPrice(it, undefined, (await db.products.get(p.id))!)).toMatchObject({ source: 'product', value: 70 })
+  })
+})
+
+describe('Sprachen', () => {
+  it('Karten-Schlüssel: Deutsch roh, sonst mit Präfix', () => {
+    expect(cardKey('de', 'sv01-025')).toBe('sv01-025'); expect(cardKey('ja', 'SV2a-025')).toBe('ja:SV2a-025')
+    expect(parseKey('sv01-025')).toEqual({ lang: 'de', apiId: 'sv01-025' })
+    expect(parseKey('zh-tw:SV2a-025')).toEqual({ lang: 'zh-tw', apiId: 'SV2a-025' })
+    expect(langTag('zh-tw')).toBe('ZH')
+  })
+  it('deutscher Name vor Originalname', () => {
+    expect(cardNames({ name: 'ピカチュウ', nameDe: 'Pikachu' })).toEqual({ name: 'Pikachu', alt: 'ピカチュウ' })
+    expect(cardNames({ name: 'Tentagra' })).toEqual({ name: 'Tentagra' })
+  })
+  it('mapCard setzt Sprache und Schlüssel', () => {
+    const c = mapCard({ id: 'SV2a-025', localId: '025', name: 'ピカチュウ', dexId: [25], set: { id: 'SV2a', name: '151', cardCount: { official: 165 } } }, 'ja')
+    expect(c).toMatchObject({ id: 'ja:SV2a-025', lang: 'ja', dexId: 25, setId: 'SV2a', setTotal: 165 })
   })
 })

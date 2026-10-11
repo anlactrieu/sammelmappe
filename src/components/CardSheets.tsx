@@ -7,10 +7,12 @@ import { CONDITIONS, CONDITION_LABEL, VARIANT_LABEL, unitPrice, priceChange, car
 import { addCard, cardmarketSearchUrl, removeItem, setProductPrice, type AddOpts } from '../lib/actions'
 import type { CardRef, Condition, Item, Product, Variant } from '../types'
 import { PriceLine, Sheet, useToast } from './ui'
+import { langLabel, langTag } from '../lib/lang'
+import { cardNames } from '../services/names'
 
 const LANGS = ['DE', 'EN', 'FR', 'IT', 'ES', 'JP']
 
-function availableVariants(card: CardRef): Variant[] {
+export function availableVariants(card: CardRef): Variant[] {
   const v = card.variants
   const list: Variant[] = []
   if (!v || v.normal) list.push('normal')
@@ -66,7 +68,7 @@ export function AddCardSheet({ card, onClose, onAdded }: { card: CardRef | null;
 
   useEffect(() => {
     if (!card) return
-    setQty(1); setCondition('NM'); setBuy(''); setManual(''); setLanguage('DE')
+    setQty(1); setCondition('NM'); setBuy(''); setManual(''); setLanguage(langTag(card.lang ?? 'de'))
     setVariant(availableVariants(card)[0])
   }, [card])
 
@@ -80,7 +82,7 @@ export function AddCardSheet({ card, onClose, onAdded }: { card: CardRef | null;
     setSaving(true)
     try {
       await addCard(card, opts())
-      toast(`${qty}× ${card.name} hinzugefügt`)
+      toast(`${qty}× ${cardNames(card).name}${card.lang ? ' (' + langTag(card.lang) + ')' : ''} hinzugefügt`)
       onAdded?.()
       if (andClose) onClose(); else { setQty(1); setBuy(''); setManual('') }
     } finally { setSaving(false) }
@@ -88,17 +90,22 @@ export function AddCardSheet({ card, onClose, onAdded }: { card: CardRef | null;
   const wish = async () => {
     await db.cards.put(card)
     await db.wishlist.put({ cardId: card.id, addedAt: Date.now() }).catch(() => undefined)
-    toast('Auf der Wunschliste'); onClose()
+    toast(`${cardNames(card).name} auf der Wunschliste`); onClose()
   }
   return (
-    <Sheet open onClose={onClose} title={card.name}>
+    <Sheet open onClose={onClose} title={cardNames(card).name} footer={<>
+      <button className="btn primary grow-btn" disabled={saving} onClick={() => save(true)}>{qty > 1 ? `${qty}× hinzufügen` : 'Hinzufügen'}</button>
+      <button className="btn" disabled={saving} onClick={() => save(false)} title="Speichern und Fenster offen lassen, z. B. für dieselbe Karte in anderem Zustand">+ Noch eins</button>
+      <button className="btn ghost" onClick={wish}>Merken</button>
+    </>}>
       <div className="add-head">
         {card.image && <img crossOrigin="anonymous" src={imageUrl(card.image, 'low')} alt={`Karte ${card.name}`} className="add-img" />}
         <div>
+          {card.lang && <p><b className="langtag">{langTag(card.lang)}</b> <span className="muted small">{langLabel(card.lang)}e Karte{cardNames(card).alt ? ` · ${cardNames(card).alt}` : ''}</span></p>}
           <p className="muted">{card.setName}</p>
           <p className="muted small">Nr. {card.localId}{card.setTotal ? `/${card.setTotal}` : ''}{card.rarity ? ` · ${card.rarity}` : ''}</p>
           <p className="big">{preview != null ? formatEur(preview) : 'Kein Preis'}</p>
-          <p className="muted small">{card.cm ? 'Cardmarket-Trend (NM)' : 'Noch kein Marktpreis – unten manuell eintragen'}</p>
+          <p className="muted small">{card.cm ? `Cardmarket-Trend (NM)${card.lang === 'ja' || card.lang === 'zh-tw' || card.lang === 'zh-cn' ? ' – Richtwert der asiatischen Ausgabe' : ''}` : 'Noch kein Marktpreis – unten manuell eintragen'}</p>
         </div>
       </div>
 
@@ -108,37 +115,32 @@ export function AddCardSheet({ card, onClose, onAdded }: { card: CardRef | null;
         {availableVariants(card).length === 1 ? <small className="muted">Diese Karte gibt es nur als {VARIANT_LABEL[availableVariants(card)[0]]}.</small> : <VariantHelp />}
       </div>
       <div className="field" role="group">Zustand
-        <div className="chips">{CONDITIONS.map((c) => (
+        <div className="chips tight">{CONDITIONS.map((c) => (
           <button key={c} aria-pressed={c === condition} className={`chip${c === condition ? ' on' : ''}`} onClick={() => setCondition(c)} title={CONDITION_LABEL[c]}>{c}</button>))}</div>
         <small className="muted">{CONDITION_LABEL[condition]}</small>
         <ConditionHelp />
       </div>
-      <div className="row2">
-        <div className="field" role="group">Menge
-          <div className="stepper">
-            <button onClick={() => setQty(Math.max(1, qty - 1))} aria-label="Weniger">−</button>
-            <output>{qty}</output>
-            <button onClick={() => setQty(qty + 1)} aria-label="Mehr">+</button>
-          </div>
+      <div className="field" role="group">Menge
+        <div className="stepper">
+          <button onClick={() => setQty(Math.max(1, qty - 1))} aria-label="Weniger">−</button>
+          <output aria-live="polite">{qty}</output>
+          <button onClick={() => setQty(qty + 1)} aria-label="Mehr">+</button>
         </div>
+      </div>
+      <details className="help more">
+        <summary>Mehr Angaben: Sprache, Kaufpreis …</summary>
         <label className="field">Sprache
-          <select value={language} onChange={(e) => setLanguage(e.target.value)}>{LANGS.map((l) => <option key={l}>{l}</option>)}</select>
+          <select value={language} disabled={!!card.lang} onChange={(e) => setLanguage(e.target.value)}>{[...new Set([language, ...LANGS])].map((l) => <option key={l}>{l}</option>)}</select>
         </label>
-      </div>
-      <div className="row2">
-        <label className="field">Kaufpreis / Stück
-          <input inputMode="decimal" placeholder="optional, z. B. 1,50" value={buy} onChange={(e) => setBuy(e.target.value)} />
-        </label>
-        <label className="field">Eigener Preis
-          <input inputMode="decimal" placeholder="überschreibt Markt" value={manual} onChange={(e) => setManual(e.target.value)} />
-        </label>
-      </div>
-      <p className="muted small">„Hinzufügen“ speichert und schließt. „+ weiteres Exemplar“ speichert und lässt das Fenster offen, z. B. für dieselbe Karte in anderem Zustand.</p>
-      <div className="actions">
-        <button className="btn primary" disabled={saving} onClick={() => save(true)}>Hinzufügen</button>
-        <button className="btn" disabled={saving} onClick={() => save(false)}>Hinzufügen + weiteres Exemplar</button>
-        <button className="btn ghost" onClick={wish}>♡ Wunschliste</button>
-      </div>
+        <div className="row2">
+          <label className="field">Kaufpreis / Stück
+            <input inputMode="decimal" placeholder="z. B. 1,50" value={buy} onChange={(e) => setBuy(e.target.value)} />
+          </label>
+          <label className="field">Eigener Preis
+            <input inputMode="decimal" placeholder="statt Marktpreis" value={manual} onChange={(e) => setManual(e.target.value)} />
+          </label>
+        </div>
+      </details>
     </Sheet>
   )
 }
@@ -162,7 +164,7 @@ export function ItemSheet({ item, card, product, onClose }: { item: Item | null;
 
   if (!item || !f) return null
   const price = unitPrice({ ...f, manualPrice: item.kind === 'product' ? undefined : parseEur(manual) }, card, product)
-  const name = card?.name ?? product?.name ?? 'Eintrag'
+  const name = card ? cardNames(card).name : product?.name ?? 'Eintrag'
   const ch7 = card ? priceChange(card, 7, f.variant === 'reverse') : null
 
   const save = async () => {
@@ -182,11 +184,14 @@ export function ItemSheet({ item, card, product, onClose }: { item: Item | null;
   const del = async () => { if (confirm(`„${name}" aus der Sammlung entfernen?`)) { await removeItem(item.id!); toast('Entfernt'); onClose() } }
 
   return (
-    <Sheet open onClose={onClose} title={name}>
+    <Sheet open onClose={onClose} title={name} footer={<>
+      <button className="btn primary grow-btn" onClick={save}>Speichern</button>
+      <button className="btn danger" onClick={del}>Entfernen</button>
+    </>}>
       <div className="add-head">
         {card?.image && <img crossOrigin="anonymous" src={imageUrl(card.image, 'low')} alt={`Karte ${name}`} className="add-img" />}
         <div>
-          <p className="muted">{card ? `${card.setName} · ${card.localId}` : product?.type}</p>
+          <p className="muted">{card ? `${card.lang ? langTag(card.lang) + ' · ' : ''}${cardNames(card).alt ? cardNames(card).alt + ' · ' : ''}${card.setName} · ${card.localId}` : product?.type}</p>
           <p className="big"><PriceLine price={price} qty={f.qty} compact /></p>
           <p className="muted small"><PriceLine price={price} /></p>
           {ch7 != null && <p className={`small ${ch7 >= 0 ? 'up' : 'down'}`}>{ch7 >= 0 ? '▲' : '▼'} {Math.abs(ch7).toFixed(1).replace('.', ',')} % ggü. 7-Tage-Schnitt</p>}
@@ -196,7 +201,7 @@ export function ItemSheet({ item, card, product, onClose }: { item: Item | null;
       {item.kind === 'card' && card && <>
         <div className="field" role="group">Variante<div className="chips">{availableVariants(card).map((v) => (
           <button key={v} aria-pressed={v === f.variant} className={`chip${v === f.variant ? ' on' : ''}`} onClick={() => setF({ ...f, variant: v })}>{VARIANT_LABEL[v]}</button>))}</div></div>
-        <div className="field" role="group">Zustand<div className="chips">{CONDITIONS.map((c) => (
+        <div className="field" role="group">Zustand<div className="chips tight">{CONDITIONS.map((c) => (
           <button key={c} aria-pressed={c === f.condition} className={`chip${c === f.condition ? ' on' : ''}`} onClick={() => setF({ ...f, condition: c })}>{c}</button>))}</div><ConditionHelp /></div>
         <label className="field">Sprache
           <select value={f.language} onChange={(e) => setF({ ...f, language: e.target.value })}>{LANGS.map((l) => <option key={l}>{l}</option>)}</select></label>
@@ -220,11 +225,7 @@ export function ItemSheet({ item, card, product, onClose }: { item: Item | null;
       </label>
       <a className="link" target="_blank" rel="noreferrer" href={cardmarketSearchUrl(name + (card ? ' ' + card.localId : ''))}>Preis auf Cardmarket nachschauen ↗</a>
       <label className="field">Notiz<textarea rows={2} value={f.notes ?? ''} onChange={(e) => setF({ ...f, notes: e.target.value })} /></label>
-      <div className="actions">
-        <button className="btn primary" onClick={save}>Speichern</button>
-        <button className="btn danger" onClick={del}>Entfernen</button>
-      </div>
-      {card && <Link className="link" to={`/sets/${card.setId}`} onClick={onClose}>Ganzes Set ansehen →</Link>}
+      {card && <Link className="link" to={`/sets/${card.lang ?? 'de'}/${card.setId}`} onClick={onClose}>Ganzes Set ansehen →</Link>}
     </Sheet>
   )
 }

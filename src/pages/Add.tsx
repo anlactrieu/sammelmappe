@@ -1,4 +1,7 @@
 import { useEffect, useState } from 'react'
+import { useQuickAdd } from '../components/quickAdd'
+import { LangChips } from '../components/LangChips'
+import { langTag, type Lang } from '../lib/lang'
 import { Link, useSearchParams } from 'react-router-dom'
 import { fetchCard, imageUrl, searchCards, type CardBrief } from '../services/tcgdex'
 import { Icon } from '../components/Icon'
@@ -13,6 +16,9 @@ import type { CardRef } from '../types'
 
 export default function Add() {
   const toast = useToast()
+  const quickAdd = useQuickAdd()
+  const [lang, setLangState] = useState<Lang>(() => { try { return (localStorage.getItem('cardLang') as Lang) || 'de' } catch { return 'de' } })
+  const setLang = (l: Lang) => { setLangState(l); try { localStorage.setItem('cardLang', l) } catch { /* privater Modus */ } }
   const [params] = useSearchParams()
   const [mode, setMode] = useState<'card' | 'product'>(params.get('mode') === 'product' ? 'product' : 'card')
   const [q, setQ] = useState('')
@@ -47,12 +53,12 @@ export default function Add() {
     const ctrl = new AbortController()
     const t = setTimeout(async () => {
       setLoading(true); setError('')
-      try { { setRes(await searchCards(q, ctrl.signal)); setLimit(60) } }
+      try { { setRes(await searchCards(q, lang, ctrl.signal)); setLimit(60) } }
       catch (e) { if ((e as Error).name !== 'AbortError') setError('Suche nicht möglich – bist du online?') }
       finally { setLoading(false) }
     }, 300)
     return () => { clearTimeout(t); ctrl.abort() }
-  }, [q])
+  }, [q, lang])
 
   const pick = async (b: CardBrief) => {
     try { setCard(await fetchCard(b.id)) } catch { toast('Karte konnte nicht geladen werden') }
@@ -72,17 +78,19 @@ export default function Add() {
         {reading && <p className="muted small" role="status">{status || 'Werte Foto aus …'}</p>}
         <ProductPicker query={pq} onQuery={setPq} photoTexts={texts} rankedIds={ranked} onPick={(c, eur) => { setPrefill({ c, eur }); setProductOpen(true) }} autoFocus />
       </>) : (<>
+        <LangChips value={lang} onChange={setLang} />
+        {lang !== 'de' && <p className="muted small">Tippe den deutschen oder englischen Namen – die App findet die {lang === 'en' ? 'englische' : 'fremdsprachige'} Karte über die Pokédex-Nummer.</p>}
         <input className="search" type="search" placeholder="Kartenname, z. B. Glurak, Pikachu …" value={q} autoFocus
           onChange={(e) => setQ(e.target.value)} aria-label="Karte suchen" />
         {loading && <p className="muted small">Suche läuft …</p>}
         {error && <p className="error">{error}</p>}
         {res && res.length === 0 && !loading && <Empty icon="🔍" title="Nichts gefunden" text="Probiere den deutschen Kartennamen (z. B. „Glurak“ statt „Charizard“)." />}
-        {!res && !error && <p className="hint">Tipp: Alle Namen sind deutsch. Mit Scan geht’s noch schneller.</p>}
+        {!res && !error && lang === 'de' && <p className="hint">Tipp: Alle Namen sind deutsch. Mit Scan geht’s noch schneller.</p>}
         <ul className="grid">
           {(res ?? []).slice(0, limit).map((b) => (
-            <li key={b.id}><button className="tile" onClick={() => pick(b)}>
+            <li key={b.id} className="tile-wrap"><button className="quick" onClick={() => quickAdd(b.id)} aria-label={`${b.name} direkt hinzufügen`}>＋</button><button className="tile" onClick={() => pick(b)}>
               <div className="tile-img">{b.image ? <img crossOrigin="anonymous" src={imageUrl(b.image)} alt="" loading="lazy" /> : <span className="thumb-ph big"><Icon name="card" size={40} /></span>}</div>
-              <strong className="tile-name">{b.name}</strong><small className="muted tile-sub">{b.id.split('-')[0].toUpperCase()} · {b.localId}</small>
+              <strong className="tile-name">{b.name}</strong><small className="muted tile-sub">{lang !== 'de' && <b className="langtag">{langTag(lang)}</b>} {b.id.replace(/^(en|ja|zh-tw|zh-cn):/, '').replace(/-[^-]+$/, '').toUpperCase()} · {b.localId}</small>
             </button></li>))}
         </ul>
         {res && res.length > limit && <button className="btn" onClick={() => setLimit(limit + 60)}>Mehr laden ({res.length - limit} weitere)</button>}

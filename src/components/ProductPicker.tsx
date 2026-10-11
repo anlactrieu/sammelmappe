@@ -14,6 +14,7 @@ export function ProductPicker({ query, onQuery, onPick, autoFocus, photoTexts, r
     if (!photo) return searchCatalog(cat, query)
     const byId = new Map(cat.products.map((p) => [p.id, p]))
     const ranked = (rankedIds ?? []).map((id) => byId.get(id)).filter((p): p is CatalogProduct => !!p)
+      .sort((x, y) => Number(/ case\b/i.test(x.n)) - Number(/ case\b/i.test(y.n))) // Kartons (Case) hinter die Einzelprodukte: gleiche Optik, aber selten gemeint
     const seen = new Set(ranked.map((p) => p.id))
     return [...ranked, ...(photoTexts?.length ? searchLoose(cat, photoTexts, 6).filter((p) => !seen.has(p.id)) : [])]
   }, [cat, query, photo, photoTexts, rankedIds])
@@ -31,7 +32,7 @@ export function ProductPicker({ query, onQuery, onPick, autoFocus, photoTexts, r
           <li key={p.id}>
             <button className="rowbtn" onClick={() => onPick(p, p.p != null ? toEur(p.p, rate) : null)}>
               <img src={productImage(p.id)} alt="" loading="lazy" />
-              <div className="grow"><strong>{p.n}</strong><small className="muted">{cat?.groups[p.g]}</small></div>
+              <div className="grow"><strong>{p.l && <><b className="langtag">{p.l}</b> </>}{p.n}</strong><small className="muted">{cat?.groups[p.g]}</small></div>
               <span className="price">{p.p != null ? <strong>≈ {formatEur(toEur(p.p, rate))}</strong> : <span className="missing">kein Preis</span>}</span>
             </button>
           </li>))}

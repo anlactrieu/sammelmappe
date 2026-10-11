@@ -14,7 +14,10 @@ export interface CardRef {
   id: string            // z. B. sv01-025
   name: string
   localId: string
-  setId: string
+  setId: string         // API-Set-ID (ohne Sprachpräfix)
+  lang?: 'de' | 'en' | 'ja' | 'zh-tw' | 'zh-cn'   // fehlt = Deutsch
+  nameDe?: string       // deutscher Pokémon-Name (bei fremdsprachigen Karten, über Pokédex-Nr.)
+  dexId?: number
   setName: string
   image?: string        // Basis-URL ohne /low.webp
   rarity?: string
@@ -25,9 +28,12 @@ export interface CardRef {
 }
 
 export interface SetRef {
+  key: string; lang: 'de' | 'en' | 'ja' | 'zh-tw' | 'zh-cn'
   id: string; name: string; total: number; official: number
   abbreviation?: string; logo?: string; symbol?: string; releaseDate?: string
 }
+
+export interface DexNames { id: number; v?: number; de?: string; en?: string; ja?: string; zhTw?: string; zhCn?: string }
 
 export interface Product {
   id: string
@@ -37,6 +43,7 @@ export interface Product {
   setName?: string
   image?: string        // Katalogbild-URL oder eigenes Foto (verkleinertes JPEG als Data-URL)
   catalogId?: number    // TCGplayer-Produkt-ID aus dem Katalog
+  region?: string       // Sprache/Region der Ausgabe: DE, EN, JA, ZH, KO …
   priceSource?: 'catalog' | 'manual'
   price?: number        // aktueller Marktpreis (manuell/Katalog)
   priceUpdated?: number

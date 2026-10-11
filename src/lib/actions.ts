@@ -28,14 +28,14 @@ export function productId(name: string, ean?: string) {
   return ean ? `ean-${ean}` : 'p-' + name.toLowerCase().replace(/[^a-z0-9äöüß]+/g, '-').replace(/^-|-$/g, '') + '-' + Date.now().toString(36)
 }
 
-export function addProduct(p: { name: string; type: ProductType; ean?: string; setName?: string; price?: number; image?: string; catalogId?: number; priceSource?: 'catalog' | 'manual'; priceUpdated?: number }, qty: number, buyPrice?: number): Promise<number> {
+export function addProduct(p: { name: string; type: ProductType; ean?: string; setName?: string; price?: number; image?: string; catalogId?: number; priceSource?: 'catalog' | 'manual'; priceUpdated?: number; region?: string }, qty: number, buyPrice?: number): Promise<number> {
   return db.transaction('rw', db.products, db.items, () => addProductTx(p, qty, buyPrice))
 }
-async function addProductTx(p: { name: string; type: ProductType; ean?: string; setName?: string; price?: number; image?: string; catalogId?: number; priceSource?: 'catalog' | 'manual'; priceUpdated?: number }, qty: number, buyPrice?: number): Promise<number> {
+async function addProductTx(p: { name: string; type: ProductType; ean?: string; setName?: string; price?: number; image?: string; catalogId?: number; priceSource?: 'catalog' | 'manual'; priceUpdated?: number; region?: string }, qty: number, buyPrice?: number): Promise<number> {
   const existing = (p.ean ? await db.products.where('ean').equals(p.ean).first() : undefined)
     ?? (p.catalogId != null ? (await db.products.toArray()).find((x) => x.catalogId === p.catalogId) : undefined)
   const id = existing?.id ?? productId(p.name, p.ean)
-  const product: Product = { ...(existing ?? {}), id, name: existing?.name ?? p.name, type: existing?.type ?? p.type, ean: p.ean ?? existing?.ean, setName: p.setName ?? existing?.setName, image: p.image ?? existing?.image, catalogId: p.catalogId ?? existing?.catalogId,
+  const product: Product = { ...(existing ?? {}), id, name: existing?.name ?? p.name, type: existing?.type ?? p.type, ean: p.ean ?? existing?.ean, setName: p.setName ?? existing?.setName, image: p.image ?? existing?.image, region: p.region ?? existing?.region, catalogId: p.catalogId ?? existing?.catalogId,
     priceSource: p.price != null && p.price !== existing?.price ? p.priceSource ?? 'manual' : existing?.priceSource ?? p.priceSource,
     price: p.price ?? existing?.price, priceUpdated: p.price != null && p.price !== existing?.price ? p.priceUpdated ?? Date.now() : existing?.priceUpdated, custom: true }
   await db.products.put(product)

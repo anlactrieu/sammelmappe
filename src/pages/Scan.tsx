@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { Segmented, Sheet } from '../components/ui'
+import { LangChips } from '../components/LangChips'
+import type { Lang } from '../lib/lang'
 import { AddCardSheet } from '../components/CardSheets'
 import { ProductSheet } from '../components/ProductSheet'
 import { detectEan } from '../services/barcode'
@@ -17,6 +19,8 @@ type Mode = 'card' | 'barcode'
 export default function Scan() {
   const [params] = useSearchParams()
   const nav = useNavigate()
+  const [cardLang, setCardLangState] = useState<Lang>(() => { try { return (localStorage.getItem('cardLang') as Lang) || 'de' } catch { return 'de' } })
+  const setCardLang = (l: Lang) => { setCardLangState(l); try { localStorage.setItem('cardLang', l) } catch { /* privater Modus */ } }
   const [mode, setMode] = useState<Mode>(params.get('mode') === 'barcode' ? 'barcode' : 'card')
   const video = useRef<HTMLVideoElement>(null)
   const frameEl = useRef<HTMLDivElement>(null)
@@ -25,7 +29,7 @@ export default function Scan() {
   const [cands, setCands] = useState<CardRef[]>([])
   const [card, setCard] = useState<CardRef | null>(null)
   const [ean, setEan] = useState<string | undefined>()
-  const [series, setSeriesState] = useState(() => { try { return localStorage.getItem('scanSeries') === '1' } catch { return false } })
+  const [series, setSeriesState] = useState(() => { try { return localStorage.getItem('scanSeries') !== '0' } catch { return true } })
   const [added, setAdded] = useState(0)
   const setSeries = (v: boolean) => { setSeriesState(v); try { localStorage.setItem('scanSeries', v ? '1' : '0') } catch { /* privater Modus */ } }
   const [manual, setManual] = useState('')
@@ -85,14 +89,14 @@ export default function Scan() {
     const p = parseCardText(text)
     if (!p.number) return 'none'
     setStatus(`Nummer ${p.number}${p.total ? '/' + p.total : ''} erkannt – suche …`)
-    const found = await resolveByNumber(p.number, p.totals, p.words)
+    const found = await resolveByNumber(p.number, p.totals, p.words, cardLang)
     if (g !== gen.current) return 'stale'
     if (auto && Date.now() < cooldown.current.until && found.some((c) => cooldown.current.keys.has(c.id))) return 'stale'
     if (found.length === 1) setCard(found[0])
     else if (found.length > 1) setCands(found)
     else return 'none'
     return 'ok'
-  }, [])
+  }, [cardLang])
 
   const tick = useCallback(async () => {
     const v = video.current
@@ -162,6 +166,7 @@ export default function Scan() {
         {camError && <p className="cam-error">{camError}</p>}
         {!camError && <div ref={frameEl} className={`frame is-${mode}`} aria-hidden />}
       </div>
+      {mode === 'card' && <div className="scan-lang"><LangChips value={cardLang} onChange={setCardLang} label="Sprache der Karte" /></div>}
       <p className="scan-status" role="status">{status}</p>
       <div className="scan-bottom">
         {mode === 'card'
@@ -169,7 +174,7 @@ export default function Scan() {
           : <button className="btn primary" disabled={!!camError} onClick={photoSearch}>Packung fotografieren</button>}
         <label className="switch"><input type="checkbox" checked={series} onChange={(e) => setSeries(e.target.checked)} /> Mehrere nacheinander</label>
       </div>
-      <details className="scan-alt">
+      <details className="scan-alt" open={!!camError || undefined}>
         <summary>{mode === 'barcode' ? 'Barcode klappt nicht? Produkt suchen' : 'Klappt nicht? Nummer eintippen oder Namen suchen'}</summary>
       {mode === 'card' && (
         <form className="manual" onSubmit={async (e) => { e.preventDefault(); if (!manual) return; const r = await lookup(manual, gen.current, false); if (r === 'none') setStatus('Nichts gefunden – Format: 025/198') }}>

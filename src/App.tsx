@@ -44,6 +44,7 @@ function Shell() {
           <Route path="/scan" element={<Scan />} />
           <Route path="/add" element={<Add />} />
           <Route path="/sets" element={<SetList />} />
+          <Route path="/sets/:lang/:id" element={<SetDetail />} />
           <Route path="/sets/:id" element={<SetDetail />} />
           <Route path="/wishlist" element={<Wishlist />} />
           <Route path="/settings" element={<Settings />} />

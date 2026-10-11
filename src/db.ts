@@ -1,10 +1,11 @@
 import Dexie, { type Table } from 'dexie'
-import type { CardRef, Item, Product, SetRef, Setting, Snapshot, WishItem } from './types'
+import type { CardRef, DexNames, Item, Product, SetRef, Setting, Snapshot, WishItem } from './types'
 
 class AppDB extends Dexie {
   items!: Table<Item, number>
   cards!: Table<CardRef, string>
-  sets!: Table<SetRef, string>
+  setcache!: Table<SetRef, string>
+  dex!: Table<DexNames, number>
   products!: Table<Product, string>
   wishlist!: Table<WishItem, number>
   snapshots!: Table<Snapshot, string>
@@ -20,6 +21,8 @@ class AppDB extends Dexie {
       snapshots: 'date',
       settings: 'key',
     })
+    // v2: mehrsprachige Sets (Schlüssel „sprache/id“), Pokédex-Namen; alte Set-Tabelle entfällt (wird neu geladen)
+    this.version(2).stores({ sets: null, setcache: 'key', dex: 'id' })
   }
 }
 export const db = new AppDB()

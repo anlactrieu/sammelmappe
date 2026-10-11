@@ -76,6 +76,8 @@ export default function Home() {
         </div>
       </section>
 
+      <div className="actions" style={{ marginTop: 0 }}><Link className="btn primary" to="/add">Karte hinzufügen</Link><Link className="btn" to="/add?mode=product">Produkt hinzufügen</Link></div>
+
       {totals.missing > 0 && <Link to="/collection?filter=missing" className="banner">⚠ {totals.missing} Einträge ohne Preis – jetzt ergänzen →</Link>}
 
       {bySet.length > 0 && <section>

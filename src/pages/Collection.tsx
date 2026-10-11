@@ -15,7 +15,7 @@ type Sort = 'added' | 'value' | 'name'
 type View = 'grid' | 'list'
 
 export default function Collection() {
-  const { rows, totals, ready } = useCollection()
+  const { rows, ready } = useCollection()
   const [params, setParams] = useSearchParams()
   const [q, setQ] = useState('')
   const [kind, setKind] = useState<Kind>('all')
@@ -54,14 +54,14 @@ export default function Collection() {
       <div className="toolbar">
         <button className={`chip${activeFilters ? ' on' : ''}`} onClick={() => setFOpen(true)}>Filter{activeFilters ? ` (${activeFilters})` : ''}</button>
         <select value={sort} onChange={(e) => setSort(e.target.value as Sort)} aria-label="Sortierung">
-          <option value="added">Neueste</option><option value="value">Wert</option><option value="name">Name</option></select>
-        <Segmented label="Ansicht" value={view} onChange={changeView} options={[{ value: 'grid', label: 'Raster' }, { value: 'list', label: 'Liste' }]} />
+          <option value="added">Neueste zuerst</option><option value="value">Wert</option><option value="name">Name A–Z</option></select>
       </div>
       {missingOnly && <button className="chip on" onClick={() => setParams({})}>Nur ohne Preis ✕</button>}
-      {ready && <p className="muted small">{list.length} Einträge · {formatEur(totals.value)} gesamt</p>}
+      {ready && <div className="toolbar"><p className="muted small">{list.length} Einträge · {formatEur(list.reduce((s, r) => s + (r.price.value ?? 0) * r.item.qty, 0))}{list.length === rows.length ? ' gesamt' : ' (gefiltert)'}</p>
+        <Segmented label="Ansicht" value={view} onChange={changeView} options={[{ value: 'grid', label: 'Raster' }, { value: 'list', label: 'Liste' }]} /></div>}
 
-      {ready && rows.length === 0 && <Empty icon="🗂️" title="Noch nichts hier" text="Füge Karten oder Produkte hinzu." ><Link className="btn primary" to="/add">Hinzufügen</Link></Empty>}
-      {ready && rows.length > 0 && list.length === 0 && <Empty icon="🔍" title="Keine Treffer" text="Passe Suche oder Filter an." />}
+      {ready && rows.length === 0 && <Empty icon="🗂️" title="Noch nichts hier" text="Füge deine erste Karte oder dein erstes Produkt hinzu – per Scan oder Suche." ><div className="actions"><Link className="btn primary" to="/add">Karte suchen</Link><Link className="btn" to="/add?mode=product">Produkt hinzufügen</Link></div></Empty>}
+      {ready && rows.length > 0 && list.length === 0 && <Empty icon="🔍" title="Keine Treffer" text="Passe Suche oder Filter an."><button className="btn" onClick={() => { setQ(''); setKind('all'); setFSet(''); setFCond(''); setFLang(''); setParams({}) }}>Alles zurücksetzen</button></Empty>}
 
       <ul className={view === 'grid' ? 'grid' : 'list'}>
         {list.map((r) => (
@@ -76,6 +76,7 @@ export default function Collection() {
             <button className="tile" onClick={() => setOpen(r)} aria-label={`${r.name}, ${r.item.qty} Stück`}>
               <div className={`tile-img${isFoil(r) ? ' foil' : ''}`}>
                 {r.image ? <img crossOrigin="anonymous" src={imageUrl(r.image)} alt="" loading="lazy" /> : <span className="thumb-ph big"><Icon name="box" size={40} /></span>}
+                {r.tag && <span className="badge lang">{r.tag}</span>}
                 {r.item.qty > 1 && <span className="badge">{r.item.qty}×</span>}
                 {r.item.graded && <span className="badge grade">{r.item.graded.company} {r.item.graded.grade}</span>}
               </div>
