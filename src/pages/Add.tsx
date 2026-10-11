@@ -80,7 +80,7 @@ export default function Add() {
         <ProductPicker query={pq} onQuery={setPq} photoTexts={texts} rankedIds={ranked} photoVec={vec} onPick={(c, eur) => { setPrefill({ c, eur }); setProductOpen(true) }} autoFocus />
       </>) : (<>
         <LangChips value={lang} onChange={setLang} />
-        {lang !== 'de' && <p className="muted small">Tippe den deutschen oder englischen Namen – die App findet die {lang === 'en' ? 'englische' : 'fremdsprachige'} Karte über die Pokédex-Nummer.</p>}
+        {lang !== 'de' && <p className="muted small">Tippe den deutschen Namen (z. B. Glurak) – die App findet die Karte in {lang === 'en' ? 'Englisch' : lang === 'ja' ? 'Japanisch' : lang === 'zh-tw' ? 'traditionellem Chinesisch' : 'vereinfachtem Chinesisch'} automatisch. Der Kartentext bleibt in der Originalsprache.</p>}
         <input className="search" type="search" placeholder="Kartenname, z. B. Glurak, Pikachu …" value={q} autoFocus
           onChange={(e) => setQ(e.target.value)} aria-label="Karte suchen" />
         {loading && <p className="muted small">Suche läuft …</p>}
