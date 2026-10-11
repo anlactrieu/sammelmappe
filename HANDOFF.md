@@ -31,3 +31,7 @@ Sprachen de/en/ja/zh-tw/zh-cn (TCGdex `/v2/{lang}`; ko bewusst nicht: 239 Karten
 - CSS-Klasse `.card` kollidiert mit Modus-Klassennamen (Scan-Rahmen wurde weiß) → `is-card`.
 - macOS `sed -i ''` nötig; `sips -c` für Bildcrops, kein PIL installiert.
 - Dexie: Chip-/Stepper-Gruppen nicht in `<label>` (löst ersten Button aus).
+
+
+## Aktuell (2026-10-11, spät)
+Technische Gesamtdoku: `ARCHITEKTUR.md`. Scan ist nur noch Foto (Nummer-/Live-Scan entfernt). Karten-Index-Lauf (`cards-index.yml`) läuft/setzt fort; danach mit den drei Test-Karten (Necrozma SM106, Galar-Lauchzelot 079/198, Galagladi 081/198) prüfen. Regel: alles kostenlos halten (Repo öffentlich).
