@@ -1,4 +1,5 @@
 const paths: Record<string, string> = {
+  search: 'M11 4a7 7 0 100 14 7 7 0 000-14zM20 20l-4-4',
   calendar: 'M4 6h16v14H4zM4 10h16M8 3v5M16 3v5',
   home: 'M3 11l9-8 9 8M5 10v10h5v-6h4v6h5V10',
   stack: 'M4 7l8-4 8 4-8 4-8-4zM4 12l8 4 8-4M4 17l8 4 8-4',

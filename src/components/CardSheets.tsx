@@ -7,6 +7,7 @@ import { CONDITIONS, CONDITION_LABEL, VARIANT_LABEL, unitPrice, priceChange, car
 import { addCard, cardmarketSearchUrl, removeItem, setProductPrice, type AddOpts } from '../lib/actions'
 import type { CardRef, Condition, Item, Product, Variant } from '../types'
 import { PriceLine, Sheet, useToast } from './ui'
+import { Lightbox } from './Lightbox'
 import { langLabel, langTag } from '../lib/lang'
 import { cardNames } from '../services/names'
 
@@ -56,7 +57,8 @@ function VariantHelp() {
 }
 
 /** Karte mit Details zur Sammlung hinzufügen. */
-export function AddCardSheet({ card, onClose, onAdded }: { card: CardRef | null; onClose: () => void; onAdded?: () => void }) {
+export function AddCardSheet({ card, onClose, onAdded, compare }: { card: CardRef | null; onClose: () => void; onAdded?: () => void; compare?: string }) {
+  const [zoom, setZoom] = useState(false)
   const toast = useToast()
   const [qty, setQty] = useState(1)
   const [condition, setCondition] = useState<Condition>('NM')
@@ -93,13 +95,14 @@ export function AddCardSheet({ card, onClose, onAdded }: { card: CardRef | null;
     toast(`${cardNames(card).name} auf der Wunschliste`); onClose()
   }
   return (
+    <>
     <Sheet open onClose={onClose} title={cardNames(card).name} footer={<>
       <button className="btn primary grow-btn" disabled={saving} onClick={() => save(true)}>{qty > 1 ? `${qty}× hinzufügen` : 'Hinzufügen'}</button>
       <button className="btn" disabled={saving} onClick={() => save(false)} title="Speichern und Fenster offen lassen, z. B. für dieselbe Karte in anderem Zustand">+ Noch eins</button>
       <button className="btn ghost" onClick={wish}>Merken</button>
     </>}>
       <div className="add-head">
-        {card.image && <img src={imageUrl(card.image, 'low')} alt={`Karte ${card.name}`} className="add-img" />}
+        {card.image && <button className="add-img-btn" onClick={() => setZoom(true)} aria-label="Karte vergrößern"><img src={imageUrl(card.image, 'low')} alt={`Karte ${card.name}`} className="add-img" /><span className="zoom-badge" aria-hidden>Vergrößern</span></button>}
         <div>
           {card.lang && <p><b className="langtag">{langTag(card.lang)}</b> <span className="muted small">{langLabel(card.lang)}e Karte{cardNames(card).alt ? ` · ${cardNames(card).alt}` : ''}</span></p>}
           <p className="muted">{card.setName}</p>
@@ -142,6 +145,8 @@ export function AddCardSheet({ card, onClose, onAdded }: { card: CardRef | null;
         </div>
       </details>
     </Sheet>
+    {zoom && card.image && <Lightbox src={imageUrl(card.image, 'high')} alt={cardNames(card).name} compare={compare} onClose={() => setZoom(false)} />}
+    </>
   )
 }
 

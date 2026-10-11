@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { AddCardSheet } from '../components/CardSheets'
 import { ProductSheet } from '../components/ProductSheet'
 import { Icon } from '../components/Icon'
+import { Lightbox } from '../components/Lightbox'
 import { useToast } from '../components/ui'
 import { catalogImage } from '../services/catalog'
 import { analyzePhoto, type Analysis, type ProductHit } from '../services/analyze'
@@ -31,6 +32,7 @@ export default function Scan() {
   const [prefill, setPrefill] = useState<{ c: ProductHit['p']; eur: number | null } | undefined>()
   const [added, setAdded] = useState(0)
   const run = useRef(0)
+  const [zoomCard, setZoomCard] = useState<CardRef | null>(null)
   const cam = useRef<HTMLInputElement>(null)
   const [kind, setKindState] = useState<'card' | 'product'>(() => { try { return localStorage.getItem('snapKind') === 'product' ? 'product' : 'card' } catch { return 'card' } })
   const setKind = (k: 'card' | 'product') => { setKindState(k); try { localStorage.setItem('snapKind', k) } catch { /* privater Modus */ } }
@@ -133,7 +135,7 @@ export default function Scan() {
             <h2>Karte wählen</h2>
             <ul className="grid">
               {res.cards.map((c) => (
-                <li key={c.id}><button className="tile" onClick={() => setCard(c)}>
+                <li key={c.id} className="tile-wrap"><button className="zoom-btn" onClick={() => setZoomCard(c)} aria-label={`${cardNames(c).name} vergrößern`}><Icon name="search" size={20} /></button><button className="tile" onClick={() => setCard(c)}>
                   <div className="tile-img">{c.image ? <img src={imageUrl(c.image)} alt="" /> : <span className="thumb-ph big">{c.localId}</span>}</div>
                   <strong className="tile-name">{c.lang && <><b className="langtag">{langTag(c.lang)}</b> </>}{cardNames(c).name}</strong>
                   <small className="muted tile-sub">{c.setName} · {c.localId}</small>
@@ -164,7 +166,8 @@ export default function Scan() {
         </div>
       </>)}
 
-      <AddCardSheet card={card} onClose={() => setCard(null)} onAdded={afterAdd} />
+      <AddCardSheet card={card} onClose={() => setCard(null)} onAdded={afterAdd} compare={thumb} />
+      {zoomCard?.image && <Lightbox src={imageUrl(zoomCard.image, 'high')} alt={cardNames(zoomCard).name} compare={thumb} onClose={() => setZoomCard(null)} />}
       <ProductSheet open={prefill != null} ean={res?.ean} prefill={prefill} onClose={() => setPrefill(undefined)} onAdded={afterAdd} />
       {phase === 'idle' && added > 0 && <button className="btn ghost" onClick={() => nav('/collection')}>Zur Sammlung</button>}
     </div>

@@ -261,3 +261,16 @@ a.rowbtn, a.rowbtn:visited { text-decoration: none; color: var(--ink); } a.rowbt
 .soon-card.first { border: 2px solid var(--ink); box-shadow: 0 0 0 3px var(--label) inset; }
 .soon-card.first strong { font: 800 1.35rem/1.1 var(--display); text-transform: uppercase; }
 .err-detail { white-space: pre-wrap; background: var(--sleeve-2); padding: 10px; border-radius: var(--r-ui); font: 500 .8rem var(--mono); }
+.add-img-btn { position: relative; padding: 0; border: 0; background: none; flex: none; }
+.add-img-btn .add-img { width: 112px; display: block; }
+.zoom-badge { position: absolute; left: 6px; right: 6px; bottom: 6px; background: var(--label); color: var(--label-ink); border: 2px solid var(--ink); border-radius: 6px; font: 700 .66rem var(--mono); text-transform: uppercase; text-align: center; padding: 3px 0; }
+.zoom-btn { position: absolute; z-index: 2; left: 14px; top: 14px; width: 40px; height: 40px; border-radius: 10px; border: 2px solid var(--ink); background: var(--sleeve); color: var(--ink); display: grid; place-items: center; padding: 0; }
+.lightbox { position: fixed; inset: 0; z-index: 80; background: rgba(5,7,13,.92); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; padding: 56px 12px 24px; overflow: auto; }
+.lightbox-x { position: fixed; top: calc(10px + env(safe-area-inset-top)); right: 12px; background: #131a29; border-color: #2a3550; color: #fff; }
+.lightbox-body { display: flex; gap: 10px; width: 100%; justify-content: center; align-items: flex-start; }
+.lightbox-body figure { margin: 0; flex: 1 1 0; max-width: 460px; text-align: center; color: #cdd5e6; }
+.lightbox-body img { width: 100%; height: auto; border-radius: 10px; display: block; background: #131a29; }
+.lightbox-body figcaption { font: 600 .72rem var(--mono); text-transform: uppercase; margin-top: 6px; }
+.lightbox-hint { color: #8892aa; font-size: .8rem; margin: 0; }
+@media (max-width: 520px) { .lightbox-body.two { flex-direction: column; align-items: center; } .lightbox-body.two figure { max-width: 70vw; } }
+.langchips { gap: 6px; } .langchips .chip { flex: 0 0 auto; padding: 0 14px; white-space: nowrap; }
