@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import { HashRouter, NavLink, Route, Routes, useLocation } from 'react-router-dom'
 import { ToastProvider } from './components/ui'
+import { ErrorBoundary } from './components/ErrorBoundary'
 import Home from './pages/Home'
 import Collection from './pages/Collection'
 import Scan from './pages/Scan'
@@ -40,6 +41,7 @@ function Shell() {
   return (
     <>
       <main>
+        <ErrorBoundary resetKey={pathname}>
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/collection" element={<Collection />} />
@@ -54,6 +56,7 @@ function Shell() {
           <Route path="/settings" element={<Settings />} />
           <Route path="*" element={<Home />} />
         </Routes>
+        </ErrorBoundary>
       </main>
       <nav className={`tabbar${scanning ? ' dark' : ''}`} aria-label="Hauptnavigation">
         <NavLink to="/" end className={tab}><Icon name="home" />Start</NavLink>

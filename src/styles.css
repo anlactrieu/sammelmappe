@@ -260,3 +260,4 @@ a.rowbtn, a.rowbtn:visited { text-decoration: none; color: var(--ink); } a.rowbt
 .soon-days b { display: block; font: 900 2rem/1 var(--display); } .soon-days small { font: 700 .66rem var(--mono); text-transform: uppercase; letter-spacing: .08em; }
 .soon-card.first { border: 2px solid var(--ink); box-shadow: 0 0 0 3px var(--label) inset; }
 .soon-card.first strong { font: 800 1.35rem/1.1 var(--display); text-transform: uppercase; }
+.err-detail { white-space: pre-wrap; background: var(--sleeve-2); padding: 10px; border-radius: var(--r-ui); font: 500 .8rem var(--mono); }

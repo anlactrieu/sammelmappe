@@ -31,6 +31,7 @@ export default function Scan() {
   const [prefill, setPrefill] = useState<{ c: ProductHit['p']; eur: number | null } | undefined>()
   const [added, setAdded] = useState(0)
   const run = useRef(0)
+  const cam = useRef<HTMLInputElement>(null)
   const [kind, setKindState] = useState<'card' | 'product'>(() => { try { return localStorage.getItem('snapKind') === 'product' ? 'product' : 'card' } catch { return 'card' } })
   const setKind = (k: 'card' | 'product') => { setKindState(k); try { localStorage.setItem('snapKind', k) } catch { /* privater Modus */ } }
   const [picked, setPicked] = useState<number | null>(null)
@@ -60,6 +61,13 @@ export default function Scan() {
   }
   const next = () => {
     if (pos + 1 < queue.length) { setPos(pos + 1); analyze(queue[pos + 1]) } else { setPhase('idle'); setQueue([]); setPos(0); setRes(null) }
+  }
+  /** „Nichts davon“: zurück zum Start und sofort die Kamera für ein neues Foto öffnen */
+  const retake = () => {
+    run.current++
+    setPhase('idle'); setRes(null); setQueue([]); setPos(0)
+    setThumb((t) => { if (t) URL.revokeObjectURL(t); return undefined })
+    setTimeout(() => cam.current?.click(), 60)
   }
   const afterAdd = () => { if (picked != null && res?.vec) learnPhoto(picked, res.vec).catch(() => undefined); setPicked(null); setAdded((n) => n + 1); setCard(null); setPrefill(undefined); next() }
 
@@ -97,7 +105,7 @@ export default function Scan() {
         <div className="snap-actions">
           <label className="btn primary snap-btn">
             <Icon name="camera" size={26} /> {kind === 'card' ? 'Karte fotografieren' : 'Produkt fotografieren'}
-            <input type="file" accept="image/*" capture="environment" className="file-overlay" onChange={(e) => { start(e.target.files); e.target.value = '' }} />
+            <input ref={cam} type="file" accept="image/*" capture="environment" className="file-overlay" onChange={(e) => { start(e.target.files); e.target.value = '' }} />
           </label>
           <label className="btn snap-alt">
             Fotos aus der Galerie
@@ -150,7 +158,7 @@ export default function Scan() {
         {res.ean && <p className="muted small">Barcode gelesen: <code>{res.ean}</code></p>}
 
         <div className="actions">
-          <button className="btn" onClick={next}>{pos + 1 < queue.length ? 'Weiter zum nächsten Foto' : 'Nichts davon – neues Foto'}</button>
+          <button className="btn primary" onClick={pos + 1 < queue.length ? next : retake}>{pos + 1 < queue.length ? 'Weiter zum nächsten Foto' : 'Nichts davon – neues Foto'}</button>
           <button className="btn ghost" onClick={() => { setKind(kind === 'card' ? 'product' : 'card'); setPhase('idle'); setRes(null); setQueue([]) }}>{kind === 'card' ? 'Es ist ein Produkt' : 'Es ist eine Karte'}</button>
           <Link className="btn ghost" to="/quick">Per Namen erfassen</Link>
         </div>
