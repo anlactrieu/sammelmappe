@@ -44,6 +44,8 @@ const PHRASES: [RegExp, string][] = [
 ]
 const WORDS: Record<string, string[]> = {
   kollektion: ['collection'], koffer: ['chest'], sammlerkoffer: ['chest'], truhe: ['chest'], abenteuer: ['adventure'], sammlerbox: ['collector'], blech: ['tin'], dose: ['tin'], spezial: ['special'], kampfdeck: ['battle deck'], starterset: ['starter'], album: ['binder', 'album'], ordner: ['binder'], display: ['display', 'booster box'], karmesin: ['scarlet'], purpur: ['violet'], schwert: ['sword'], schild: ['shield'],
+  prismatische: ['prismatic'], entwicklungen: ['evolutions'], entwicklung: ['evolution'], evoli: ['eevee'], nachtara: ['umbreon'], aquana: ['vaporeon'], folipurba: ['leafeon'], psiana: ['espeon'], flamara: ['flareon'], feelinara: ['sylveon'], blitza: ['jolteon'], glaziola: ['glaceon'],
+  glurak: ['charizard'], bisaflor: ['venusaur'], turtok: ['blastoise'], relaxo: ['snorlax'], mewtu: ['mewtwo'], garados: ['gyarados'], dragoran: ['dragonite'], pummeluff: ['jigglypuff'], mauzi: ['meowth'], quajutsu: ['greninja'], schwarze: ['black'], blitze: ['bolt'], weiße: ['white'], weisse: ['white'], flammen: ['flare'], fatale: ['phantasmal'], erhabene: ['ascended'], helden: ['heroes'], maskerade: ['masquerade'], zwielicht: ['twilight'], gewalten: ['temporal', 'forces'], zeit: ['temporal'], paradoxrift: ['paradox rift'], stapel: ['stacking'],
   sonne: ['sun'], mond: ['moon'], prämie: ['premium'], praemie: ['premium'], mini: ['mini'], deck: ['deck'], spiel: ['battle'],
 }
 

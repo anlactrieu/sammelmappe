@@ -193,6 +193,11 @@ describe('Produktkatalog', () => {
     expect(searchCatalog(c2, 'Paldea Abenteuer Koffer')[0].id).toBe(9)
     expect(searchCatalog(c2, 'Sammlerkoffer').map((p) => p.id).sort()).toEqual([10, 9])
   })
+  it('deutsche Pokémon-Namen und Setnamen finden den Katalog', () => {
+    const c3 = { ...cat, products: [...cat.products, { id: 20, g: 2, n: 'Prismatic Evolutions Mini Tin [Umbreon]', p: 41 }, { id: 21, g: 2, n: 'Prismatic Evolutions Mini Tin [Sylveon]', p: 43 }] }
+    expect(searchCatalog(c3, 'Nachtara Mini Tin Prismatische Entwicklungen')[0].id).toBe(20)
+    expect(searchCatalog(c3, 'Feelinara Mini Tin').map((p) => p.id)).toEqual([21])
+  })
   it('Case hinter dem Einzelprodukt', () => expect(searchCatalog(cat, 'booster bundle').map((p) => p.id)).toEqual([1, 2]))
   it('Typ & Zeit & Umrechnung', () => {
     expect(guessType('151 Elite Trainer Box')).toBe('Top-Trainer-Box'); expect(guessType('X Booster Bundle')).toBe('Booster')
