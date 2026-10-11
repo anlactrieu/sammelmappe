@@ -22,6 +22,16 @@ export function parseCardText(text: string): ParsedCardText {
 /** "025" → "25", "TG05" bleibt "TG05" – für Vergleiche mit localId. */
 export const normalizeLocalId = (id: string) => id.replace(/^([A-Za-z]*)0+(?=\d)/, '$1')
 
+/** Menge aus der Eingabe lösen: "2x nachtara mini tin", "2 nachtara", "nachtara x3" → { qty, text } */
+export function parseQty(input: string): { qty: number; text: string } {
+  const s = input.trim()
+  let m = s.match(/^(\d{1,3})\s*[x×]\s*(.+)$/i) ?? s.match(/^(\d{1,2})\s+(\D.*)$/)
+  if (m) return { qty: Math.max(1, Number(m[1])), text: m[2].trim() }
+  m = s.match(/^(.+?)\s*[x×]\s*(\d{1,3})$/i)
+  if (m) return { qty: Math.max(1, Number(m[2])), text: m[1].trim() }
+  return { qty: 1, text: s }
+}
+
 /** UPC-A (12 Ziffern) → EAN-13 mit führender 0; sonst unverändert. So passen 0820… und 820… zusammen. */
 export const normalizeEan = (code: string) => { const d = code.replace(/\D/g, ''); return d.length === 12 ? '0' + d : d }
 

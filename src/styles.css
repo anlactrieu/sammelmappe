@@ -204,3 +204,6 @@ textarea { padding: 10px 12px; resize: vertical; }
 .viewfinder.mode-photo .mode-banner { background: var(--label); color: var(--label-ink); }
 .frame.is-photo { width: 86%; aspect-ratio: 1 / 1; max-height: 78%; border-style: dashed; border-color: #fff; }
 .shutter { min-height: 56px; font-size: 1.05rem; }
+.quick-plus { flex: none; width: 44px; height: 44px; border-radius: 10px; background: var(--label); color: var(--label-ink); border: 2px solid var(--ink); display: grid; place-items: center; }
+.done-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; background: var(--sleeve); border: 1px solid var(--rule); border-radius: var(--r-ui); padding: 8px 12px; }
+.strike { text-decoration: line-through; color: var(--ink-2); }

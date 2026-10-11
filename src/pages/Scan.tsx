@@ -189,6 +189,7 @@ export default function Scan() {
         </form>)}
 
       <Link className="link" to={mode === 'card' ? '/add' : '/add?mode=product'}>{mode === 'card' ? 'Per Namen suchen →' : 'Produkt im Katalog suchen →'}</Link>
+      <Link className="link" to="/quick">Kamera klappt nicht? Schnell erfassen →</Link>
       </details>
 
       <Sheet open={cands.length > 0 && !card} onClose={closeAll} title="Welche Karte ist es?">

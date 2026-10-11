@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 import { db } from '../db'
-import { eanList, isValidEan, normalizeEan, normalizeLocalId, parseCardText, totalCandidates } from '../lib/parse'
+import { eanList, isValidEan, parseQty, normalizeEan, normalizeLocalId, parseCardText, totalCandidates } from '../lib/parse'
 import { cardBasePrice, priceChange, totals, unitPrice } from '../lib/pricing'
 import { formatEur, isBadAmount, parseEur, relativeTime } from '../lib/format'
 import { addCard, addProduct, setProductPrice } from '../lib/actions'
@@ -84,6 +84,16 @@ describe('EAN', () => {
     expect(normalizeEan('820650454097')).toBe('0820650454097'); expect(normalizeEan('0820650454097')).toBe('0820650454097')
     expect(eanList('4007396203226, 0820650454097')).toEqual(['4007396203226', '0820650454097'])
     expect(eanList('4007396203226, 820650454097').includes(normalizeEan('0820650454097'))).toBe(true)
+  })
+})
+
+describe('Menge in der Schnell-Eingabe', () => {
+  it('liest Mengen vorn und hinten', () => {
+    expect(parseQty('2x Nachtara Mini Tin')).toEqual({ qty: 2, text: 'Nachtara Mini Tin' })
+    expect(parseQty('3 nachtara')).toEqual({ qty: 3, text: 'nachtara' })
+    expect(parseQty('nachtara x4')).toEqual({ qty: 4, text: 'nachtara' })
+    expect(parseQty('151 Booster')).toEqual({ qty: 1, text: '151 Booster' })
+    expect(parseQty('Glurak')).toEqual({ qty: 1, text: 'Glurak' })
   })
 })
 

@@ -49,6 +49,19 @@ async function addProductTx(p: { name: string; type: ProductType; ean?: string; 
 }
 
 /** Produktpreis schnell aktualisieren (gilt für alle Exemplare dieses Produkts). */
+/** Katalog-/Eigenes-Produkt direkt zur Sammlung (Menge, ohne Fenster). Gibt die Item-ID zurück. */
+export async function addCatalogProduct(c: { id: number; n: string; l?: string; ean?: string; img?: string }, eur: number | null, qty: number, opts: { image: string; type: ProductType; priceUpdated?: number; firstEan?: string }): Promise<number> {
+  return addProduct({ name: c.n, type: opts.type, ean: opts.firstEan, image: opts.image, catalogId: c.id, region: c.l ?? (c.id < 0 ? 'DE' : 'EN'),
+    price: eur ?? undefined, priceSource: c.id < 0 ? 'manual' : 'catalog', priceUpdated: opts.priceUpdated }, qty)
+}
+
+/** Menge eines Items um `qty` verringern (Rückgängig); löscht bei 0. */
+export async function undoItemQty(id: number, qty: number) {
+  const it = await db.items.get(id)
+  if (!it) return
+  if (it.qty > qty) await db.items.update(id, { qty: it.qty - qty }); else await db.items.delete(id)
+}
+
 export async function setProductPrice(productId: string, price: number | undefined) {
   const cur = await db.products.get(productId)
   if (cur?.price === price) return
