@@ -184,3 +184,5 @@ textarea { padding: 10px 12px; resize: vertical; }
 .cand-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 10px; margin-top: 8px; }
 .picker { display: flex; flex-direction: column; gap: 8px; }
 .picker .rowbtn img { width: 44px; height: 44px; object-fit: contain; background: #fff; border-radius: 6px; }
+.file-btn { position: relative; overflow: hidden; cursor: pointer; }
+.file-overlay { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; font-size: 100px; }

@@ -53,9 +53,9 @@ export function ProductSheet({ open, ean, prefill, onClose, onAdded }: { open: b
       setReading(true); setSugg([])
       const names = await suggestNamesFromCanvas(canvas)
       setSugg(names)
-      if (names[0]) setQuery(names[0])
+      setQuery('')
       if (!names.length) toast('Im Foto kein Text erkannt – Namen bitte tippen')
-    } catch { toast('Foto konnte nicht gelesen werden (offline? Texterkennung lädt beim ersten Mal Daten)') }
+    } catch (e) { toast(`Foto konnte nicht verarbeitet werden: ${(e as Error).message || 'Texterkennung nicht geladen (offline?)'}`) }
     finally { setReading(false) }
   }
   function pickCatalog(c: CatalogProduct, eur: number | null) {
@@ -81,13 +81,13 @@ export function ProductSheet({ open, ean, prefill, onClose, onAdded }: { open: b
       {!known && <>
         <h2 style={{ marginTop: 8 }}>Im Katalog suchen</h2>
         {catalog ? <p className="hint">Aus dem Katalog übernommen. Preis ≈ umgerechnet aus dem US-Markt (TCGplayer) – passe ihn an, wenn dein Markt abweicht.</p> : null}
-        {!catalog && <ProductPicker query={query} onQuery={setQuery} onPick={pickCatalog} />}
+        {!catalog && <ProductPicker query={query} onQuery={setQuery} onPick={pickCatalog} photoTexts={sugg} />}
       </>}
       {!known && !catalog && <div className="photo-box">
         {photo ? <img src={photo} alt="Produktfoto" /> : <span className="muted small">Noch kein Foto</span>}
         <div className="grow">
-          <label className="btn small-btn" style={{ cursor: 'pointer' }}>{photo ? 'Foto ersetzen' : 'Produkt fotografieren'}
-            <input type="file" accept="image/*" capture="environment" hidden onChange={(e) => onPhoto(e.target.files?.[0])} /></label>
+          <label className="btn small-btn file-btn">{photo ? 'Foto ersetzen' : 'Produkt fotografieren'}
+            <input type="file" accept="image/*" capture="environment" className="file-overlay" onChange={(e) => { onPhoto(e.target.files?.[0]); e.target.value = '' }} /></label>
           <small className="muted">{reading ? 'Lese Text auf der Verpackung …' : 'Das Foto wird gespeichert und liest den Namen von der Packung.'}</small>
         </div>
       </div>}
