@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { AddCardSheet } from '../components/CardSheets'
 import { ProductSheet } from '../components/ProductSheet'
 import { Icon } from '../components/Icon'
-import { Segmented, useToast } from '../components/ui'
+import { useToast } from '../components/ui'
 import { catalogImage } from '../services/catalog'
 import { analyzePhoto, type Analysis, type ProductHit } from '../services/analyze'
 import { learnPhoto } from '../services/imageSearch'
@@ -77,27 +77,35 @@ export default function Scan() {
         {added > 0 && <Link className="btn small-btn scan-done" to="/collection">Fertig ({added})</Link>}
       </header>
 
-      {phase === 'idle' && (<>
-        <Segmented label="Was fotografierst du?" value={kind} onChange={setKind} options={[{ value: 'card', label: 'Karte' }, { value: 'product', label: 'Produkt' }]} />
-        <p className="muted">{kind === 'card'
-          ? 'Eine Einzelkarte pro Foto. Die App erkennt sie am Bild, in jeder Sprache, auch Japanisch und Chinesisch.'
-          : 'Ein Produkt pro Foto (Booster, Box, Tin, Blister …). Die App erkennt es am Bild, ein Barcode im Bild hilft zusätzlich.'} Danach kannst du das Handy weglegen.</p>
-        <label className="btn primary snap-btn">
-          <Icon name="camera" size={26} /> Foto aufnehmen
-          <input type="file" accept="image/*" capture="environment" className="file-overlay" onChange={(e) => { start(e.target.files); e.target.value = '' }} />
-        </label>
-        <label className="btn snap-alt">
-          Fotos aus der Galerie wählen (mehrere möglich)
-          <input type="file" accept="image/*" multiple className="file-overlay" onChange={(e) => { start(e.target.files); e.target.value = '' }} />
-        </label>
-        <ul className="snap-tips">
-          <li>{kind === 'card' ? 'Ganze Vorderseite, möglichst bildfüllend, von oben.' : 'Ganze Vorderseite des Produkts. Ein Barcode im Bild hilft zusätzlich.'}</li>
-          <li>Besser ohne Spiegelung und mit ruhiger Hand – ein scharfes Foto genügt.</li>
-        </ul>
-        <div className="snap-links">
-          <Link className="link" to="/quick">Tippen statt fotografieren →</Link>
+      {phase === 'idle' && (<div className="snap-idle">
+        <div>
+          <h2 className="snap-q">Was möchtest du erfassen?</h2>
+          <div className="kind-grid" role="radiogroup" aria-label="Was fotografierst du?">
+            <button role="radio" aria-checked={kind === 'card'} className={`kind${kind === 'card' ? ' on' : ''}`} onClick={() => setKind('card')}>
+              <span className="kind-art kind-card" aria-hidden />
+              <strong>Karte</strong><small>Einzelkarte, jede Sprache</small>
+            </button>
+            <button role="radio" aria-checked={kind === 'product'} className={`kind${kind === 'product' ? ' on' : ''}`} onClick={() => setKind('product')}>
+              <span className="kind-art kind-box" aria-hidden />
+              <strong>Produkt</strong><small>Booster, Box, Tin, Blister</small>
+            </button>
+          </div>
+          <p className="snap-hint">{kind === 'card'
+            ? 'Ganze Vorderseite, möglichst bildfüllend und von oben.'
+            : 'Ganze Vorderseite. Ein Barcode im Bild hilft zusätzlich.'} Besser ohne Spiegelung.</p>
         </div>
-      </>)}
+        <div className="snap-actions">
+          <label className="btn primary snap-btn">
+            <Icon name="camera" size={26} /> {kind === 'card' ? 'Karte fotografieren' : 'Produkt fotografieren'}
+            <input type="file" accept="image/*" capture="environment" className="file-overlay" onChange={(e) => { start(e.target.files); e.target.value = '' }} />
+          </label>
+          <label className="btn snap-alt">
+            Fotos aus der Galerie
+            <input type="file" accept="image/*" multiple className="file-overlay" onChange={(e) => { start(e.target.files); e.target.value = '' }} />
+          </label>
+          <Link className="link snap-link" to="/quick">Lieber tippen statt fotografieren →</Link>
+        </div>
+      </div>)}
 
       {phase !== 'idle' && (
         <div className="snap-photo">

@@ -213,7 +213,7 @@ textarea { padding: 10px 12px; resize: vertical; }
 .scan .segmented button { padding: 0 7px; }
 .scan-top { gap: 6px; }
 .snap { gap: 14px; }
-.snap-btn { min-height: 76px; font-size: 1.2rem; position: relative; overflow: hidden; }
+.snap-btn { min-height: 72px; font-size: 1.15rem; position: relative; overflow: hidden; gap: 10px; }
 .snap-alt { position: relative; overflow: hidden; text-align: center; }
 .snap-tips { margin: 0; padding-left: 18px; color: var(--ink-2); font-size: .9rem; display: flex; flex-direction: column; gap: 4px; }
 .snap-links { display: flex; flex-direction: column; }
@@ -223,3 +223,22 @@ textarea { padding: 10px 12px; resize: vertical; }
 
 .grow .price { margin-top: 2px; }
 .help summary, .link { min-height: 44px; display: inline-flex; align-items: center; }
+
+/* Foto-Seite: Auswahl Karte/Produkt als große Kacheln, Aktionen im Daumenbereich */
+.snap-idle { display: flex; flex-direction: column; justify-content: space-between; gap: 18px; min-height: calc(100dvh - 190px); }
+.snap-q { font: 800 1.5rem/1.05 var(--display); text-transform: uppercase; letter-spacing: .01em; color: var(--ink); margin: 6px 0 12px; padding: 0; border: 0; }
+.kind-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.kind { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 18px 10px 14px; background: var(--sleeve); border: 2px solid var(--rule); border-radius: var(--r-card); text-align: center; min-height: 168px; justify-content: flex-end; }
+.kind strong { font: 800 1.45rem/1 var(--display); text-transform: uppercase; }
+.kind small { color: var(--ink-2); font-size: .8rem; }
+.kind.on { border-color: var(--ink); box-shadow: 0 0 0 3px var(--label) inset; background: var(--sleeve); }
+.kind.on strong::after { content: " ✓"; color: var(--up); }
+.kind-art { width: 62px; height: 86px; margin-bottom: 8px; border-radius: 6px; border: 2px solid var(--ink); background: linear-gradient(160deg, var(--sleeve-2), var(--sleeve)); position: relative; }
+.kind-card::after { content: ""; position: absolute; inset: 7px 7px 28px; border: 2px solid var(--ink); border-radius: 3px; background: var(--label); }
+.kind-box { width: 92px; height: 72px; }
+.kind-box::before { content: ""; position: absolute; left: -2px; right: -2px; top: 14px; height: 2px; background: var(--ink); }
+.kind-box::after { content: ""; position: absolute; left: 8px; bottom: 8px; width: 34px; height: 22px; background: var(--label); border: 2px solid var(--ink); }
+.snap-hint { color: var(--ink-2); margin: 14px 2px 0; font-size: .92rem; }
+.snap-actions { display: flex; flex-direction: column; gap: 10px; margin-top: auto; }
+.snap-actions .snap-btn { min-height: 72px; }
+.snap-link { align-self: center; }
