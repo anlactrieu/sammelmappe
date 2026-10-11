@@ -242,3 +242,10 @@ textarea { padding: 10px 12px; resize: vertical; }
 .snap-actions { display: flex; flex-direction: column; gap: 10px; margin-top: auto; }
 .snap-actions .snap-btn { min-height: 72px; }
 .snap-link { align-self: center; }
+.rel { display: flex; gap: 12px; align-items: flex-start; background: var(--sleeve); border: 1px solid var(--rule); border-radius: var(--r-card); padding: 12px; }
+.rel-date { flex: none; width: 54px; text-align: center; border: 2px solid var(--ink); border-radius: 8px; background: var(--label); color: var(--label-ink); padding: 4px 0 2px; }
+.rel-date b { display: block; font: 900 1.6rem/1 var(--display); } .rel-date small { font: 700 .66rem var(--mono); text-transform: uppercase; }
+.rel .grow small { margin-top: 2px; } .link-inline { color: var(--ink); font-weight: 700; }
+.next-set { display: flex; flex-direction: column; gap: 2px; padding: 12px 14px; border: 2px solid var(--ink); border-radius: var(--r-card); background: var(--sleeve); text-decoration: none; color: var(--ink); }
+.next-set strong { font: 800 1.3rem/1.1 var(--display); text-transform: uppercase; } .next-set small { font: 500 .78rem var(--mono); color: var(--ink-2); }
+a.rowbtn, a.rowbtn:visited { text-decoration: none; color: var(--ink); } a.rowbtn small { text-decoration: none; }

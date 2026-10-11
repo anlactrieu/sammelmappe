@@ -39,7 +39,7 @@ export function SetList() {
 
   return (
     <div className="page">
-      <header className="page-head"><Link to="/collection" className="back" aria-label="Zurück">‹</Link><h1>Sets</h1></header>
+      <header className="page-head"><Link to="/collection" className="back" aria-label="Zurück">‹</Link><h1>Sets</h1><Link className="btn small-btn" to="/releases">Neuheiten</Link></header>
       <LangChips value={lang} onChange={(l) => setParams(l === 'de' ? {} : { lang: l })} />
       <input className="search" type="search" placeholder="Set suchen …" value={q} onChange={(e) => setQ(e.target.value)} aria-label="Set suchen" />
       {err && <p className="error">{err}</p>}

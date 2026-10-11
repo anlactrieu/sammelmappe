@@ -6,6 +6,7 @@ import { formatEur, isBadAmount, parseEur, relativeTime } from '../lib/format'
 import { addCard, addProduct, setProductPrice } from '../lib/actions'
 import { exportCsv, exportJson, importJson } from '../services/backup'
 import { nameSuggestions } from '../lib/photo'
+import { countdownLabel, daysUntil, formatDate, upcoming } from '../services/releases'
 import { frameToVideo, numberStrips } from '../lib/strips'
 import { mapCard } from '../services/tcgdex'
 import { cardKey, langTag, parseKey } from '../lib/lang'
@@ -105,6 +106,19 @@ describe('Menge in der Schnell-Eingabe', () => {
     expect(parseQty('nachtara x4')).toEqual({ qty: 4, text: 'nachtara' })
     expect(parseQty('151 Booster')).toEqual({ qty: 1, text: '151 Booster' })
     expect(parseQty('Glurak')).toEqual({ qty: 1, text: 'Glurak' })
+  })
+})
+
+describe('Neuheiten', () => {
+  const today = new Date(2026, 9, 11)
+  it('Countdown und Datum', () => {
+    expect(daysUntil('2026-11-06', today)).toBe(26); expect(countdownLabel(26)).toBe('in 4 Wochen'); expect(countdownLabel(1)).toBe('morgen'); expect(countdownLabel(0)).toBe('heute'); expect(countdownLabel(-3)).toBe('vor 3 Tagen')
+    expect(formatDate('2026-11-06')).toBe('6. November 2026')
+  })
+  it('eigene Termine vor Handelsdaten, ohne Dublette, Vergangenes raus', () => {
+    const r = { generatedAt: '', de: [], sets: [{ code: 'ME06', name: 'Delta Reign', date: '2026-11-06', region: 'EN' as const }, { code: 'M7', name: 'X', date: '2026-12-01', region: 'JA' as const }, { code: 'OLD', name: 'Alt', date: '2026-01-01', region: 'EN' as const }] }
+    const u = upcoming(r, [{ name: 'Delta-Herrschaft', date: '2026-11-06', region: 'DE' }], today)
+    expect(u.map((x) => x.title)).toEqual(['Delta-Herrschaft', 'X'])
   })
 })
 

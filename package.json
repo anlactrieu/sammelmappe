@@ -13,7 +13,8 @@
     "catalog": "node scripts/build-catalog.mjs",
     "lint": "tsc --noEmit",
     "embeddings": "node scripts/build-embeddings.mjs",
-    "emb:pull": "curl -sf -o public/catalog-emb.json https://anlactrieu.github.io/sammelmappe/catalog-emb.json && curl -sf -o public/catalog-emb.bin https://anlactrieu.github.io/sammelmappe/catalog-emb.bin"
+    "emb:pull": "curl -sf -o public/catalog-emb.json https://anlactrieu.github.io/sammelmappe/catalog-emb.json && curl -sf -o public/catalog-emb.bin https://anlactrieu.github.io/sammelmappe/catalog-emb.bin",
+    "releases": "node scripts/build-releases.mjs"
   },
   "dependencies": {
     "dexie": "^4.4.6",

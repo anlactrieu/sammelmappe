@@ -6,6 +6,7 @@ import Collection from './pages/Collection'
 import Scan from './pages/Scan'
 import Add from './pages/Add'
 import Quick from './pages/Quick'
+import Releases from './pages/Releases'
 import Wishlist from './pages/Wishlist'
 import Settings from './pages/Settings'
 import { SetDetail, SetList } from './pages/Sets'
@@ -45,6 +46,7 @@ function Shell() {
           <Route path="/scan" element={<Scan />} />
           <Route path="/add" element={<Add />} />
           <Route path="/quick" element={<Quick />} />
+          <Route path="/releases" element={<Releases />} />
           <Route path="/sets" element={<SetList />} />
           <Route path="/sets/:lang/:id" element={<SetDetail />} />
           <Route path="/sets/:id" element={<SetDetail />} />

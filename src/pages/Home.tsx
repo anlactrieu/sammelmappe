@@ -9,6 +9,7 @@ import { syncPrices } from '../services/priceSync'
 import { imageUrl } from '../services/tcgdex'
 import { Empty, Segmented, Sparkline, useToast } from '../components/ui'
 import { Icon } from '../components/Icon'
+import { countdownLabel, daysUntil, formatDate, loadReleases, upcoming, type UpcomingItem } from '../services/releases'
 import { saveSnapshot } from '../services/priceSync'
 
 export function RefreshButton({ className = 'btn' }: { className?: string }) {
@@ -27,6 +28,8 @@ export function RefreshButton({ className = 'btn' }: { className?: string }) {
 export default function Home() {
   const { rows, totals, ready } = useCollection()
   const [days, setDays] = useState<7 | 30>(7)
+  const [next, setNext] = useState<UpcomingItem | null>(null)
+  useEffect(() => { loadReleases().then(({ releases, manual }) => setNext(upcoming(releases, manual)[0] ?? null)) }, [])
   const snaps = useLiveQuery(() => db.snapshots.orderBy('date').toArray(), [])
   const lastSync = useLiveQuery(() => getSetting<number>('lastSync', 0), [])
   useEffect(() => { if (ready && rows.length) saveSnapshot().catch(() => undefined) }, [ready, totals.value, totals.count, rows.length])
@@ -78,6 +81,8 @@ export default function Home() {
       </section>
 
       <div className="actions" style={{ marginTop: 0 }}><Link className="btn primary" to="/add">Karte hinzufügen</Link><Link className="btn" to="/add?mode=product">Produkt hinzufügen</Link></div>
+
+      {next && <Link to="/releases" className="next-set"><span className="eyebrow">Nächstes Set</span><strong>{next.title}</strong><small>{formatDate(next.date)} · {countdownLabel(daysUntil(next.date))}</small></Link>}
 
       {totals.missing > 0 && <Link to="/collection?filter=missing" className="banner">⚠ {totals.missing} {totals.missing === 1 ? 'Eintrag' : 'Einträge'} ohne Preis – jetzt ergänzen →</Link>}
 
