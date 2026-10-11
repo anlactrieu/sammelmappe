@@ -4,7 +4,9 @@ import { Segmented, Sheet } from '../components/ui'
 import { AddCardSheet } from '../components/CardSheets'
 import { ProductSheet } from '../components/ProductSheet'
 import { detectEan } from '../services/barcode'
-import { readCardNumber } from '../services/ocr'
+import { readCardNumber, suggestNamesFromCanvas } from '../services/ocr'
+import { ProductPicker } from '../components/ProductPicker'
+import type { CatalogProduct } from '../services/catalog'
 import { imageUrl, resolveByNumber } from '../services/tcgdex'
 import { parseCardText } from '../lib/parse'
 import type { CardRef } from '../types'
@@ -31,9 +33,12 @@ export default function Scan() {
   const cooldown = useRef({ keys: new Set<string>(), until: 0 })
   const streamRef = useRef<MediaStream | null>(null)
   const [stream, setStream] = useState<MediaStream | null>(null)
+  const [finder, setFinder] = useState<{ texts: string[] } | null>(null)
+  const [fq, setFq] = useState('')
+  const [prefill, setPrefill] = useState<{ c: CatalogProduct; eur: number | null } | undefined>()
   const [live, setLive] = useState(false)
   const [slow, setSlow] = useState(false)
-  const paused = card != null || ean != null || cands.length > 0
+  const paused = card != null || ean != null || cands.length > 0 || finder != null || prefill != null
 
   const mounted = useRef(true)
   useEffect(() => { mounted.current = true; return () => { mounted.current = false } }, [])
@@ -116,6 +121,21 @@ export default function Scan() {
     return () => clearInterval(id)
   }, [tick, mode, camError])
 
+  /** Standbild der Kamera lesen und direkt im Produktkatalog suchen. */
+  const photoSearch = async () => {
+    const v = video.current
+    if (!v || !v.videoWidth || busy.current) return
+    busy.current = true
+    setStatus('Lese Packung … (beim ersten Mal lädt die Texterkennung ca. 10 s)')
+    try {
+      const k = Math.min(1, 1400 / Math.max(v.videoWidth, v.videoHeight))
+      const c = document.createElement('canvas'); c.width = Math.round(v.videoWidth * k); c.height = Math.round(v.videoHeight * k)
+      c.getContext('2d')!.drawImage(v, 0, 0, c.width, c.height)
+      const texts = await suggestNamesFromCanvas(c).catch(() => [] as string[])
+      setFq(''); setFinder({ texts })
+      setStatus('Bereit')
+    } finally { busy.current = false }
+  }
   const afterAdd = () => { setAdded((n) => n + 1); if (!series) nav('/collection') }
   const closeAll = () => {
     gen.current++
@@ -142,7 +162,9 @@ export default function Scan() {
       </div>
       <p className="scan-status" role="status">{status}</p>
       <div className="scan-bottom">
-        <button className="btn primary" disabled={!!camError} onClick={tick}>{mode === 'card' ? 'Jetzt lesen' : 'Jetzt scannen'}</button>
+        {mode === 'card'
+          ? <button className="btn primary" disabled={!!camError} onClick={tick}>Jetzt lesen</button>
+          : <button className="btn primary" disabled={!!camError} onClick={photoSearch}>Packung fotografieren</button>}
         <label className="switch"><input type="checkbox" checked={series} onChange={(e) => setSeries(e.target.checked)} /> Mehrere nacheinander</label>
       </div>
       <details className="scan-alt">
@@ -165,8 +187,13 @@ export default function Scan() {
         <div className="actions"><button className="btn ghost" onClick={closeAll}>Keine davon</button></div>
       </Sheet>
 
+      <Sheet open={finder != null && !prefill} onClose={() => { setFinder(null); setFq('') }} title="Welches Produkt?">
+        <p className="muted small">{finder?.texts.length ? 'Passende Produkte zur Packung. Tippe auf das richtige.' : 'Auf dem Foto war kein Text lesbar. Tippe den Namen ein.'}</p>
+        <ProductPicker query={fq} onQuery={setFq} photoTexts={finder?.texts} onPick={(c, eur) => setPrefill({ c, eur })} autoFocus={!finder?.texts.length} />
+        <div className="actions"><button className="btn ghost" onClick={() => { setPrefill(undefined); setEan(''); setFinder(null) }}>Manuell eingeben</button></div>
+      </Sheet>
       <AddCardSheet card={card} onClose={closeAll} onAdded={afterAdd} />
-      <ProductSheet open={ean != null} ean={ean} onClose={closeAll} onAdded={afterAdd} />
+      <ProductSheet open={ean != null || prefill != null} ean={ean || undefined} prefill={prefill} onClose={() => { setPrefill(undefined); setFinder(null); closeAll() }} onAdded={afterAdd} />
     </div>
   )
 }

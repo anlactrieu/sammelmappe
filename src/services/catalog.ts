@@ -48,6 +48,24 @@ export function searchCatalog(cat: Catalog, query: string, limit = 40): CatalogP
   return scored.sort((a, b) => b.s - a.s).slice(0, limit).map((x) => x.p)
 }
 
+const STOP = new Set(['pokemon', 'pokémon', 'tcg', 'karten', 'sammelkartenspiel', 'trading', 'card', 'game', 'the', 'und', 'mit', 'für', 'fur', 'von', 'der', 'die', 'das', 'ein', 'alter', 'ab', 'jahren', 'enthält', 'enthalt', 'inhalt', 'zufällige', 'inhalte'])
+
+/** Lose Suche für Packungstext aus einem Foto: Rauschen und Füllwörter ignorieren, möglichst viele Wörter treffen. */
+export function searchLoose(cat: Catalog, texts: string[], limit = 12): CatalogProduct[] {
+  const tokens = normalizeQuery(texts.join(' ')).filter(([t]) => !STOP.has(t) && (t.length >= 3 || /^\d+$/.test(t)))
+  const uniq = Array.from(new Map(tokens.map((a) => [a[0], a])).values())
+  if (!uniq.length) return []
+  const need = uniq.length >= 2 ? 2 : 1
+  const scored: { p: CatalogProduct; s: number }[] = []
+  for (const p of cat.products) {
+    const name = `${p.n} ${cat.groups[p.g] ?? ''}`.toLowerCase()
+    const hit = uniq.filter((alts) => alts.some((a) => name.includes(a))).length
+    if (hit < need) continue
+    scored.push({ p, s: hit * 100 - p.n.length - (/ case\b/i.test(p.n) ? 30 : 0) + (p.p != null ? 5 : 0) })
+  }
+  return scored.sort((a, b) => b.s - a.s).slice(0, limit).map((x) => x.p)
+}
+
 /** USD→EUR (EZB-Referenzkurs via frankfurter), 24 h gecacht, mit Rückfallwert. */
 export async function usdToEur(): Promise<number> {
   const saved = await getSetting<{ rate: number; at: number } | null>('fx', null)

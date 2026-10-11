@@ -8,7 +8,7 @@ import { exportCsv, exportJson, importJson } from '../services/backup'
 import { nameSuggestions } from '../lib/photo'
 import { frameToVideo, numberStrips } from '../lib/strips'
 import { mapCard } from '../services/tcgdex'
-import { catalogTime, guessType, searchCatalog, toEur } from '../services/catalog'
+import { catalogTime, guessType, searchCatalog, searchLoose, toEur } from '../services/catalog'
 import type { CardRef, Item } from '../types'
 
 const card: CardRef = {
@@ -166,6 +166,11 @@ describe('Produktkatalog', () => {
     expect(searchCatalog(cat, '30 Jahre Jubiläum Booster Bundle')[0].id).toBe(1)
     expect(searchCatalog(cat, 'Top-Trainer-Box 151').map((p) => p.id)).toEqual([4])
     expect(searchCatalog(cat, 'Top Trainer Box Jubiläum')[0].id).toBe(3)
+  })
+  it('lose Foto-Suche ignoriert Füllwörter und Rauschen', () => {
+    const r = searchLoose(cat, ['POKÉMON TCG', 'Booster Bundle', 'Jubiläum', 'xq zz'])
+    expect(r[0].id).toBe(1)
+    expect(searchLoose(cat, ['Pokémon', 'Sammelkartenspiel'])).toEqual([])
   })
   it('Case hinter dem Einzelprodukt', () => expect(searchCatalog(cat, 'booster bundle').map((p) => p.id)).toEqual([1, 2]))
   it('Typ & Zeit & Umrechnung', () => {
