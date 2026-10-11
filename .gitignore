@@ -4,3 +4,4 @@ dist
 .DS_Store
 *.tsbuildinfo
 public/catalog-emb.*
+public/cards-emb.*

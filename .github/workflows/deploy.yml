@@ -32,6 +32,9 @@ jobs:
       - run: npm ci
       - run: npm run catalog        # Produktkatalog erneuern (höchstens 1 Abruf/Tag, eigener User-Agent)
       - run: npm run embeddings     # Bild-Vektoren für die Foto-Suche (nur neue Produkte werden berechnet)
+      - name: Karten-Index vom Daten-Branch holen (falls vorhanden)
+        run: |
+          curl -fsSL "https://raw.githubusercontent.com/${GITHUB_REPOSITORY}/data/cards-emb.json" -o public/cards-emb.json && curl -fsSL "https://raw.githubusercontent.com/${GITHUB_REPOSITORY}/data/cards-emb.bin" -o public/cards-emb.bin || rm -f public/cards-emb.json public/cards-emb.bin
       - run: npm test
       - run: npm run build
       - uses: actions/configure-pages@v5

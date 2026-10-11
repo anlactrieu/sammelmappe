@@ -1,0 +1,48 @@
+name: Karten-Bildindex
+
+# Berechnet Bild-Vektoren aller Karten (de, ja, zh-tw, en) für die Karten-Foto-Erkennung und legt sie auf dem Branch "data" ab.
+# Setzt bei jedem Lauf fort (Zeitbudget je Lauf), darum wöchentlich und per Hand startbar.
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 3 * * 1'
+
+permissions:
+  contents: write
+  actions: write
+
+concurrency:
+  group: cards-index
+  cancel-in-progress: false
+
+jobs:
+  index:
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - name: Daten-Branch holen
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          URL="https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+          git clone --depth 1 --branch data "$URL" data 2>/dev/null || { mkdir data && git -C data init -q -b data && git -C data remote add origin "$URL"; }
+          git -C data config user.name "github-actions"
+          git -C data config user.email "actions@github.com"
+          # amend braucht mindestens einen Commit
+          git -C data rev-parse HEAD >/dev/null 2>&1 || git -C data commit -q --allow-empty -m "Karten-Index"
+      - name: Index berechnen
+        env:
+          OUT_DIR: data
+          GIT_PUSH: '1'
+          MAX_MINUTES: '320'
+        run: node scripts/build-card-embeddings.mjs
+      - name: Seite neu veröffentlichen
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh workflow run deploy.yml --repo "$GITHUB_REPOSITORY" --ref main

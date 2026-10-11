@@ -7,6 +7,11 @@ import { AddCardSheet } from '../components/CardSheets'
 import { ProductSheet } from '../components/ProductSheet'
 import { detectEan } from '../services/barcode'
 import { readCardNumber } from '../services/ocr'
+import { searchCardsByImage } from '../services/imageSearch'
+import { frameToVideo } from '../lib/strips'
+import { cardNames } from '../services/names'
+import { langTag } from '../lib/lang'
+import { fetchCard } from '../services/tcgdex'
 import { findByPhoto } from '../services/photoFind'
 import { ProductPicker } from '../components/ProductPicker'
 import type { CatalogProduct } from '../services/catalog'
@@ -16,7 +21,7 @@ import type { CardRef } from '../types'
 
 type Mode = 'card' | 'barcode' | 'photo'
 const MODE_HELP: Record<Mode, { banner: string; status: string }> = {
-  card: { banner: 'Karte scannen', status: 'Halte die Karte ruhig in den Rahmen' },
+  card: { banner: 'Karte erkennen', status: 'Karte formatfüllend in den Rahmen, dann „Karte erkennen“ – Sprache wird automatisch erkannt' },
   barcode: { banner: 'Barcode scannen', status: 'Barcode der Verpackung in den Rahmen halten – wird automatisch erkannt' },
   photo: { banner: 'Produkt fotografieren', status: 'Ganze Vorderseite ins Bild, dann „Foto aufnehmen“' },
 }
@@ -24,8 +29,8 @@ const MODE_HELP: Record<Mode, { banner: string; status: string }> = {
 export default function Scan() {
   const [params] = useSearchParams()
   const nav = useNavigate()
-  const [cardLang, setCardLangState] = useState<Lang>(() => { try { return (localStorage.getItem('cardLang') as Lang) || 'de' } catch { return 'de' } })
-  const setCardLang = (l: Lang) => { setCardLangState(l); try { localStorage.setItem('cardLang', l) } catch { /* privater Modus */ } }
+  const [cardLang, setCardLangState] = useState<Lang | 'auto'>(() => { try { return (localStorage.getItem('scanLang') as Lang | 'auto') || 'auto' } catch { return 'auto' } })
+  const setCardLang = (l: Lang | 'auto') => { setCardLangState(l); try { localStorage.setItem('scanLang', l) } catch { /* privater Modus */ } }
   const [mode, setMode] = useState<Mode>(params.get('mode') === 'barcode' ? 'barcode' : params.get('mode') === 'photo' ? 'photo' : 'card')
   const video = useRef<HTMLVideoElement>(null)
   const frameEl = useRef<HTMLDivElement>(null)
@@ -94,7 +99,9 @@ export default function Scan() {
     const p = parseCardText(text)
     if (!p.number) return 'none'
     setStatus(`Nummer ${p.number}${p.total ? '/' + p.total : ''} erkannt – suche …`)
-    const found = await resolveByNumber(p.number, p.totals, p.words, cardLang)
+    const langs: Lang[] = cardLang === 'auto' ? ['de', 'en', 'ja', 'zh-tw'] : [cardLang]
+    let found: CardRef[] = []
+    for (const l of langs) { found = await resolveByNumber(p.number, p.totals, p.words, l).catch(() => []); if (found.length || g !== gen.current) break }
     if (g !== gen.current) return 'stale'
     if (auto && Date.now() < cooldown.current.until && found.some((c) => cooldown.current.keys.has(c.id))) return 'stale'
     if (found.length === 1) setCard(found[0])
@@ -105,7 +112,7 @@ export default function Scan() {
 
   const tick = useCallback(async () => {
     const v = video.current
-    if (busy.current || paused || !v || v.readyState < 2 || mode === 'photo') return
+    if (busy.current || paused || !v || v.readyState < 2 || mode !== 'barcode') return
     busy.current = true
     const g = gen.current
     try {
@@ -113,23 +120,53 @@ export default function Scan() {
         const code = await detectEan(v)
         if (g !== gen.current) return
         if (code && !(Date.now() < cooldown.current.until && cooldown.current.keys.has(code))) { navigator.vibrate?.(60); setEan(normalizeEan(code)) }
-      } else {
-        setStatus('Lese Karte …')
-        const text = await readCardNumber(v, frameEl.current)
-        if (g !== gen.current) return
-        const r = await lookup(text, g, true)
-        if (r === 'ok') navigator.vibrate?.(60)
-        else if (r === 'none') setStatus(parseCardText(text).number ? 'Keine passende Karte gefunden' : 'Nummer unten am Kartenrand nicht lesbar – Karte füllt den Rahmen? Weniger Glanz, mehr Licht')
       }
     } catch { setStatus('Scan-Fehler – bitte erneut versuchen') }
     finally { busy.current = false }
   }, [mode, paused, lookup])
 
   useEffect(() => {
-    if (camError || mode === 'photo') return
-    const id = setInterval(tick, mode === 'barcode' ? 600 : 2500)
+    if (camError || mode !== 'barcode') return // Karten werden per Auslöser erkannt, nicht im Dauerlauf
+    const id = setInterval(tick, 600)
     return () => clearInterval(id)
   }, [tick, mode, camError])
+
+  /** Karte erkennen: Bildvergleich (alle Sprachen) und – parallel, max. 3 s – die Kartennummer per Texterkennung. */
+  const recognizeCard = async () => {
+    const v = video.current
+    if (!v || !v.videoWidth || busy.current) return
+    busy.current = true
+    const g = ++gen.current
+    try {
+      setStatus('Erkenne Karte …')
+      const r = frameEl.current ? frameToVideo(frameEl.current.getBoundingClientRect(), v.getBoundingClientRect(), v.videoWidth, v.videoHeight) : { x: 0, y: 0, w: v.videoWidth, h: v.videoHeight }
+      const canvas = document.createElement('canvas'); canvas.width = 320; canvas.height = 448
+      canvas.getContext('2d')!.drawImage(v, r.x, r.y, r.w, r.h, 0, 0, canvas.width, canvas.height)
+      const timeout = <T,>(p: Promise<T>, ms: number, fallback: T) => Promise.race([p, new Promise<T>((res) => setTimeout(() => res(fallback), ms))])
+      const [img, text] = await Promise.all([
+        searchCardsByImage(canvas, (pct) => setStatus(`Lade Bilderkennung (einmalig): ${Math.round(pct)} %`)).catch(() => null),
+        timeout(readCardNumber(v, frameEl.current).catch(() => ''), 3000, ''),
+      ])
+      if (g !== gen.current) return
+      const keys: string[] = []
+      const p = parseCardText(text)
+      if (p.number) {
+        const langs: Lang[] = cardLang === 'auto' ? ['de', 'en', 'ja', 'zh-tw'] : [cardLang]
+        for (const l of langs) {
+          const found = await resolveByNumber(p.number, p.totals, p.words, l).catch(() => [])
+          if (found.length) { keys.push(...found.slice(0, 3).map((c) => c.id)); break }
+        }
+      }
+      keys.push(...(img?.hits ?? []).filter((h) => cardLang === 'auto' || h.key.startsWith(cardLang === 'de' ? '' : cardLang + ':')).map((h) => h.key))
+      const uniq = Array.from(new Set(keys)).slice(0, 8)
+      if (!uniq.length) { setStatus(img === null ? 'Karten-Bilderkennung noch nicht verfügbar und keine Nummer gelesen – Nummer eintippen oder Namen suchen' : 'Nichts erkannt – Karte näher ran, mehr Licht, weniger Glanz'); return }
+      const cards = (await Promise.all(uniq.map((k) => fetchCard(k, undefined, false).catch(() => null)))).filter((c): c is CardRef => !!c)
+      if (g !== gen.current) return
+      navigator.vibrate?.(60)
+      setStatus('Welche Karte ist es?')
+      setCands(cards)
+    } catch { setStatus('Scan-Fehler – bitte erneut versuchen') } finally { busy.current = false }
+  }
 
   /** Standbild der Kamera lesen und direkt im Produktkatalog suchen. */
   const photoSearch = async () => {
@@ -172,10 +209,10 @@ export default function Scan() {
         {camError && <p className="cam-error">{camError}</p>}
         {!camError && <div ref={frameEl} className={`frame is-${mode}`} aria-hidden />}
       </div>
-      {mode === 'card' && <div className="scan-lang"><LangChips value={cardLang} onChange={setCardLang} label="Sprache der Karte" /></div>}
+      {mode === 'card' && <div className="scan-lang"><LangChips value={cardLang} onChange={(l) => setCardLang(l)} label="Sprache der Karte" allowAuto onAuto={() => setCardLang('auto')} /></div>}
       <p className="scan-status" role="status">{status}</p>
       <div className="scan-bottom">
-        {mode === 'card' && <button className="btn primary" disabled={!!camError} onClick={tick}>Jetzt lesen</button>}
+        {mode === 'card' && <button className="btn primary shutter" disabled={!!camError} onClick={recognizeCard}>Karte erkennen</button>}
         {mode === 'barcode' && <button className="btn primary" disabled={!!camError} onClick={tick}>Jetzt scannen</button>}
         {mode === 'photo' && <button className="btn primary shutter" disabled={!!camError} onClick={photoSearch}>Foto aufnehmen</button>}
         <label className="switch"><input type="checkbox" checked={series} onChange={(e) => setSeries(e.target.checked)} /> Mehrere nacheinander</label>
@@ -193,11 +230,11 @@ export default function Scan() {
       </details>
 
       <Sheet open={cands.length > 0 && !card} onClose={closeAll} title="Welche Karte ist es?">
-        <p className="muted small">Mehrere Sets haben diese Kartennummer. Tippe auf die richtige Karte.</p>
+        <p className="muted small">Die ähnlichsten Karten – auch aus anderen Sprachen. Vergleiche mit deiner Karte und tippe die richtige an.</p>
         <div className="cand-grid">{cands.map((c) => (
           <button key={c.id} className="tile" onClick={() => setCard(c)}>
-            <div className="tile-img"><img crossOrigin="anonymous" src={imageUrl(c.image)} alt="" /></div>
-            <strong className="tile-name">{c.name}</strong><small className="muted tile-sub">{c.setName}</small></button>))}</div>
+            <div className="tile-img">{c.image ? <img crossOrigin="anonymous" src={imageUrl(c.image)} alt="" /> : <span className="thumb-ph big">{c.localId}</span>}</div>
+            <strong className="tile-name">{c.lang && <><b className="langtag">{langTag(c.lang)}</b> </>}{cardNames(c).name}</strong><small className="muted tile-sub">{c.setName} · {c.localId}</small></button>))}</div>
         <div className="actions"><button className="btn ghost" onClick={closeAll}>Keine davon</button></div>
       </Sheet>
 

@@ -77,3 +77,47 @@ export async function learnPhoto(catalogId: number, vec: Float32Array) {
   if (mine.length >= 5 && mine[0].id != null) await db.learned.delete(mine[0].id)
   await db.learned.add({ catalogId, vec, at: Date.now() })
 }
+
+/* ---------- Karten per Foto (alle Sprachen, Index cards-emb.*) ---------- */
+interface CardIndex { keys: string[]; scales: Float32Array; q: Int8Array }
+let cardIndexP: Promise<CardIndex | null> | null = null
+
+export function loadCardIndex(): Promise<CardIndex | null> {
+  cardIndexP ??= (async () => {
+    try {
+      const [m, b] = await Promise.all([fetch('./cards-emb.json'), fetch('./cards-emb.bin')])
+      if (!m.ok || !b.ok) return null
+      const meta = (await m.json()) as { model: string; dim: number; keys: string[] }
+      if (meta.model !== MODEL || meta.dim !== DIM) return null
+      const buf = await b.arrayBuffer(), row = 4 + DIM, n = meta.keys.length
+      if (buf.byteLength < n * row) return null
+      const scales = new Float32Array(n), q = new Int8Array(n * DIM)
+      const dv = new DataView(buf), bytes = new Int8Array(buf)
+      for (let i = 0; i < n; i++) { scales[i] = dv.getFloat32(i * row, true); q.set(bytes.subarray(i * row + 4, i * row + row), i * DIM) }
+      return { keys: meta.keys, scales, q }
+    } catch { return null }
+  })().then((r) => { if (!r) cardIndexP = null; return r })
+  return cardIndexP
+}
+
+export interface CardImageHit { key: string; score: number }
+/** Die ähnlichsten Karten (Schlüssel wie "sv01-025" oder "ja:SV2a-025") zu einem Kartenfoto. `null` = Index nicht verfügbar. */
+export async function searchCardsByImage(canvas: HTMLCanvasElement, onProgress?: (pct: number) => void, limit = 8): Promise<{ hits: CardImageHit[]; vec: Float32Array } | null> {
+  const index = await loadCardIndex()
+  if (!index) return null
+  const embed = await getExtractor(onProgress)
+  const v = await embed(canvas)
+  const n = index.keys.length, top: CardImageHit[] = []
+  let floor = -1
+  for (let i = 0; i < n; i++) {
+    let dot = 0; const o = i * DIM
+    for (let d = 0; d < DIM; d++) dot += index.q[o + d] * v[d]
+    const score = dot * index.scales[i]
+    if (top.length < limit || score > floor) {
+      top.push({ key: index.keys[i], score }); top.sort((a, b) => b.score - a.score)
+      if (top.length > limit) top.pop()
+      floor = top[top.length - 1].score
+    }
+  }
+  return { hits: top, vec: v }
+}

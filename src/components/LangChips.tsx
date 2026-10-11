@@ -1,9 +1,10 @@
 import { LANGS, type Lang } from '../lib/lang'
 
 /** Kartensprache wählen (merkt sich die Wahl). */
-export function LangChips({ value, onChange, label = 'Kartensprache' }: { value: Lang; onChange: (l: Lang) => void; label?: string }) {
+export function LangChips({ value, onChange, label = 'Kartensprache', allowAuto, onAuto }: { value: Lang | 'auto'; onChange: (l: Lang) => void; label?: string; allowAuto?: boolean; onAuto?: () => void }) {
   return (
     <div className="chips tight" role="group" aria-label={label}>
+      {allowAuto && <button className={`chip${value === 'auto' ? ' on' : ''}`} aria-pressed={value === 'auto'} onClick={() => onAuto?.()} title="Sprache automatisch erkennen">Auto</button>}
       {LANGS.map((l) => (
         <button key={l.code} className={`chip${l.code === value ? ' on' : ''}`} aria-pressed={l.code === value} onClick={() => onChange(l.code)} title={l.label}>
           {l.tag === 'DE' || l.tag === 'EN' ? l.tag : l.native}
