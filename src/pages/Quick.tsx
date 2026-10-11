@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import { LangChips } from '../components/LangChips'
 import { useQuickAdd } from '../components/quickAdd'
 import { Segmented, useToast } from '../components/ui'
@@ -18,7 +18,8 @@ export default function Quick() {
   const toast = useToast()
   const quickAddCard = useQuickAdd()
   const input = useRef<HTMLInputElement>(null)
-  const [mode, setMode] = useState<'product' | 'card'>('product')
+  const [params] = useSearchParams()
+  const [mode, setMode] = useState<'product' | 'card'>(params.get('mode') === 'card' ? 'card' : params.get('mode') === 'product' ? 'product' : (() => { try { return localStorage.getItem('snapKind') === 'product' ? 'product' : 'card' } catch { return 'card' } })())
   const [lang, setLang] = useState<Lang>('de')
   const [q, setQ] = useState('')
   const [cat, setCat] = useState<Catalog | null | undefined>(undefined)
@@ -57,7 +58,7 @@ export default function Quick() {
 
   return (
     <div className="page">
-      <header className="page-head"><Link to="/add" className="back" aria-label="Zurück">‹</Link><h1>Schnell</h1></header>
+      <header className="page-head"><Link to={mode === 'card' ? '/add' : '/add?mode=product'} className="back" aria-label="Zurück">‹</Link><h1>Schnell</h1></header>
       <p className="muted small">Tippen, antippen, fertig. Mit Menge: „2x Nachtara Mini Tin“.</p>
       <Segmented label="Was erfassen" value={mode} onChange={(m) => { setMode(m); input.current?.focus() }} options={[{ value: 'product', label: 'Produkt' }, { value: 'card', label: 'Karte' }]} />
       {mode === 'card' && <LangChips value={lang} onChange={setLang} />}

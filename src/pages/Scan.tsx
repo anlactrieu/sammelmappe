@@ -111,7 +111,7 @@ export default function Scan() {
             Fotos aus der Galerie
             <input type="file" accept="image/*" multiple className="file-overlay" onChange={(e) => { start(e.target.files); e.target.value = '' }} />
           </label>
-          <Link className="link snap-link" to="/quick">Lieber tippen statt fotografieren →</Link>
+          <Link className="link snap-link" to={`/quick?mode=${kind}`}>Lieber tippen statt fotografieren →</Link>
         </div>
       </div>)}
 
@@ -160,7 +160,7 @@ export default function Scan() {
         <div className="actions">
           <button className="btn primary" onClick={pos + 1 < queue.length ? next : retake}>{pos + 1 < queue.length ? 'Weiter zum nächsten Foto' : 'Nichts davon – neues Foto'}</button>
           <button className="btn ghost" onClick={() => { setKind(kind === 'card' ? 'product' : 'card'); setPhase('idle'); setRes(null); setQueue([]) }}>{kind === 'card' ? 'Es ist ein Produkt' : 'Es ist eine Karte'}</button>
-          <Link className="btn ghost" to="/quick">Per Namen erfassen</Link>
+          <Link className="btn ghost" to={`/quick?mode=${kind}`}>{kind === 'card' ? 'Karte per Namen suchen' : 'Produkt per Namen suchen'}</Link>
         </div>
       </>)}
 

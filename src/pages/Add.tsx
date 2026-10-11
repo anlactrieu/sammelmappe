@@ -72,7 +72,7 @@ export default function Add() {
 
   return (
     <div className="page">
-      <header className="page-head"><h1>Hinzufügen</h1><Link className="btn small-btn" to="/quick">Schnell erfassen</Link></header>
+      <header className="page-head"><h1>Hinzufügen</h1><Link className="btn small-btn" to={`/quick?mode=${mode}`}>Schnell erfassen</Link></header>
       <Segmented label="Was hinzufügen" value={mode} onChange={setMode} options={[{ value: 'card', label: 'Karte' }, { value: 'product', label: 'Produkt' }]} />
       {mode === 'product' ? (<>
         <div className="actions" style={{ marginTop: 0 }}>
