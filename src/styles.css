@@ -274,3 +274,4 @@ a.rowbtn, a.rowbtn:visited { text-decoration: none; color: var(--ink); } a.rowbt
 .lightbox-hint { color: #8892aa; font-size: .8rem; margin: 0; }
 @media (max-width: 520px) { .lightbox-body.two { flex-direction: column; align-items: center; } .lightbox-body.two figure { max-width: 70vw; } }
 .langchips { gap: 6px; } .langchips .chip { flex: 0 0 auto; padding: 0 14px; white-space: nowrap; }
+.diag { list-style: none; padding: 0; margin: 10px 0 0; display: flex; flex-direction: column; gap: 4px; font: 500 .8rem var(--mono); } .diag .ok b { color: var(--up); } .diag .bad b { color: var(--down); }

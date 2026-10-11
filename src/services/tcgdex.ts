@@ -49,10 +49,10 @@ export function mapCard(raw: RawCard, lang: Lang = 'de'): CardRef {
 export async function fetchCard(key: string, signal?: AbortSignal, persist = true): Promise<CardRef> {
   const { lang, apiId } = parseKey(key)
   let card = mapCard(await get<RawCard>(`/cards/${encodeURIComponent(apiId)}`, lang, signal), lang)
+  if (!persist) return lang === 'de' ? card : await attachGermanName(card).catch(() => card) // Vorschau: keine Datenbank nötig
   const old = await db.cards.get(key)
   card.nameDe = old?.nameDe
   card = await attachGermanName(card)
-  if (!persist) return card
   // Liefert die API einmal keinen Preis, den zuletzt bekannten behalten
   if (!card.cm && old?.cm) card.cm = old.cm
   await db.cards.put(card)

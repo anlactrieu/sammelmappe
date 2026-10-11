@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useQuickAdd } from '../components/quickAdd'
 import { LangChips } from '../components/LangChips'
-import { langTag, type Lang } from '../lib/lang'
+import { langLabel, langTag, type Lang } from '../lib/lang'
 import { Link, useSearchParams } from 'react-router-dom'
 import { fetchCard, imageUrl, loadSets, searchCards, type CardBrief } from '../services/tcgdex'
 import { Icon } from '../components/Icon'
@@ -90,7 +90,7 @@ export default function Add() {
           onChange={(e) => setQ(e.target.value)} aria-label="Karte suchen" />
         {loading && <p className="muted small">Suche läuft …</p>}
         {error && <p className="error">{error}</p>}
-        {res && res.length === 0 && !loading && <Empty icon="🔍" title="Nichts gefunden" text="Probiere den deutschen Kartennamen (z. B. „Glurak“ statt „Charizard“)." />}
+        {res && res.length === 0 && !loading && <Empty icon="🔍" title="Nichts gefunden" text={`Gesucht in: ${langLabel(lang)}. ${lang === 'de' ? 'Probiere den deutschen Namen (z. B. „Glurak“) oder die Nummer (079/198).' : 'Probiere den deutschen Namen oder die Nummer – oder wechsle oben auf „DE“.'}`}>{lang !== 'de' && <button className="btn" onClick={() => setLang('de')}>Auf Deutsch suchen</button>}</Empty>}
         {!res && !error && lang === 'de' && <p className="hint">Tipp: Alle Namen sind deutsch. Mit Scan geht’s noch schneller.</p>}
         <ul className="grid">
           {sorted.slice(0, limit).map((b) => (

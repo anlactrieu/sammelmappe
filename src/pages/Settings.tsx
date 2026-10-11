@@ -26,6 +26,26 @@ export default function Settings() {
       else { const c = await loadCatalog(true); setCat(c); const n = await syncProductPrices(); toast(j.ok ? `${j.out.split('\n').pop()} · ${n} Produktpreise aktualisiert` : `Fehler: ${j.out}`) }
     } catch { toast('Aktualisierung fehlgeschlagen – offline?') } finally { setBusy(false) }
   }
+  const [diag, setDiag] = useState<[string, string, boolean][] | null>(null)
+  const [diagBusy, setDiagBusy] = useState(false)
+  const runDiag = async () => {
+    setDiagBusy(true)
+    const rows: [string, string, boolean][] = []
+    const step = async (name: string, f: () => Promise<string>) => {
+      const t0 = performance.now()
+      try { rows.push([name, `${await Promise.race([f(), new Promise<string>((_, rej) => setTimeout(() => rej(new Error('Zeitüberschreitung (8 s)')), 8000))])} · ${Math.round(performance.now() - t0)} ms`, true]) }
+      catch (e) { rows.push([name, (e as Error).message || String(e), false]) }
+      setDiag([...rows])
+    }
+    await step('Online', async () => (navigator.onLine ? 'ja' : 'nein'))
+    await step('Datenbank im Gerät', async () => `${await db.items.count()} Einträge`)
+    await step('Kartensuche (TCGdex, Glurak)', async () => { const r = await fetch('https://api.tcgdex.net/v2/de/cards?name=Glurak'); if (!r.ok) throw new Error('HTTP ' + r.status); return `${(await r.json()).length} Treffer` })
+    await step('Kartenbilder (TCGdex)', async () => { const r = await fetch('https://assets.tcgdex.net/de/sv/sv01/025/low.webp'); if (!r.ok) throw new Error('HTTP ' + r.status); return 'ok' })
+    await step('Produktkatalog', async () => { const c = await loadCatalog(true); if (!c) throw new Error('nicht geladen'); return `${c.products.length} Produkte` })
+    await step('Service Worker', async () => { const r = await navigator.serviceWorker?.getRegistration(); return r ? `aktiv (${r.active ? 'läuft' : 'wartet'})` : 'keiner' })
+    await step('Sprache der Suche', async () => localStorage.getItem('cardLang') || 'de (Standard)')
+    setDiagBusy(false)
+  }
   const date = () => new Date().toISOString().slice(0, 10)
 
   const onImport = async (f?: File) => {
@@ -46,6 +66,12 @@ export default function Settings() {
         <h2>Preise</h2>
         <p className="muted">Quelle: Cardmarket (EUR) über TCGdex, täglich aktualisiert. Letzter Abruf: {relativeTime(last).replace(/\.$/, '')}. Beim Öffnen der App wird automatisch aktualisiert, wenn die Preise älter als 24 Std. sind.</p>
         <RefreshButton className="btn primary" />
+      </section>
+      <section className="card">
+        <h2>Diagnose</h2>
+        <p className="muted small">Version: {__BUILD__}. Wenn etwas nicht funktioniert (z. B. Suche liefert nichts), drücke „Verbindung testen“ und schick mir das Ergebnis.</p>
+        <button className="btn" disabled={diagBusy} onClick={runDiag}>{diagBusy ? 'Teste …' : 'Verbindung testen'}</button>
+        {diag && <ul className="diag">{diag.map(([k, v, ok]) => <li key={k} className={ok ? 'ok' : 'bad'}><b>{ok ? '✓' : '✗'}</b> {k}: {v}</li>)}</ul>}
       </section>
       <section className="card">
         <h2>Produktkatalog</h2>
