@@ -4,6 +4,7 @@ import { normalizeLocalId, parseNumberQuery, totalVariants } from '../lib/parse'
 
 import { cardKey, parseKey, type Lang } from '../lib/lang'
 import { attachGermanName, dexNames } from './names'
+import { isCatKey, jaCardRef, loadJaCards, searchJaCards } from './jaCards'
 
 const apiBase = (lang: Lang) => `https://api.tcgdex.net/v2/${lang}`
 
@@ -48,6 +49,13 @@ export function mapCard(raw: RawCard, lang: Lang = 'de'): CardRef {
 /** Volle Karte inkl. Preisen laden und im Katalog cachen. `key` = Karten-Schlüssel (de roh, sonst "ja:SV2a-025"). */
 export async function fetchCard(key: string, signal?: AbortSignal, persist = true): Promise<CardRef> {
   const { lang, apiId } = parseKey(key)
+  if (lang === 'ja' && isCatKey(apiId)) { // japanische Katalogkarte (cards-ja.json)
+    const cat = await loadJaCards()
+    const c = cat && jaCardRef(cat, Number(apiId.slice(4)))
+    if (!c) throw new Error('Katalogkarte nicht gefunden')
+    if (persist) await db.cards.put(c)
+    return c
+  }
   let card = mapCard(await get<RawCard>(`/cards/${encodeURIComponent(apiId)}`, lang, signal), lang)
   if (!persist) return lang === 'de' ? card : await attachGermanName(card).catch(() => card) // Vorschau: keine Datenbank nötig
   const old = await db.cards.get(key)
@@ -63,7 +71,7 @@ export async function getCard(id: string): Promise<CardRef | undefined> {
   return (await db.cards.get(id)) ?? fetchCard(id).catch(() => undefined)
 }
 
-export interface CardBrief { id: string; localId: string; name: string; image?: string; lang?: Lang }
+export interface CardBrief { id: string; localId: string; name: string; image?: string; lang?: Lang; setName?: string }
 
 const rankBy = (q: string) => (n: string) => (n.toLowerCase() === q.toLowerCase() ? 0 : n.toLowerCase().startsWith(q.toLowerCase()) ? 1 : 2)
 const withLang = (list: CardBrief[], lang: Lang): CardBrief[] => list.map((c) => ({ ...c, id: cardKey(lang, c.id), lang }))
@@ -99,7 +107,22 @@ async function searchByNumber(n: NonNullable<ReturnType<typeof parseNumberQuery>
   return out
 }
 
+/** Japanisch: Katalogkarten (tcgcsv, US-Preis) ergänzen die TCGdex-Treffer – dort fehlen viele Karten/Bilder. */
+async function withJaCatalog(q: string, tcgdex: CardBrief[], signal?: AbortSignal): Promise<CardBrief[]> {
+  const cat = await loadJaCards()
+  if (!cat) return tcgdex
+  const have = new Set(tcgdex.map((c) => { const id = c.id.replace(/^ja:/, ''); const i = id.lastIndexOf('-'); return `${id.slice(0, i).toLowerCase()}-${parseInt(c.localId, 10)}` }))
+  const english = parseNumberQuery(q) ? undefined : (await translateName(q, 'en', signal).catch(() => []))[0]
+  const extra = searchJaCards(cat, q, english, have)
+  return [...tcgdex, ...extra]
+}
+
 export async function searchCards(query: string, lang: Lang = 'de', signal?: AbortSignal): Promise<CardBrief[]> {
+  const base = await searchCardsBase(query, lang, signal)
+  return lang === 'ja' ? withJaCatalog(query.trim(), base, signal) : base
+}
+
+async function searchCardsBase(query: string, lang: Lang = 'de', signal?: AbortSignal): Promise<CardBrief[]> {
   const q = query.trim()
   if (q.length < 2) return []
   const num = parseNumberQuery(q)

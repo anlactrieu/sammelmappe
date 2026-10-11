@@ -13,12 +13,15 @@ import Settings from './pages/Settings'
 import { SetDetail, SetList } from './pages/Sets'
 import { Icon } from './components/Icon'
 import { syncIfDue } from './services/priceSync'
+import { setFx } from './lib/pricing'
+import { usdToEur } from './services/catalog'
 
 const tab = ({ isActive }: { isActive: boolean }) => `tab${isActive ? ' on' : ''}`
 
 function Shell() {
   const { pathname } = useLocation()
   useEffect(() => {
+    usdToEur().then(setFx).catch(() => undefined)
     const run = () => { if (document.visibilityState === 'visible') syncIfDue().catch(() => undefined) }
     run()
     navigator.storage?.persist?.().catch(() => undefined) // iOS/Safari darf lokale Daten sonst bei Platzmangel räumen

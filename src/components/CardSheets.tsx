@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import { db } from '../db'
 import { imageUrl } from '../services/tcgdex'
 import { formatEur, isBadAmount, parseEur } from '../lib/format'
-import { CONDITIONS, CONDITION_LABEL, VARIANT_LABEL, unitPrice, priceChange, cardBasePrice } from '../lib/pricing'
+import { CONDITIONS, CONDITION_LABEL, VARIANT_LABEL, unitPrice, priceChange, cardBasePrice, catalogCardEur } from '../lib/pricing'
 import { addCard, cardmarketSearchUrl, removeItem, setProductPrice, type AddOpts } from '../lib/actions'
 import type { CardRef, Condition, Item, Product, Variant } from '../types'
 import { PriceLine, Sheet, useToast } from './ui'
@@ -76,7 +76,7 @@ export function AddCardSheet({ card, onClose, onAdded, compare }: { card: CardRe
 
   if (!card) return null
   const base = cardBasePrice(card, variant)
-  const preview = base ? base.value : null
+  const preview = base ? base.value : catalogCardEur(card)
   const opts = (): AddOpts => ({ qty, condition, variant, language, buyPrice: parseEur(buy), manualPrice: parseEur(manual) })
   const save = async (andClose: boolean) => {
     if (saving) return
@@ -108,7 +108,7 @@ export function AddCardSheet({ card, onClose, onAdded, compare }: { card: CardRe
           <p className="muted">{card.setName}</p>
           <p className="muted small">Nr. {card.localId}{card.setTotal ? `/${card.setTotal}` : ''}{card.rarity ? ` · ${card.rarity}` : ''}</p>
           <p className="big">{preview != null ? formatEur(preview) : 'Kein Preis'}</p>
-          <p className="muted small">{card.cm ? `Cardmarket-Trend (NM)${card.lang === 'ja' || card.lang === 'zh-tw' || card.lang === 'zh-cn' ? ' – Richtwert der asiatischen Ausgabe' : ''}` : 'Noch kein Marktpreis – unten manuell eintragen'}</p>
+          <p className="muted small">{card.usd != null && !card.cm ? 'US-Marktpreis (TCGplayer, Japan) – in Euro umgerechnet, Richtwert' : card.cm ? `Cardmarket-Trend (NM)${card.lang === 'ja' || card.lang === 'zh-tw' || card.lang === 'zh-cn' ? ' – Richtwert der asiatischen Ausgabe' : ''}` : 'Noch kein Marktpreis – unten manuell eintragen'}</p>
         </div>
       </div>
 

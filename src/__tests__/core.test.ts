@@ -1,7 +1,8 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 import { db } from '../db'
+import { jaCardRef, searchJaCards, type JaCatalog } from '../services/jaCards'
 import { eanList, isValidEan, parseNumberQuery, parseQty, totalVariants, normalizeEan, normalizeLocalId, parseCardText, totalCandidates } from '../lib/parse'
-import { cardBasePrice, priceChange, totals, unitPrice } from '../lib/pricing'
+import { cardBasePrice, priceChange, setFx, totals, unitPrice } from '../lib/pricing'
 import { formatEur, isBadAmount, parseEur, relativeTime } from '../lib/format'
 import { addCard, addProduct, setProductPrice } from '../lib/actions'
 import { exportCsv, exportJson, importJson } from '../services/backup'
@@ -117,6 +118,25 @@ describe('Nummern-Suche', () => {
     expect(parseNumberQuery('SM106')).toEqual({ number: 'SM106', promoCode: 'SM' })
     expect(parseNumberQuery('swsh 245')).toEqual({ number: 'SWSH245', promoCode: 'SWSH' })
     expect(parseNumberQuery('Glurak')).toBeNull(); expect(parseNumberQuery('Pikachu V')).toBeNull(); expect(parseNumberQuery('151')).toBeNull()
+  })
+})
+
+describe('Japanische Katalogkarten', () => {
+  const cat: JaCatalog = { source: '2026-10-10T20:06:02+0000', groups: { '1': ['SV2a', 'Pokemon Card 151', '2023-06-16'], '2': ['M2', 'Neues Set', '2026-05-01'] },
+    cards: [[10, 1, '025/165', 'Pikachu', 0.45], [11, 1, '006/165', 'Charizard ex', 12.5], [12, 2, '025/080', 'Pikachu ex', null]] }
+  it('findet per Nummer (führende Nullen egal) und Name, neues Set zuerst', () => {
+    expect(searchJaCards(cat, '25/165').map((c) => c.id)).toEqual(['ja:cat-10'])
+    expect(searchJaCards(cat, 'pikachu').map((c) => c.id)).toEqual(['ja:cat-12', 'ja:cat-10'])
+    expect(searchJaCards(cat, 'Glurak', 'charizard').map((c) => c.id)).toEqual(['ja:cat-11'])
+  })
+  it('lässt Karten aus, die TCGdex schon hat', () => {
+    expect(searchJaCards(cat, '25/165', undefined, new Set(['sv2a-25']))).toEqual([])
+  })
+  it('Preis: USD in Euro, mit Zustandsabschlag und Schätz-Kennzeichen', () => {
+    setFx(0.9)
+    const ref = jaCardRef(cat, 11)!
+    const price = unitPrice(base({ refId: ref.id, condition: 'LP' }), ref)
+    expect(price).toMatchObject({ source: 'catalog', estimated: true, value: 6.75 })
   })
 })
 

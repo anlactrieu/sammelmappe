@@ -5,3 +5,4 @@ dist
 *.tsbuildinfo
 public/catalog-emb.*
 public/cards-emb.*
+public/cards-ja.json

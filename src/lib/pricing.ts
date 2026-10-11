@@ -11,6 +11,12 @@ export const VARIANT_LABEL: Record<Variant, string> = { normal: 'Normal', holo: 
 
 const r2 = (n: number) => Math.round(n * 100) / 100
 
+let fx = 0.89
+/** Aktueller USD→EUR-Kurs für Katalogkarten (wird beim Start gesetzt). */
+/** Katalogkarte (nur US-Preis): Euro-Wert zur Anzeige im Hinzufügen-Fenster. */
+export const catalogCardEur = (card: CardRef): number | null => (card.usd != null && !card.cm ? r2(card.usd * fx) : null)
+export const setFx = (rate: number) => { if (rate > 0) fx = rate }
+
 const pos = (n?: number | null) => (n != null && n > 0 ? n : undefined)
 
 /**
@@ -43,6 +49,10 @@ export function unitPrice(item: Item, card?: CardRef, product?: Product, now = D
     return { value: product.price, source: cat ? 'catalog' : 'product', estimated: cat, updatedAt: product.priceUpdated, stale: product.priceUpdated ? now - product.priceUpdated > STALE_MS : false }
   }
   if (!card) return { value: null, source: 'none' }
+  if (card.usd != null && !card.cm) {
+    const at = card.priceFetchedAt
+    return { value: r2(card.usd * fx * (item.graded ? 1 : CONDITION_FACTOR[item.condition])), source: 'catalog', estimated: true, updatedAt: at, stale: at ? now - at > STALE_MS : true }
+  }
   const base = cardBasePrice(card, item.variant)
   if (!base) return { value: null, source: 'none' }
   const gradedNoManual = !!item.graded

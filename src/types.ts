@@ -18,6 +18,8 @@ export interface CardRef {
   lang?: 'de' | 'en' | 'ja' | 'zh-tw' | 'zh-cn'   // fehlt = Deutsch
   nameDe?: string       // deutscher Pokémon-Name (bei fremdsprachigen Karten, über Pokédex-Nr.)
   dexId?: number
+  usd?: number          // US-Marktpreis (TCGplayer JP) bei Katalogkarten ohne Cardmarket-Preis
+  priceSource?: 'catalog-ja'
   setName: string
   image?: string        // Basis-URL ohne /low.webp
   rarity?: string
