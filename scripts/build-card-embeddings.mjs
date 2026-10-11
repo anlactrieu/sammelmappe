@@ -49,6 +49,16 @@ for (const lang of LANGS) {
   console.log(`${lang}: ${todo.length} neue Karten gesamt`)
 }
 
+// Japanische Katalogkarten (cards-ja.json von der Live-Seite): Bild von tcgplayer, Schlüssel "ja:cat-<id>"
+try {
+  let ja = null
+  try { ja = JSON.parse(await readFile(new URL('../public/cards-ja.json', import.meta.url), 'utf8')) } catch { /* nicht lokal */ }
+  if (!ja) { const r = await fetch(process.env.SITE_URL ? process.env.SITE_URL + 'cards-ja.json' : 'https://anlactrieu.github.io/sammelmappe/cards-ja.json'); if (r.ok) ja = await r.json() }
+  let added = 0
+  for (const c of ja?.cards ?? []) { const k = `ja:cat-${c[0]}`; if (!have.has(k)) { todo.push({ k, url: `https://tcgplayer-cdn.tcgplayer.com/product/${c[0]}_200w.jpg` }); added++ } }
+  console.log(`japanische Katalogkarten: ${added} neu`)
+} catch { console.log('cards-ja.json nicht verfügbar – übersprungen') }
+
 async function save() {
   const keys = [...have.keys()]
   await writeFile(join(OUT, 'cards-emb.json'), JSON.stringify({ model: MODEL, dim: DIM, keys }))
