@@ -116,3 +116,25 @@ export async function readNumberInRect(video: HTMLVideoElement, rect: Strip): Pr
   } finally { await w.setParameters({ tessedit_pageseg_mode: '11' as never, tessedit_char_whitelist: DIGITS }) }
   return ''
 }
+
+/**
+ * Kartennummer irgendwo im Foto suchen (Foto ohne Rahmen). Nur Ziffern + "/", Gesamtbild und untere Hälfte vergrößert.
+ * Best-Effort: bei kleiner Schrift liefert der Bildvergleich das bessere Ergebnis.
+ */
+export async function readNumberAnywhere(photo: HTMLCanvasElement): Promise<string> {
+  const w = await getWorker()
+  await w.setParameters({ tessedit_pageseg_mode: '11' as never, tessedit_char_whitelist: DIGITS })
+  const regions: Strip[] = [{ x: 0, y: 0, w: 1, h: 1 }, { x: 0, y: 0.55, w: 1, h: 0.45 }, { x: 0, y: 0.7, w: 1, h: 0.3 }]
+  const c = document.createElement('canvas')
+  for (const r of regions) {
+    const sx = r.x * photo.width, sy = r.y * photo.height, sw = r.w * photo.width, sh = r.h * photo.height
+    const k = Math.min(2, 1800 / sw)
+    c.width = Math.round(sw * k); c.height = Math.round(sh * k)
+    const ctx = c.getContext('2d')!
+    ctx.filter = 'grayscale(1) contrast(1.4)'
+    ctx.drawImage(photo, sx, sy, sw, sh, 0, 0, c.width, c.height)
+    const text = (await w.recognize(c)).data.text
+    if (plausible(text)) return text
+  }
+  return ''
+}

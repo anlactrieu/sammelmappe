@@ -212,3 +212,11 @@ textarea { padding: 10px 12px; resize: vertical; }
 .scan > * { flex-shrink: 0; } .scan > .viewfinder { flex-shrink: 1; min-height: 40vh; }
 .scan .segmented button { padding: 0 7px; }
 .scan-top { gap: 6px; }
+.snap { gap: 14px; }
+.snap-btn { min-height: 76px; font-size: 1.2rem; position: relative; overflow: hidden; }
+.snap-alt { position: relative; overflow: hidden; text-align: center; }
+.snap-tips { margin: 0; padding-left: 18px; color: var(--ink-2); font-size: .9rem; display: flex; flex-direction: column; gap: 4px; }
+.snap-links { display: flex; flex-direction: column; }
+.snap-photo { display: flex; gap: 12px; align-items: center; background: var(--sleeve); border: 1px solid var(--rule); border-radius: var(--r-card); padding: 10px; }
+.snap-photo img { width: 72px; height: 96px; object-fit: cover; border-radius: 8px; }
+.snap-photo .grow { gap: 2px; }

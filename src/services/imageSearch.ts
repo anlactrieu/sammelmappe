@@ -121,3 +121,44 @@ export async function searchCardsByImage(canvas: HTMLCanvasElement, onProgress?:
   }
   return { hits: top, vec: v }
 }
+
+/* ---------- Gemeinsame Bausteine für die Foto-Auswertung ---------- */
+export async function embedCanvas(canvas: HTMLCanvasElement, onProgress?: (pct: number) => void): Promise<Float32Array> {
+  return (await getExtractor(onProgress))(canvas)
+}
+
+function topK<T extends { score: number }>(items: T[], limit: number): T[] { return items.sort((a, b) => b.score - a.score).slice(0, limit) }
+
+/** Katalogprodukte zu einem fertigen Bildvektor (inkl. gelernter Fotos). */
+export async function searchProductsByVec(v: Float32Array, limit = 8): Promise<ImageHit[] | null> {
+  const index = await loadIndex()
+  if (!index) return null
+  const n = index.ids.length, out: ImageHit[] = []
+  for (let i = 0; i < n; i++) {
+    let dot = 0; const o = i * DIM
+    for (let d = 0; d < DIM; d++) dot += index.q[o + d] * v[d]
+    out.push({ id: index.ids[i], score: dot * index.scales[i] })
+  }
+  const best = new Map(out.map((h) => [h.id, h.score]))
+  for (const l of await db.learned.toArray()) {
+    let dot = 0
+    for (let d = 0; d < DIM; d++) dot += l.vec[d] * v[d]
+    if (dot + 0.05 > (best.get(l.catalogId) ?? -1)) best.set(l.catalogId, dot + 0.05)
+  }
+  return topK(Array.from(best, ([id, score]) => ({ id, score })), limit)
+}
+
+/** Karten (alle Sprachen) zu einem fertigen Bildvektor. */
+export async function searchCardsByVec(v: Float32Array, limit = 8): Promise<CardImageHit[] | null> {
+  const index = await loadCardIndex()
+  if (!index) return null
+  const n = index.keys.length, top: CardImageHit[] = []
+  let floor = -1
+  for (let i = 0; i < n; i++) {
+    let dot = 0; const o = i * DIM
+    for (let d = 0; d < DIM; d++) dot += index.q[o + d] * v[d]
+    const score = dot * index.scales[i]
+    if (top.length < limit || score > floor) { top.push({ key: index.keys[i], score }); top.sort((a, b) => b.score - a.score); if (top.length > limit) top.pop(); floor = top[top.length - 1].score }
+  }
+  return top
+}
