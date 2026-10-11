@@ -2,6 +2,16 @@
 const DIM = 384
 const MODEL = 'Xenova/dinov2-small'
 
+/** fetch mit bis zu 3 Versuchen (wackeliges Mobilnetz: der erste Versuch schlägt oft fehl, der zweite klappt) */
+async function fetchRetry(url: string, tries = 3): Promise<Response> {
+  let last: unknown
+  for (let i = 0; i < tries; i++) {
+    try { const r = await fetch(url); if (r.ok) return r; last = new Error(`HTTP ${r.status}`) } catch (e) { last = e }
+    await new Promise((res) => setTimeout(res, 400 * (i + 1)))
+  }
+  throw last
+}
+
 interface Index { ids: number[]; scales: Float32Array; q: Int8Array }
 let indexP: Promise<Index | null> | null = null
 let extractorP: Promise<(img: HTMLCanvasElement) => Promise<Float32Array>> | null = null
@@ -9,12 +19,12 @@ let extractorP: Promise<(img: HTMLCanvasElement) => Promise<Float32Array>> | nul
 export function loadIndex(): Promise<Index | null> {
   indexP ??= (async () => {
     try {
-      const m = await fetch('./catalog-emb.json')
-      if (!m.ok) return null
+      const m = await fetchRetry('./catalog-emb.json').catch(() => null)
+      if (!m) return null
       const meta = (await m.json()) as { model: string; dim: number; ids: number[]; rev?: string }
       if (meta.model !== MODEL || meta.dim !== DIM) return null
-      const b = await fetch(`./catalog-emb.bin?rev=${meta.rev ?? ''}`) // Revision im Namen: json und bin gehören immer zusammen
-      if (!b.ok) return null
+      const b = await fetchRetry(`./catalog-emb.bin?rev=${meta.rev ?? ''}`).catch(() => null) // Revision im Namen: json und bin gehören immer zusammen
+      if (!b) return null
       const buf = await b.arrayBuffer(), row = 4 + DIM, n = meta.ids.length
       if (buf.byteLength !== n * row) return null // exakt, sonst passt die Datei nicht zur Liste
       const scales = new Float32Array(n), q = new Int8Array(n * DIM)
@@ -87,8 +97,8 @@ let cardIndexP: Promise<CardIndex | null> | null = null
 export function loadCardIndex(): Promise<CardIndex | null> {
   cardIndexP ??= (async () => {
     try {
-      const [m, b] = await Promise.all([fetch('./cards-emb.json'), fetch('./cards-emb.bin')])
-      if (!m.ok || !b.ok) return null
+      const [m, b] = await Promise.all([fetchRetry('./cards-emb.json').catch(() => null), fetchRetry('./cards-emb.bin').catch(() => null)])
+      if (!m || !b) return null
       const meta = (await m.json()) as { model: string; dim: number; keys: string[] }
       if (meta.model !== MODEL || meta.dim !== DIM) return null
       const buf = await b.arrayBuffer(), row = 4 + DIM, n = meta.keys.length
@@ -169,4 +179,14 @@ export async function searchCardsByVec(v: Float32Array, limit = 8): Promise<Card
 export async function hasIndex(): Promise<boolean> {
   const [a, b] = await Promise.all([loadIndex(), loadCardIndex()])
   return !!(a || b)
+}
+
+let warm: Promise<void> | null = null
+/** Modell und Indizes vorab laden (beim Öffnen der Foto-Seite), damit das erste Foto nicht länger braucht als das zweite. */
+export function warmUp(onProgress?: (pct: number) => void): Promise<void> {
+  warm ??= (async () => {
+    const [a, b] = await Promise.all([loadIndex(), loadCardIndex()])
+    if (a || b) await getExtractor(onProgress)
+  })().catch((e) => { warm = null; throw e })
+  return warm
 }

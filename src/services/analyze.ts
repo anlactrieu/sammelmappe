@@ -60,7 +60,7 @@ export async function analyzePhoto(photo: HTMLCanvasElement, onStatus: (s: strin
   const certain: CardRef[] = []
   const cardKeys = Array.from(cardBest, ([k, s]) => ({ k, s })).sort((a, b) => b.s - a.s).slice(0, 6)
   const known = new Set(certain.map((c) => c.id))
-  const imgCards = (await Promise.all(cardKeys.filter((x) => !known.has(x.k)).map((x) => timeout(fetchCard(x.k, undefined, false), 8000, null).catch(() => null)))).filter((c): c is CardRef => !!c)
+  const imgCards = (await Promise.all(cardKeys.filter((x) => !known.has(x.k)).map((x) => timeout(fetchCard(x.k, undefined, false), 15000, null).catch(() => null)))).filter((c): c is CardRef => !!c)
   const cards = [...certain, ...imgCards].slice(0, 8)
 
   const prodList = Array.from(prodBest, ([id, s]) => ({ id, s })).sort((a, b) => b.s - a.s).slice(0, 6)

@@ -7,7 +7,7 @@ import { Lightbox } from '../components/Lightbox'
 import { useToast } from '../components/ui'
 import { catalogImage } from '../services/catalog'
 import { analyzePhoto, type Analysis, type ProductHit } from '../services/analyze'
-import { learnPhoto } from '../services/imageSearch'
+import { learnPhoto, warmUp } from '../services/imageSearch'
 import { cardNames } from '../services/names'
 import { imageUrl } from '../services/tcgdex'
 import { fileToThumb } from '../lib/photo'
@@ -39,6 +39,9 @@ export default function Scan() {
   const [picked, setPicked] = useState<number | null>(null)
 
   useEffect(() => () => { if (thumb) URL.revokeObjectURL(thumb) }, [thumb])
+  const [warmState, setWarmState] = useState<'loading' | 'ready' | 'off'>('loading')
+  const [warmPct, setWarmPct] = useState(0)
+  useEffect(() => { warmUp((p) => setWarmPct(Math.round(p))).then(() => setWarmState('ready')).catch(() => setWarmState('off')) }, [])
 
   const analyze = async (file: File) => {
     const id = ++run.current
@@ -105,6 +108,7 @@ export default function Scan() {
             : 'Ganze Vorderseite. Ein Barcode im Bild hilft zusätzlich.'} Besser ohne Spiegelung.</p>
         </div>
         <div className="snap-actions">
+          <p className="snap-warm" role="status">{warmState === 'loading' ? `Bilderkennung wird vorbereitet … ${warmPct ? warmPct + ' %' : ''} – du kannst trotzdem schon fotografieren.` : warmState === 'ready' ? '✓ Bilderkennung bereit' : 'Bilderkennung nicht verfügbar – suche per Namen oder Nummer.'}</p>
           <label className="btn primary snap-btn">
             <Icon name="camera" size={26} /> {kind === 'card' ? 'Karte fotografieren' : 'Produkt fotografieren'}
             <input ref={cam} type="file" accept="image/*" capture="environment" className="file-overlay" onChange={(e) => { start(e.target.files); e.target.value = '' }} />
