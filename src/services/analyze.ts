@@ -68,7 +68,9 @@ export async function analyzePhoto(photo: HTMLCanvasElement, onStatus: (s: strin
     const k = dupKey(c); if (seen.has(k)) continue
     seen.add(k); cards.push(c)
   }
-  cards.sort((x, y) => (cardBest.get(y.id) ?? 0) - (cardBest.get(x.id) ?? 0)); cards.splice(8)
+  // Bei fast gleichem Bild (gleiches Motiv in DE und EN) die deutsche Karte zuerst
+  const rank = (c: CardRef) => (cardBest.get(c.id) ?? 0) + (!c.lang ? 0.04 : 0)
+  cards.sort((x, y) => rank(y) - rank(x)); cards.splice(8)
 
   const prodList = Array.from(prodBest, ([id, s]) => ({ id, s })).sort((a, b) => b.s - a.s).slice(0, 6)
     .map((x) => { const p = byId.get(x.id); return p ? toHit(p, x.s) : null }).filter((x): x is ProductHit => !!x)
