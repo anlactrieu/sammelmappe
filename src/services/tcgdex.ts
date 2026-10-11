@@ -1,6 +1,6 @@
 import { db, getSetting, setSetting } from '../db'
 import type { CardRef, CardmarketPrice, SetRef } from '../types'
-import { normalizeLocalId, totalVariants } from '../lib/parse'
+import { normalizeLocalId, parseNumberQuery, totalVariants } from '../lib/parse'
 
 import { cardKey, parseKey, type Lang } from '../lib/lang'
 import { attachGermanName, dexNames } from './names'
@@ -84,9 +84,26 @@ async function translateName(q: string, target: Lang, signal?: AbortSignal): Pro
 }
 
 /** Kartensuche je Sprache. Fremdsprachig: deutscher/englischer Name wird über die Pokédex-Nr. übersetzt. */
+/** Promo-Präfix → TCGdex-Set-IDs ("SM106" → smp-SM106). */
+const PROMO_SETS: Record<string, string[]> = { SM: ['smp'], SWSH: ['swshp'], SVP: ['svp'], XY: ['xyp'], BW: ['bwp'], DP: ['dpp'], HGSS: ['hgssp'], MEP: ['mep'], SV: ['svp'], NP: ['np'], PR: ['pr-sv'], POP: ['pop'] }
+
+async function searchByNumber(n: NonNullable<ReturnType<typeof parseNumberQuery>>, lang: Lang): Promise<CardBrief[]> {
+  const toBrief = (c: CardRef): CardBrief => ({ id: c.id, localId: c.localId, name: c.name, image: c.image, lang: c.lang })
+  if (n.total) return (await resolveByNumber(n.number, [n.total], [], lang).catch(() => [])).map(toBrief)
+  const out: CardBrief[] = []
+  for (const set of PROMO_SETS[n.promoCode ?? ''] ?? []) {
+    for (const id of [n.number, n.number.replace(/^([A-Z]+)0+/, '$1')]) {
+      try { out.push(toBrief(await fetchCard(cardKey(lang, `${set}-${id}`), undefined, false))); break } catch { /* nächste Schreibweise */ }
+    }
+  }
+  return out
+}
+
 export async function searchCards(query: string, lang: Lang = 'de', signal?: AbortSignal): Promise<CardBrief[]> {
   const q = query.trim()
   if (q.length < 2) return []
+  const num = parseNumberQuery(q)
+  if (num) { const hit = await searchByNumber(num, lang); if (hit.length) return hit }
   const direct = async (name: string) => withLang(await get<CardBrief[]>(`/cards?name=${encodeURIComponent(name)}`, lang, signal), lang)
   let list: CardBrief[] = []
   const latin = /^[\p{L}\p{N} .'’:&é-]+$/u.test(q) && !/[\u3040-\u30ff\u3400-\u9fff]/.test(q)

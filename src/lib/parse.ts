@@ -40,6 +40,16 @@ export function parseQty(input: string): { qty: number; text: string } {
   return { qty: 1, text: s }
 }
 
+/** Nummern-Suche: "079/198", "79 / 198", "SM106", "swsh 079" → { number, total? , promo? } oder null, wenn es ein Name ist. */
+export function parseNumberQuery(q: string): { number: string; total?: number; promoCode?: string } | null {
+  const s = q.trim()
+  let m = s.match(/^([A-Za-z]{0,4}\d{1,3})\s*\/\s*[A-Za-z]{0,3}(\d{2,3})$/)
+  if (m) return { number: m[1], total: Number(m[2]) }
+  m = s.match(/^([A-Za-z]{2,5})[\s-]?(\d{1,3})$/)
+  if (m) return { number: (m[1] + m[2]).toUpperCase(), promoCode: m[1].toUpperCase() }
+  return null
+}
+
 /** UPC-A (12 Ziffern) → EAN-13 mit führender 0; sonst unverändert. So passen 0820… und 820… zusammen. */
 export const normalizeEan = (code: string) => { const d = code.replace(/\D/g, ''); return d.length === 12 ? '0' + d : d }
 

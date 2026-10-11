@@ -63,7 +63,7 @@ export default function Quick() {
       <Segmented label="Was erfassen" value={mode} onChange={(m) => { setMode(m); input.current?.focus() }} options={[{ value: 'product', label: 'Produkt' }, { value: 'card', label: 'Karte' }]} />
       {mode === 'card' && <LangChips value={lang} onChange={setLang} />}
       <input ref={input} className="search" type="search" value={q} onChange={(e) => setQ(e.target.value)} enterKeyHint="search"
-        placeholder={mode === 'product' ? 'z. B. 2x Fatale Flammen Display' : 'z. B. Glurak'} aria-label="Name eingeben" />
+        placeholder={mode === 'product' ? 'z. B. 2x Fatale Flammen Display' : 'Name oder Nummer, z. B. Glurak oder 079/198'} aria-label="Name eingeben" />
       {qty > 1 && <p className="small"><b className="langtag">× {qty}</b> wird mit jedem Tippen auf einen Treffer hinzugefügt</p>}
 
       {mode === 'product' && cat === null && <p className="error small">Produktkatalog nicht gefunden. Du kannst Produkte trotzdem unter Hinzufügen → Produkt manuell anlegen.</p>}

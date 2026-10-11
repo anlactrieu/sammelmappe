@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 import { db } from '../db'
-import { eanList, isValidEan, parseQty, totalVariants, normalizeEan, normalizeLocalId, parseCardText, totalCandidates } from '../lib/parse'
+import { eanList, isValidEan, parseNumberQuery, parseQty, totalVariants, normalizeEan, normalizeLocalId, parseCardText, totalCandidates } from '../lib/parse'
 import { cardBasePrice, priceChange, totals, unitPrice } from '../lib/pricing'
 import { formatEur, isBadAmount, parseEur, relativeTime } from '../lib/format'
 import { addCard, addProduct, setProductPrice } from '../lib/actions'
@@ -106,6 +106,17 @@ describe('Menge in der Schnell-Eingabe', () => {
     expect(parseQty('nachtara x4')).toEqual({ qty: 4, text: 'nachtara' })
     expect(parseQty('151 Booster')).toEqual({ qty: 1, text: '151 Booster' })
     expect(parseQty('Glurak')).toEqual({ qty: 1, text: 'Glurak' })
+  })
+})
+
+describe('Nummern-Suche', () => {
+  it('erkennt Kartennummern, Promos und Namen', () => {
+    expect(parseNumberQuery('079/198')).toEqual({ number: '079', total: 198 })
+    expect(parseNumberQuery('79 / 198')).toEqual({ number: '79', total: 198 })
+    expect(parseNumberQuery('TG05/TG30')).toEqual({ number: 'TG05', total: 30 })
+    expect(parseNumberQuery('SM106')).toEqual({ number: 'SM106', promoCode: 'SM' })
+    expect(parseNumberQuery('swsh 245')).toEqual({ number: 'SWSH245', promoCode: 'SWSH' })
+    expect(parseNumberQuery('Glurak')).toBeNull(); expect(parseNumberQuery('Pikachu V')).toBeNull(); expect(parseNumberQuery('151')).toBeNull()
   })
 })
 
