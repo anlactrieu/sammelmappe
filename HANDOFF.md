@@ -5,6 +5,9 @@ PWA (React+Vite+TS+Dexie) im Projektroot, MVP laufend: Suche (TCGdex DE), Sammlu
 Verifiziert: `npx tsc --noEmit` ok, `npx vitest run` 26/26, `npm run build` ok, UI im Browser-Pane (Mobile) geprüft. Kamera/OCR im Pane nicht testbar (Kamera blockiert).
 Review-Runden 1+2 (Subagent) und 2 Advisor-Runden abgearbeitet. OCR im Browser-Pane auf echten DE-Kartenbildern verifiziert (`006/165`, `025/198`, ~1,2 s; Filter `grayscale+contrast` nötig, Safari-Fallback per Pixelschleife). Build/Preview: HTML, Manifest, Icons, sw.js liefern 200; Service-Worker-Registrierung im Browser-Pane nicht prüfbar (Pane blockiert SW, auch bei direktem `register`). Kein Git-Repo → `/code-review` übersprungen (User fragen, ob `git init`).
 
+## Online
+Live: https://anlactrieu.github.io/sammelmappe/ (Repo anlactrieu/sammelmappe, öffentlich, Pages via Actions). Täglicher Katalog-Refresh per Cron 21:30 UTC. Sammlung bleibt lokal pro Gerät (kein Sync). Produktkatalog: `scripts/build-catalog.mjs` (tcgcsv.com, eigener User-Agent, 100 ms Pause). Produkt-Foto-Suche: Scan → „Produkt“ → „Packung fotografieren“.
+
 ## Letzte 3 Entscheidungen
 1. **OCR über enge Streifen** (`src/lib/strips.ts`, `src/services/ocr.ts`): Node-Test auf echten DE-Karten – Vollkarte/breite Bereiche liefern keine Nummer, enge Streifen unten links/rechts (4× skaliert, Whitelist `0-9/`, PSM 11) lesen `025/198`. Rahmen→Videopixel via `frameToVideo`.
 2. **HashRouter + `base: './'`**: kein Server-Rewrite für Deep-Links nötig; HTTPS für Kamera via `npm run dev:https` (basic-ssl).

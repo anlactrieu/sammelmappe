@@ -2,6 +2,8 @@
 
 Deutsche Karten & Produkte scannen, Sammlung tracken, Cardmarket-Richtwerte (EUR) immer aktuell.
 
+**Online:** https://anlactrieu.github.io/sammelmappe/ (GitHub Pages, Kamera ohne Zertifikatswarnung, als App installierbar). Ein täglicher Job (`.github/workflows/deploy.yml`, 21:30 UTC) erneuert den Produktkatalog und veröffentlicht neu.
+
 ```bash
 npm install
 npm run dev:https   # HTTPS nötig für die Handykamera (Zertifikatswarnung einmal bestätigen), Adresse im WLAN öffnen
