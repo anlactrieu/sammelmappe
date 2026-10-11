@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { AddCardSheet } from '../components/CardSheets'
 import { ProductSheet } from '../components/ProductSheet'
 import { Icon } from '../components/Icon'
-import { useToast } from '../components/ui'
+import { Segmented, useToast } from '../components/ui'
 import { catalogImage } from '../services/catalog'
 import { analyzePhoto, type Analysis, type ProductHit } from '../services/analyze'
 import { learnPhoto } from '../services/imageSearch'
@@ -31,6 +31,8 @@ export default function Scan() {
   const [prefill, setPrefill] = useState<{ c: ProductHit['p']; eur: number | null } | undefined>()
   const [added, setAdded] = useState(0)
   const run = useRef(0)
+  const [kind, setKindState] = useState<'card' | 'product'>(() => { try { return localStorage.getItem('snapKind') === 'product' ? 'product' : 'card' } catch { return 'card' } })
+  const setKind = (k: 'card' | 'product') => { setKindState(k); try { localStorage.setItem('snapKind', k) } catch { /* privater Modus */ } }
   const [picked, setPicked] = useState<number | null>(null)
 
   useEffect(() => () => { if (thumb) URL.revokeObjectURL(thumb) }, [thumb])
@@ -41,7 +43,7 @@ export default function Scan() {
     setThumb((t) => { if (t) URL.revokeObjectURL(t); return URL.createObjectURL(file) })
     try {
       const { canvas } = await fileToThumb(file, 1400)
-      const r = await analyzePhoto(canvas, (s) => { if (id === run.current) setStatus(s) })
+      const r = await analyzePhoto(canvas, (s) => { if (id === run.current) setStatus(s) }, kind)
       if (id !== run.current) return
       setRes(r); setPhase('results')
     } catch (e) {
@@ -66,9 +68,7 @@ export default function Scan() {
     setPrefill({ c: h.p, eur: h.eur })
   }
 
-  const sections = res
-    ? (res.first === 'products' ? (['products', 'cards'] as const) : (['cards', 'products'] as const))
-    : []
+  const sections = res ? ((kind === 'product' ? ['products'] : ['cards']) as ('products' | 'cards')[]) : []
 
   return (
     <div className="page snap">
@@ -78,7 +78,10 @@ export default function Scan() {
       </header>
 
       {phase === 'idle' && (<>
-        <p className="muted">Eine Karte oder ein Produkt pro Foto. Die App erkennt am Bild, was es ist – in jeder Sprache, auch Japanisch und Chinesisch. Danach kannst du das Handy weglegen.</p>
+        <Segmented label="Was fotografierst du?" value={kind} onChange={setKind} options={[{ value: 'card', label: 'Karte' }, { value: 'product', label: 'Produkt' }]} />
+        <p className="muted">{kind === 'card'
+          ? 'Eine Einzelkarte pro Foto. Die App erkennt sie am Bild, in jeder Sprache, auch Japanisch und Chinesisch.'
+          : 'Ein Produkt pro Foto (Booster, Box, Tin, Blister …). Die App erkennt es am Bild, ein Barcode im Bild hilft zusätzlich.'} Danach kannst du das Handy weglegen.</p>
         <label className="btn primary snap-btn">
           <Icon name="camera" size={26} /> Foto aufnehmen
           <input type="file" accept="image/*" capture="environment" className="file-overlay" onChange={(e) => { start(e.target.files); e.target.value = '' }} />
@@ -88,8 +91,7 @@ export default function Scan() {
           <input type="file" accept="image/*" multiple className="file-overlay" onChange={(e) => { start(e.target.files); e.target.value = '' }} />
         </label>
         <ul className="snap-tips">
-          <li>Karte: ganze Vorderseite, möglichst bildfüllend.</li>
-          <li>Produkt: ganze Vorderseite. Ein Barcode im Bild hilft zusätzlich.</li>
+          <li>{kind === 'card' ? 'Ganze Vorderseite, möglichst bildfüllend, von oben.' : 'Ganze Vorderseite des Produkts. Ein Barcode im Bild hilft zusätzlich.'}</li>
           <li>Besser ohne Spiegelung und mit ruhiger Hand – ein scharfes Foto genügt.</li>
         </ul>
         <div className="snap-links">
@@ -112,7 +114,7 @@ export default function Scan() {
       {phase === 'results' && res && (<>
         {sections.map((sec) => sec === 'cards' ? (res.cards.length > 0 && (
           <section key="cards">
-            <h2>Karten</h2>
+            <h2>Karte wählen</h2>
             <ul className="grid">
               {res.cards.map((c) => (
                 <li key={c.id}><button className="tile" onClick={() => setCard(c)}>
@@ -123,7 +125,7 @@ export default function Scan() {
             </ul>
           </section>)) : (res.products.length > 0 && (
           <section key="products">
-            <h2>Produkte</h2>
+            <h2>Produkt wählen</h2>
             <ul className="list">
               {res.products.map((h) => (
                 <li key={h.p.id}><button className="rowbtn" onClick={() => pickProduct(h)}>
@@ -134,12 +136,14 @@ export default function Scan() {
             </ul>
           </section>)))}
 
-        {!res.index.cards && !res.index.products && !res.ean && <p className="hint">Die Bilderkennung ist gerade nicht verfügbar (offline?). Suche in dem Fall per Namen.</p>}
-        {res.index.products && !res.index.cards && res.cards.length === 0 && <p className="hint">Die Karten-Bilderkennung wird gerade aufgebaut und kennt noch nicht alle Karten. Bis dahin: per Namen suchen.</p>}
+        {((kind === 'card' && !res.index.cards) || (kind === 'product' && !res.index.products && !res.ean)) && <p className="hint">Die Bilderkennung für {kind === 'card' ? 'Karten' : 'Produkte'} ist gerade nicht verfügbar (offline oder noch im Aufbau). Suche in dem Fall per Namen.</p>}
+        {kind === 'card' && res.cards.length === 0 && res.index.cards && <p className="hint">Keine passende Karte gefunden. Foto näher und gerade aufnehmen oder per Namen suchen.</p>}
+        {kind === 'product' && res.products.length === 0 && res.index.products && <p className="hint">Kein passendes Produkt gefunden. Ganze Vorderseite fotografieren oder per Namen suchen.</p>}
         {res.ean && <p className="muted small">Barcode gelesen: <code>{res.ean}</code></p>}
 
         <div className="actions">
           <button className="btn" onClick={next}>{pos + 1 < queue.length ? 'Weiter zum nächsten Foto' : 'Nichts davon – neues Foto'}</button>
+          <button className="btn ghost" onClick={() => { setKind(kind === 'card' ? 'product' : 'card'); setPhase('idle'); setRes(null); setQueue([]) }}>{kind === 'card' ? 'Es ist ein Produkt' : 'Es ist eine Karte'}</button>
           <Link className="btn ghost" to="/quick">Per Namen erfassen</Link>
         </div>
       </>)}

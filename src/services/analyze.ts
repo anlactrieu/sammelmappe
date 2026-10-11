@@ -27,9 +27,12 @@ function centerCrop(src: HTMLCanvasElement, f = 0.72): HTMLCanvasElement {
 }
 
 /** Ein Foto auswerten: Bildvergleich (Karten + Produkte, alle Sprachen) und, falls im Bild, der Barcode. Keine Texterkennung. */
-export async function analyzePhoto(photo: HTMLCanvasElement, onStatus: (s: string) => void): Promise<Analysis> {
-  onStatus('Suche Barcode …')
-  const eanRaw = await timeout(detectEanInCanvas(photo).catch(() => null), 4000, null)
+export type Kind = 'card' | 'product'
+
+export async function analyzePhoto(photo: HTMLCanvasElement, onStatus: (s: string) => void, kind: Kind = 'product'): Promise<Analysis> {
+  const wantCards = kind === 'card', wantProducts = kind === 'product'
+  if (wantProducts) onStatus('Suche Barcode …')
+  const eanRaw = wantProducts ? await timeout(detectEanInCanvas(photo).catch(() => null), 4000, null) : null
   const ean = eanRaw ? normalizeEan(eanRaw) : undefined
 
   const [cat, rate] = await Promise.all([loadCatalog(), usdToEur()])
@@ -48,7 +51,7 @@ export async function analyzePhoto(photo: HTMLCanvasElement, onStatus: (s: strin
     for (const img of [photo, centerCrop(photo, 0.72), centerCrop(photo, 0.6)]) {
       const v = await embedCanvas(img, (pct) => onStatus(`Lade Bilderkennung (einmalig): ${Math.round(pct)} %`))
       vec ??= v
-      const [ch, ph] = await Promise.all([searchCardsByVec(v, 8), searchProductsByVec(v, 8)])
+      const [ch, ph] = await Promise.all([wantCards ? searchCardsByVec(v, 8) : null, wantProducts ? searchProductsByVec(v, 8) : null])
       if (ch) { indexCards = true; for (const h of ch) cardBest.set(h.key, Math.max(h.score, cardBest.get(h.key) ?? -1)) }
       if (ph) { indexProducts = true; for (const h of ph) prodBest.set(h.id, Math.max(h.score, prodBest.get(h.id) ?? -1)) }
     }
@@ -64,9 +67,7 @@ export async function analyzePhoto(photo: HTMLCanvasElement, onStatus: (s: strin
     .map((x) => { const p = byId.get(x.id); return p ? toHit(p, x.s) : null }).filter((x): x is ProductHit => !!x)
   const products = eanHit ? [toHit(eanHit, 2), ...prodList.filter((x) => x.p.id !== eanHit.id)] : prodList
 
-  const topCard = certain.length ? 2 : (cardKeys[0]?.s ?? 0)
-  const topProd = eanHit ? 2 : (prodList[0]?.score ?? 0)
   // Barcode/Nummer sind eindeutig, sonst entscheidet die Bildähnlichkeit
-  const first: Analysis['first'] = eanHit || (!certain.length && topProd >= topCard) ? 'products' : 'cards'
+  const first: Analysis['first'] = wantProducts ? 'products' : 'cards'
   return { ean, cards, products, first, index: { cards: indexCards, products: indexProducts }, vec }
 }
