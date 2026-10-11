@@ -6,7 +6,7 @@ import type { Lang } from '../lib/lang'
 import { AddCardSheet } from '../components/CardSheets'
 import { ProductSheet } from '../components/ProductSheet'
 import { detectEan } from '../services/barcode'
-import { readCardNumber } from '../services/ocr'
+import { readCardNumber, readNumberInRect } from '../services/ocr'
 import { searchCardsByImage } from '../services/imageSearch'
 import { frameToVideo } from '../lib/strips'
 import { cardNames } from '../services/names'
@@ -19,9 +19,10 @@ import { imageUrl, resolveByNumber } from '../services/tcgdex'
 import { normalizeEan, parseCardText } from '../lib/parse'
 import type { CardRef } from '../types'
 
-type Mode = 'card' | 'barcode' | 'photo'
+type Mode = 'card' | 'number' | 'barcode' | 'photo'
 const MODE_HELP: Record<Mode, { banner: string; status: string }> = {
   card: { banner: 'Karte erkennen', status: 'Karte formatfüllend in den Rahmen, dann „Karte erkennen“ – Sprache wird automatisch erkannt' },
+  number: { banner: 'Nummer lesen', status: 'Nur die Kartennummer (z. B. 025/198) in den Streifen halten – wird automatisch gelesen' },
   barcode: { banner: 'Barcode scannen', status: 'Barcode der Verpackung in den Rahmen halten – wird automatisch erkannt' },
   photo: { banner: 'Produkt fotografieren', status: 'Ganze Vorderseite ins Bild, dann „Foto aufnehmen“' },
 }
@@ -31,11 +32,11 @@ export default function Scan() {
   const nav = useNavigate()
   const [cardLang, setCardLangState] = useState<Lang | 'auto'>(() => { try { return (localStorage.getItem('scanLang') as Lang | 'auto') || 'auto' } catch { return 'auto' } })
   const setCardLang = (l: Lang | 'auto') => { setCardLangState(l); try { localStorage.setItem('scanLang', l) } catch { /* privater Modus */ } }
-  const [mode, setMode] = useState<Mode>(params.get('mode') === 'barcode' ? 'barcode' : params.get('mode') === 'photo' ? 'photo' : 'card')
+  const [mode, setMode] = useState<Mode>(params.get('mode') === 'barcode' ? 'barcode' : params.get('mode') === 'photo' ? 'photo' : params.get('mode') === 'number' ? 'number' : 'card')
   const video = useRef<HTMLVideoElement>(null)
   const frameEl = useRef<HTMLDivElement>(null)
   const [camError, setCamError] = useState('')
-  const [status, setStatus] = useState(MODE_HELP[params.get('mode') === 'barcode' ? 'barcode' : params.get('mode') === 'photo' ? 'photo' : 'card'].status)
+  const [status, setStatus] = useState(MODE_HELP[mode].status)
   const [cands, setCands] = useState<CardRef[]>([])
   const [card, setCard] = useState<CardRef | null>(null)
   const [ean, setEan] = useState<string | undefined>()
@@ -112,11 +113,20 @@ export default function Scan() {
 
   const tick = useCallback(async () => {
     const v = video.current
-    if (busy.current || paused || !v || v.readyState < 2 || mode !== 'barcode') return
+    if (busy.current || paused || !v || v.readyState < 2 || (mode !== 'barcode' && mode !== 'number')) return
     busy.current = true
     const g = gen.current
     try {
-      if (mode === 'barcode') {
+      if (mode === 'number') {
+        const f = frameEl.current
+        if (!f || !v.videoWidth) return
+        setStatus('Lese Nummer …')
+        const text = await readNumberInRect(v, frameToVideo(f.getBoundingClientRect(), v.getBoundingClientRect(), v.videoWidth, v.videoHeight))
+        if (g !== gen.current) return
+        if (!text) { setStatus('Noch keine Nummer gelesen – Streifen genau auf die Nummer, nah ran, ruhig halten'); return }
+        const r = await lookup(text, g, true)
+        if (r === 'ok') navigator.vibrate?.(60); else if (r === 'none') setStatus('Nummer gelesen, aber keine Karte gefunden – Sprache wählen oder Nummer eintippen')
+      } else if (mode === 'barcode') {
         const code = await detectEan(v)
         if (g !== gen.current) return
         if (code && !(Date.now() < cooldown.current.until && cooldown.current.keys.has(code))) { navigator.vibrate?.(60); setEan(normalizeEan(code)) }
@@ -126,8 +136,8 @@ export default function Scan() {
   }, [mode, paused, lookup])
 
   useEffect(() => {
-    if (camError || mode !== 'barcode') return // Karten werden per Auslöser erkannt, nicht im Dauerlauf
-    const id = setInterval(tick, 600)
+    if (camError || (mode !== 'barcode' && mode !== 'number')) return // ganze Karten per Auslöser, Barcode/Nummer im Dauerlauf
+    const id = setInterval(tick, mode === 'barcode' ? 600 : 1500)
     return () => clearInterval(id)
   }, [tick, mode, camError])
 
@@ -199,7 +209,7 @@ export default function Scan() {
       <div className="scan-top">
         <button className="icon-btn scan-x" onClick={() => nav('/collection')} aria-label="Scan beenden und zur Sammlung">✕</button>
         <Segmented label="Scan-Art" value={mode} onChange={(m) => { gen.current++; setMode(m); setStatus(MODE_HELP[m].status) }}
-          options={[{ value: 'card', label: 'Karte' }, { value: 'barcode', label: 'Barcode' }, { value: 'photo', label: 'Foto' }]} />
+          options={[{ value: 'card', label: 'Karte' }, { value: 'number', label: 'Nummer' }, { value: 'barcode', label: 'Barcode' }, { value: 'photo', label: 'Foto' }]} />
         {added > 0 ? <button className="btn small-btn scan-done" onClick={() => nav('/collection')}>Fertig ({added})</button> : <span className="scan-x" aria-hidden />}
       </div>
       <div className={`viewfinder mode-${mode}`}>
@@ -209,23 +219,24 @@ export default function Scan() {
         {camError && <p className="cam-error">{camError}</p>}
         {!camError && <div ref={frameEl} className={`frame is-${mode}`} aria-hidden />}
       </div>
-      {mode === 'card' && <div className="scan-lang"><LangChips value={cardLang} onChange={(l) => setCardLang(l)} label="Sprache der Karte" allowAuto onAuto={() => setCardLang('auto')} /></div>}
+      {(mode === 'card' || mode === 'number') && <div className="scan-lang"><LangChips value={cardLang} onChange={(l) => setCardLang(l)} label="Sprache der Karte" allowAuto onAuto={() => setCardLang('auto')} /></div>}
       <p className="scan-status" role="status">{status}</p>
       <div className="scan-bottom">
         {mode === 'card' && <button className="btn primary shutter" disabled={!!camError} onClick={recognizeCard}>Karte erkennen</button>}
+        {mode === 'number' && <button className="btn primary shutter" disabled={!!camError} onClick={tick}>Nummer lesen</button>}
         {mode === 'barcode' && <button className="btn primary" disabled={!!camError} onClick={tick}>Jetzt scannen</button>}
         {mode === 'photo' && <button className="btn primary shutter" disabled={!!camError} onClick={photoSearch}>Foto aufnehmen</button>}
         <label className="switch"><input type="checkbox" checked={series} onChange={(e) => setSeries(e.target.checked)} /> Mehrere nacheinander</label>
       </div>
       <details className="scan-alt" open={!!camError || undefined}>
-        <summary>{mode === 'card' ? 'Klappt nicht? Nummer eintippen oder Namen suchen' : 'Klappt nicht? Produkt per Name suchen'}</summary>
-      {mode === 'card' && (
+        <summary>{mode === 'card' || mode === 'number' ? 'Klappt nicht? Nummer eintippen oder Namen suchen' : 'Klappt nicht? Produkt per Name suchen'}</summary>
+      {(mode === 'card' || mode === 'number') && (
         <form className="manual" onSubmit={async (e) => { e.preventDefault(); if (!manual) return; const r = await lookup(manual, gen.current, false); if (r === 'none') setStatus('Nichts gefunden – Format: 025/198') }}>
           <input value={manual} onChange={(e) => setManual(e.target.value)} placeholder="Nummer eintippen, z. B. 025/198" aria-label="Kartennummer manuell" />
           <button className="btn">Suchen</button>
         </form>)}
 
-      <Link className="link" to={mode === 'card' ? '/add' : '/add?mode=product'}>{mode === 'card' ? 'Per Namen suchen →' : 'Produkt im Katalog suchen →'}</Link>
+      <Link className="link" to={mode === 'card' || mode === 'number' ? '/add' : '/add?mode=product'}>{mode === 'card' || mode === 'number' ? 'Per Namen suchen →' : 'Produkt im Katalog suchen →'}</Link>
       <Link className="link" to="/quick">Kamera klappt nicht? Schnell erfassen →</Link>
       </details>
 

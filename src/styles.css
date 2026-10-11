@@ -207,3 +207,8 @@ textarea { padding: 10px 12px; resize: vertical; }
 .quick-plus { flex: none; width: 44px; height: 44px; border-radius: 10px; background: var(--label); color: var(--label-ink); border: 2px solid var(--ink); display: grid; place-items: center; }
 .done-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; background: var(--sleeve); border: 1px solid var(--rule); border-radius: var(--r-ui); padding: 8px 12px; }
 .strike { text-decoration: line-through; color: var(--ink-2); }
+.frame.is-number { width: 86%; height: 17%; max-height: none; aspect-ratio: auto; border-style: solid; }
+.scan .segmented button { padding: 0 9px; font-size: .74rem; }
+.scan > * { flex-shrink: 0; } .scan > .viewfinder { flex-shrink: 1; min-height: 40vh; }
+.scan .segmented button { padding: 0 7px; }
+.scan-top { gap: 6px; }

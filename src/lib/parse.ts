@@ -22,6 +22,14 @@ export function parseCardText(text: string): ParsedCardText {
 /** "025" → "25", "TG05" bleibt "TG05" – für Vergleiche mit localId. */
 export const normalizeLocalId = (id: string) => id.replace(/^([A-Za-z]*)0+(?=\d)/, '$1')
 
+const CONFUSABLE: Record<string, string[]> = { '0': ['8'], '8': ['0', '3', '5', '6'], '3': ['8'], '5': ['6', '8'], '6': ['5', '8'], '1': ['7'], '7': ['1'] }
+/** Gesamtzahl plus Varianten mit einer typischen OCR-Verwechslung (198 ↔ 195, 165 ↔ 185 …); Original zuerst. */
+export function totalVariants(total: number): number[] {
+  const s = String(total), out = [total]
+  for (let i = 0; i < s.length; i++) for (const alt of CONFUSABLE[s[i]] ?? []) { const n = Number(s.slice(0, i) + alt + s.slice(i + 1)); if (n >= 20 && !out.includes(n)) out.push(n) }
+  return out
+}
+
 /** Menge aus der Eingabe lösen: "2x nachtara mini tin", "2 nachtara", "nachtara x3" → { qty, text } */
 export function parseQty(input: string): { qty: number; text: string } {
   const s = input.trim()

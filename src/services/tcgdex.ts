@@ -1,6 +1,6 @@
 import { db, getSetting, setSetting } from '../db'
 import type { CardRef, CardmarketPrice, SetRef } from '../types'
-import { normalizeLocalId } from '../lib/parse'
+import { normalizeLocalId, totalVariants } from '../lib/parse'
 
 import { cardKey, parseKey, type Lang } from '../lib/lang'
 import { attachGermanName, dexNames } from './names'
@@ -136,17 +136,23 @@ export async function fetchSetCards(lang: Lang, setId: string): Promise<{ set: S
 export async function resolveByNumber(number: string, totals: number[] | undefined, words: string[], lang: Lang = 'de'): Promise<CardRef[]> {
   const sets = await loadSets(lang)
   const hay = words.join(' ')
-  // Erster Kandidat mit passendem Set gewinnt (z. B. 165 vor 16)
-  const match = (totals ?? []).map((t) => sets.filter((s) => s.official === t || s.total === t)).find((l) => l.length) ?? []
-  const candidates = [...match].reverse() // API: älteste zuerst
-    .sort((a, b) => Number(hay.includes(b.name.toLowerCase())) - Number(hay.includes(a.name.toLowerCase())) || (b.releaseDate ?? '').localeCompare(a.releaseDate ?? ''))
   const ids = new Set([number, normalizeLocalId(number), number.padStart(3, '0')])
-  const found: CardRef[] = []
-  await Promise.all(candidates.slice(0, 16).map(async (s) => {
-    for (const lid of ids) {
-      try { found.push(await fetchCard(cardKey(lang, `${s.id}-${lid}`), undefined, false)); return } catch { /* nächste Schreibweise */ }
-    }
-  }))
+  // Gesamtzahlen der Reihe nach probieren (erst gelesen, dann typische Verwechslungen); erster Treffer gewinnt
+  const totalsToTry = Array.from(new Set((totals ?? []).flatMap((t) => totalVariants(t)))).slice(0, 8)
+  let found: CardRef[] = []
+  for (const t of totalsToTry) {
+    const match = sets.filter((s) => s.official === t || s.total === t)
+    if (!match.length) continue
+    const candidates = [...match].reverse() // API: älteste zuerst
+      .sort((a, b) => Number(hay.includes(b.name.toLowerCase())) - Number(hay.includes(a.name.toLowerCase())) || (b.releaseDate ?? '').localeCompare(a.releaseDate ?? ''))
+    const hit: CardRef[] = []
+    await Promise.all(candidates.slice(0, 16).map(async (s) => {
+      for (const lid of ids) {
+        try { hit.push(await fetchCard(cardKey(lang, `${s.id}-${lid}`), undefined, false)); return } catch { /* nächste Schreibweise */ }
+      }
+    }))
+    if (hit.length) { found = hit; break }
+  }
   const score = (c: CardRef) => words.filter((w) => c.name.toLowerCase().includes(w)).length
   return found.sort((a, b) => score(b) - score(a))
 }

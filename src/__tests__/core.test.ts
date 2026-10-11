@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 import { db } from '../db'
-import { eanList, isValidEan, parseQty, normalizeEan, normalizeLocalId, parseCardText, totalCandidates } from '../lib/parse'
+import { eanList, isValidEan, parseQty, totalVariants, normalizeEan, normalizeLocalId, parseCardText, totalCandidates } from '../lib/parse'
 import { cardBasePrice, priceChange, totals, unitPrice } from '../lib/pricing'
 import { formatEur, isBadAmount, parseEur, relativeTime } from '../lib/format'
 import { addCard, addProduct, setProductPrice } from '../lib/actions'
@@ -84,6 +84,12 @@ describe('EAN', () => {
     expect(normalizeEan('820650454097')).toBe('0820650454097'); expect(normalizeEan('0820650454097')).toBe('0820650454097')
     expect(eanList('4007396203226, 0820650454097')).toEqual(['4007396203226', '0820650454097'])
     expect(eanList('4007396203226, 820650454097').includes(normalizeEan('0820650454097'))).toBe(true)
+  })
+})
+
+describe('OCR-Verwechslungen bei der Gesamtzahl', () => {
+  it('probiert Varianten, Original zuerst', () => {
+    const v = totalVariants(195); expect(v[0]).toBe(195); expect(v).toContain(198); expect(totalVariants(165)).toContain(185)
   })
 })
 
