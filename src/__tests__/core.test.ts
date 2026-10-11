@@ -175,10 +175,10 @@ describe('Produktkatalog', () => {
     expect(searchLoose(cat, ['Pokémon', 'Sammelkartenspiel'])).toEqual([])
   })
   it('eigene Produkte werden eingehängt und mit EUR-Preis bewertet', () => {
-    const m = mergeCustom(cat, [{ id: -1, name: '宝可梦 礼盒', region: 'ZH', price: 45, image: 'a.jpg' }])
-    expect(m.products[0]).toMatchObject({ id: -1, n: '宝可梦 礼盒', l: 'ZH', e: 45, img: './custom/a.jpg' })
+    const m = mergeCustom(cat, [{ id: -1, name: '宝可梦 礼盒', region: 'ZH', price: 45, image: 'a.jpg', ean: '6942600401297' }])
+    expect(m.products[0]).toMatchObject({ id: -1, n: '宝可梦 礼盒', l: 'ZH', e: 45, img: './custom/a.jpg', ean: '6942600401297' })
     expect(catalogEur(m.products[0], 0.9)).toBe(45); expect(catalogEur(cat.products[0], 0.89)).toBe(64.25)
-    expect(searchCatalog(m, '礼盒')[0].id).toBe(-1)
+    expect(searchCatalog(m, '礼盒')[0].id).toBe(-1); expect(isValidEan('6942600401297')).toBe(true)
   })
   it('Case hinter dem Einzelprodukt', () => expect(searchCatalog(cat, 'booster bundle').map((p) => p.id)).toEqual([1, 2]))
   it('Typ & Zeit & Umrechnung', () => {

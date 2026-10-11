@@ -3,7 +3,7 @@ import { db } from '../db'
 import { fileToThumb } from '../lib/photo'
 import { findByPhoto } from '../services/photoFind'
 import { ProductPicker } from './ProductPicker'
-import { catalogImage, catalogTime, guessType, loadCatalog, type CatalogProduct } from '../services/catalog'
+import { catalogEur, catalogImage, catalogTime, guessType, loadCatalog, type CatalogProduct } from '../services/catalog'
 import { loadSets } from '../services/tcgdex'
 import type { SetRef } from '../types'
 import { addProduct, cardmarketSearchUrl } from '../lib/actions'
@@ -40,7 +40,11 @@ export function ProductSheet({ open, ean, prefill, onClose, onAdded }: { open: b
     setName(''); setType('Booster'); setQty(1); setPrice(''); setBuy(''); setKnown(false)
     if (prefill) pickCatalog(prefill.c, prefill.eur)
     if (ean) db.products.where('ean').equals(ean).first().then((p) => {
-      if (!p) return
+      if (!p) {
+        // Unbekannter Barcode: steht er in der eigenen Produktliste (custom-products.json)?
+        loadCatalog().then((cat) => { const c = cat?.products.find((x) => x.ean === ean); if (c) pickCatalog(c, catalogEur(c, 0.89)) })
+        return
+      }
       setKnown(true); setName(p.name); setType(p.type)
       if (p.price != null) setPrice(String(p.price).replace('.', ','))
     })

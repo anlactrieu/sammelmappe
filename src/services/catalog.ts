@@ -1,9 +1,9 @@
 import { getSetting, setSetting } from '../db'
 
-export interface CatalogProduct { id: number; g: number; n: string; p: number | null; l?: string; e?: number | null; img?: string }
+export interface CatalogProduct { id: number; g: number; n: string; p: number | null; l?: string; e?: number | null; img?: string; ean?: string }
 
 /** Eigene Produkte (public/custom-products.json): Name, Sprache, Bilddatei in public/custom/, Preis direkt in EUR. */
-export interface CustomProduct { id: number; name: string; region?: string; price?: number | null; image?: string; note?: string }
+export interface CustomProduct { id: number; name: string; region?: string; price?: number | null; image?: string; ean?: string; note?: string }
 export interface Catalog { source: string; generatedAt: string; groups: Record<string, string>; products: CatalogProduct[] }
 
 let cache: Promise<Catalog | null> | null = null
@@ -24,7 +24,7 @@ export function loadCatalog(force = false): Promise<Catalog | null> {
 /** Eigene Produkte (negative IDs) vorn in den Katalog einhängen. */
 export function mergeCustom(cat: Catalog, custom: CustomProduct[]): Catalog {
   if (!custom.length) return cat
-  const mine: CatalogProduct[] = custom.map((c) => ({ id: c.id, g: 0, n: c.name, p: null, e: c.price ?? null, l: c.region, img: c.image ? `./custom/${c.image}` : undefined }))
+  const mine: CatalogProduct[] = custom.map((c) => ({ id: c.id, g: 0, n: c.name, p: null, e: c.price ?? null, l: c.region, img: c.image ? `./custom/${c.image}` : undefined, ean: c.ean }))
   return { ...cat, groups: { ...cat.groups, 0: 'Eigene Produkte' }, products: [...mine, ...cat.products] }
 }
 
