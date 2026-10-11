@@ -46,7 +46,7 @@ export default function Collection() {
   return (
     <div className="page">
       <header className="page-head"><h1>Sammlung</h1>
-        <Link className="btn small-btn" to="/sets">Sets</Link></header>
+        <span className="head-actions"><Link className="btn small-btn" to="/wishlist">♡ Wünsche</Link><Link className="btn small-btn" to="/sets">Sets</Link></span></header>
       <input className="search" type="search" placeholder="Name oder Set suchen …" value={q} onChange={(e) => setQ(e.target.value)} aria-label="Sammlung durchsuchen" />
       <div className="toolbar">
         <Segmented label="Art" value={kind} onChange={setKind} options={[{ value: 'all', label: 'Alle' }, { value: 'card', label: 'Karten' }, { value: 'product', label: 'Produkte' }]} />

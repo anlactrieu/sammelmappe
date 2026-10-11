@@ -249,3 +249,14 @@ textarea { padding: 10px 12px; resize: vertical; }
 .next-set { display: flex; flex-direction: column; gap: 2px; padding: 12px 14px; border: 2px solid var(--ink); border-radius: var(--r-card); background: var(--sleeve); text-decoration: none; color: var(--ink); }
 .next-set strong { font: 800 1.3rem/1.1 var(--display); text-transform: uppercase; } .next-set small { font: 500 .78rem var(--mono); color: var(--ink-2); }
 a.rowbtn, a.rowbtn:visited { text-decoration: none; color: var(--ink); } a.rowbtn small { text-decoration: none; }
+.head-actions { display: flex; gap: 8px; }
+.soon { margin-top: 4px; }
+.soon-head { display: flex; align-items: baseline; justify-content: space-between; border-top: 1px solid var(--rule); padding-top: .9rem; }
+.soon-head h2 { margin: 0; padding: 0; border: 0; } .soon-head .link { padding: 0; min-height: 0; }
+.soon-list { list-style: none; margin: 8px 0 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.soon-card { display: flex; align-items: center; gap: 14px; padding: 12px 14px; background: var(--sleeve); border: 1px solid var(--rule); border-radius: var(--r-card); text-decoration: none; color: var(--ink); }
+.soon-card .grow small { font: 500 .78rem var(--mono); color: var(--ink-2); margin-top: 2px; }
+.soon-days { flex: none; width: 64px; text-align: center; background: var(--label); color: var(--label-ink); border: 2px solid var(--ink); border-radius: 10px; padding: 6px 0 4px; }
+.soon-days b { display: block; font: 900 2rem/1 var(--display); } .soon-days small { font: 700 .66rem var(--mono); text-transform: uppercase; letter-spacing: .08em; }
+.soon-card.first { border: 2px solid var(--ink); box-shadow: 0 0 0 3px var(--label) inset; }
+.soon-card.first strong { font: 800 1.35rem/1.1 var(--display); text-transform: uppercase; }

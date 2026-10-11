@@ -59,7 +59,7 @@ function Shell() {
         <NavLink to="/" end className={tab}><Icon name="home" />Start</NavLink>
         <NavLink to="/collection" className={tab}><Icon name="stack" />Sammlung</NavLink>
         <NavLink to="/scan" className="scan-btn" aria-label="Foto machen"><Icon name="camera" size={30} /></NavLink>
-        <NavLink to="/wishlist" className={tab}><Icon name="heart" />Wünsche</NavLink>
+        <NavLink to="/releases" className={tab}><Icon name="calendar" />Neu</NavLink>
         <NavLink to="/settings" className={tab}><Icon name="user" />Profil</NavLink>
       </nav>
       <NavLink to="/add" className={`fab${pathname === '/collection' ? '' : ' hide'}`} aria-label="Karte oder Produkt hinzufügen"><Icon name="plus" size={28} /></NavLink>
