@@ -30,6 +30,7 @@ export default function Add() {
   const [pq, setPq] = useState('')
   const [texts, setTexts] = useState<string[]>([])
   const [ranked, setRanked] = useState<number[]>([])
+  const [vec, setVec] = useState<Float32Array | undefined>()
   const [status, setStatus] = useState('')
   const [reading, setReading] = useState(false)
   const onPhoto = async (file?: File) => {
@@ -38,7 +39,7 @@ export default function Add() {
     try {
       const { canvas } = await fileToThumb(file, 1000)
       const r = await findByPhoto(canvas, setStatus)
-      setTexts(r.texts); setRanked(r.ids)
+      setTexts(r.texts); setRanked(r.ids); setVec(r.vec)
       if (r.imageSearch === 'unavailable') toast('Bildsuche noch nicht verfügbar – nutze Text oder Namen')
       else if (r.imageSearch === 'error') toast('Bilderkennung konnte nicht geladen werden (offline?)')
       else if (!r.ids.length && !r.texts.length) toast('Nichts erkannt – Namen bitte eintippen')
@@ -76,7 +77,7 @@ export default function Add() {
           <button className="btn ghost" onClick={() => { setPrefill(undefined); setProductOpen(true) }}>Manuell</button>
         </div>
         {reading && <p className="muted small" role="status">{status || 'Werte Foto aus …'}</p>}
-        <ProductPicker query={pq} onQuery={setPq} photoTexts={texts} rankedIds={ranked} onPick={(c, eur) => { setPrefill({ c, eur }); setProductOpen(true) }} autoFocus />
+        <ProductPicker query={pq} onQuery={setPq} photoTexts={texts} rankedIds={ranked} photoVec={vec} onPick={(c, eur) => { setPrefill({ c, eur }); setProductOpen(true) }} autoFocus />
       </>) : (<>
         <LangChips value={lang} onChange={setLang} />
         {lang !== 'de' && <p className="muted small">Tippe den deutschen oder englischen Namen – die App findet die {lang === 'en' ? 'englische' : 'fremdsprachige'} Karte über die Pokédex-Nummer.</p>}

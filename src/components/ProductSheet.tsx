@@ -29,6 +29,7 @@ export function ProductSheet({ open, ean, prefill, onClose, onAdded }: { open: b
   const [photo, setPhoto] = useState<string | undefined>()
   const [sugg, setSugg] = useState<string[]>([])
   const [rankedIds, setRankedIds] = useState<number[]>([])
+  const [photoVec, setPhotoVec] = useState<Float32Array | undefined>()
   const [reading, setReading] = useState(false)
   const [query, setQuery] = useState('')
   const [region, setRegion] = useState('DE')
@@ -59,7 +60,7 @@ export function ProductSheet({ open, ean, prefill, onClose, onAdded }: { open: b
       setReading(true); setSugg([])
       const r = await findByPhoto(canvas)
       const names = r.texts
-      setSugg(names); setRankedIds(r.ids)
+      setSugg(names); setRankedIds(r.ids); setPhotoVec(r.vec)
       setQuery('')
       if (!names.length) toast('Im Foto kein Text erkannt – Namen bitte tippen')
     } catch (e) { toast(`Foto konnte nicht verarbeitet werden: ${(e as Error).message || 'Texterkennung nicht geladen (offline?)'}`) }
@@ -88,7 +89,7 @@ export function ProductSheet({ open, ean, prefill, onClose, onAdded }: { open: b
       {!known && <>
         <h2 style={{ marginTop: 8 }}>Im Katalog suchen</h2>
         {catalog ? <p className="hint">Aus dem Katalog übernommen. Preis ≈ umgerechnet aus dem US-Markt (TCGplayer) – passe ihn an, wenn dein Markt abweicht.</p> : null}
-        {!catalog && <ProductPicker query={query} onQuery={setQuery} onPick={pickCatalog} photoTexts={sugg} rankedIds={rankedIds} />}
+        {!catalog && <ProductPicker query={query} onQuery={setQuery} onPick={pickCatalog} photoTexts={sugg} rankedIds={rankedIds} photoVec={photoVec} />}
       </>}
       {!known && !catalog && <div className="photo-box">
         {photo ? <img src={photo} alt="Produktfoto" /> : <span className="muted small">Noch kein Foto</span>}

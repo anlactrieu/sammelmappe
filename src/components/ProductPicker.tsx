@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useState } from 'react'
+import { learnPhoto } from '../services/imageSearch'
 import { catalogEur, catalogImage, catalogTime, loadCatalog, searchCatalog, searchLoose, usdToEur, type Catalog, type CatalogProduct } from '../services/catalog'
 import { formatEur, relativeTime } from '../lib/format'
 
 /** Versiegelte Produkte im Katalog suchen (Name, deutsch oder englisch). */
-export function ProductPicker({ query, onQuery, onPick, autoFocus, photoTexts, rankedIds }: { query: string; onQuery: (q: string) => void; onPick: (p: CatalogProduct, eur: number | null) => void; autoFocus?: boolean; photoTexts?: string[]; rankedIds?: number[] }) {
+export function ProductPicker({ query, onQuery, onPick, autoFocus, photoTexts, rankedIds, photoVec }: { query: string; onQuery: (q: string) => void; onPick: (p: CatalogProduct, eur: number | null) => void; autoFocus?: boolean; photoTexts?: string[]; rankedIds?: number[]; photoVec?: Float32Array }) {
   const [cat, setCat] = useState<Catalog | null | undefined>(undefined)
   const [rate, setRate] = useState(0.89)
   useEffect(() => { loadCatalog().then(setCat); usdToEur().then(setRate) }, [])
@@ -30,7 +31,7 @@ export function ProductPicker({ query, onQuery, onPick, autoFocus, photoTexts, r
       <ul className="list">
         {results.map((p) => (
           <li key={p.id}>
-            <button className="rowbtn" onClick={() => onPick(p, catalogEur(p, rate))}>
+            <button className="rowbtn" onClick={() => { if (photo && photoVec) learnPhoto(p.id, photoVec).catch(() => undefined); onPick(p, catalogEur(p, rate)) }}>
               <img src={catalogImage(p)} alt="" loading="lazy" />
               <div className="grow"><strong>{p.l && <><b className="langtag">{p.l}</b> </>}{p.n}</strong><small className="muted">{cat?.groups[p.g]}</small></div>
               <span className="price">{catalogEur(p, rate) != null ? <strong>{p.e != null ? '' : '≈ '}{formatEur(catalogEur(p, rate))}</strong> : <span className="missing">kein Preis</span>}</span>

@@ -43,8 +43,8 @@ const PHRASES: [RegExp, string][] = [
   [/\d+\s*jahre?|jubil[äa]e?um/g, 'celebration'], [/booster[\s-]*display/g, 'booster box'], [/ü/g, 'u'],
 ]
 const WORDS: Record<string, string[]> = {
-  kollektion: ['collection'], display: ['display', 'booster box'], karmesin: ['scarlet'], purpur: ['violet'], schwert: ['sword'], schild: ['shield'],
-  sonne: ['sun'], mond: ['moon'], prämie: ['premium'], praemie: ['premium'], mini: ['mini'], dose: ['tin'], deck: ['deck'], spiel: ['battle'],
+  kollektion: ['collection'], koffer: ['chest'], sammlerkoffer: ['chest'], truhe: ['chest'], abenteuer: ['adventure'], sammlerbox: ['collector'], blech: ['tin'], dose: ['tin'], spezial: ['special'], kampfdeck: ['battle deck'], starterset: ['starter'], album: ['binder', 'album'], ordner: ['binder'], display: ['display', 'booster box'], karmesin: ['scarlet'], purpur: ['violet'], schwert: ['sword'], schild: ['shield'],
+  sonne: ['sun'], mond: ['moon'], prämie: ['premium'], praemie: ['premium'], mini: ['mini'], deck: ['deck'], spiel: ['battle'],
 }
 
 export function normalizeQuery(q: string): string[][] {

@@ -180,6 +180,11 @@ describe('Produktkatalog', () => {
     expect(catalogEur(m.products[0], 0.9)).toBe(45); expect(catalogEur(cat.products[0], 0.89)).toBe(64.25)
     expect(searchCatalog(m, '礼盒')[0].id).toBe(-1); expect(isValidEan('6942600401297')).toBe(true)
   })
+  it('deutsche Produktwörter (Koffer, Abenteuer) finden englische Namen', () => {
+    const c2 = { ...cat, products: [...cat.products, { id: 9, g: 2, n: 'Paldea Adventure Chest', p: 116 }, { id: 10, g: 2, n: 'Fall 2025 Collector Chest', p: 48 }] }
+    expect(searchCatalog(c2, 'Paldea Abenteuer Koffer')[0].id).toBe(9)
+    expect(searchCatalog(c2, 'Sammlerkoffer').map((p) => p.id).sort()).toEqual([10, 9])
+  })
   it('Case hinter dem Einzelprodukt', () => expect(searchCatalog(cat, 'booster bundle').map((p) => p.id)).toEqual([1, 2]))
   it('Typ & Zeit & Umrechnung', () => {
     expect(guessType('151 Elite Trainer Box')).toBe('Top-Trainer-Box'); expect(guessType('X Booster Bundle')).toBe('Booster')

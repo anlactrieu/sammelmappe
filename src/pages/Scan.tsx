@@ -38,7 +38,7 @@ export default function Scan() {
   const cooldown = useRef({ keys: new Set<string>(), until: 0 })
   const streamRef = useRef<MediaStream | null>(null)
   const [stream, setStream] = useState<MediaStream | null>(null)
-  const [finder, setFinder] = useState<{ texts: string[]; ids: number[] } | null>(null)
+  const [finder, setFinder] = useState<{ texts: string[]; ids: number[]; vec?: Float32Array } | null>(null)
   const [fq, setFq] = useState('')
   const [prefill, setPrefill] = useState<{ c: CatalogProduct; eur: number | null } | undefined>()
   const [live, setLive] = useState(false)
@@ -138,7 +138,7 @@ export default function Scan() {
       c.getContext('2d')!.drawImage(v, 0, 0, c.width, c.height)
       const r = await findByPhoto(c, setStatus)
       if (r.imageSearch === 'error') setStatus('Bilderkennung nicht geladen (offline?)')
-      setFq(''); setFinder({ texts: r.texts, ids: r.ids })
+      setFq(''); setFinder({ texts: r.texts, ids: r.ids, vec: r.vec })
       setStatus('Bereit')
     } finally { busy.current = false }
   }
@@ -196,7 +196,7 @@ export default function Scan() {
 
       <Sheet open={finder != null && !prefill} onClose={() => { setFinder(null); setFq('') }} title="Welches Produkt?">
         <p className="muted small">{finder?.texts.length || finder?.ids.length ? 'Ähnlichste Produkte zur Packung. Tippe auf das richtige.' : 'Nichts erkannt. Tippe den Namen ein.'}</p>
-        <ProductPicker query={fq} onQuery={setFq} photoTexts={finder?.texts} rankedIds={finder?.ids} onPick={(c, eur) => setPrefill({ c, eur })} autoFocus={!finder?.texts.length && !finder?.ids.length} />
+        <ProductPicker query={fq} onQuery={setFq} photoTexts={finder?.texts} rankedIds={finder?.ids} photoVec={finder?.vec} onPick={(c, eur) => setPrefill({ c, eur })} autoFocus={!finder?.texts.length && !finder?.ids.length} />
         <div className="actions"><button className="btn ghost" onClick={() => { setPrefill(undefined); setEan(''); setFinder(null) }}>Manuell eingeben</button></div>
       </Sheet>
       <AddCardSheet card={card} onClose={closeAll} onAdded={afterAdd} />

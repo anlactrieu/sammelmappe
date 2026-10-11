@@ -42,8 +42,13 @@ function getExtractor(onProgress?: (pct: number) => void) {
   return extractorP
 }
 
+import { db } from '../db'
+
+export interface ImageHit { id: number; score: number }
+export interface ImageSearchResult { hits: ImageHit[]; vec: Float32Array }
+
 /** Die ähnlichsten Katalogprodukte zu einem Foto (Katalog-IDs, bestes zuerst). `null` = Bildsuche nicht verfügbar. */
-export async function searchByImage(canvas: HTMLCanvasElement, onProgress?: (pct: number) => void, limit = 8): Promise<{ id: number; score: number }[] | null> {
+export async function searchByImage(canvas: HTMLCanvasElement, onProgress?: (pct: number) => void, limit = 8): Promise<ImageSearchResult | null> {
   const index = await loadIndex()
   if (!index) return null
   const embed = await getExtractor(onProgress)
@@ -54,5 +59,21 @@ export async function searchByImage(canvas: HTMLCanvasElement, onProgress?: (pct
     for (let d = 0; d < DIM; d++) dot += index.q[o + d] * v[d]
     out.push({ id: index.ids[i], score: dot * index.scales[i] })
   }
-  return out.sort((a, b) => b.score - a.score).slice(0, limit)
+  // Vom Nutzer bestätigte Fotos (lokal gelernt) zählen mit leichtem Bonus mit
+  const best = new Map(out.map((h) => [h.id, h.score]))
+  for (const l of await db.learned.toArray()) {
+    let dot = 0
+    for (let d = 0; d < DIM; d++) dot += l.vec[d] * v[d]
+    const s = dot + 0.05
+    if (s > (best.get(l.catalogId) ?? -1)) best.set(l.catalogId, s)
+  }
+  const hits = Array.from(best, ([id, score]) => ({ id, score })).sort((a, b) => b.score - a.score).slice(0, limit)
+  return { hits, vec: v }
+}
+
+/** Merkt sich: dieses Foto zeigt dieses Produkt (bis zu 5 Fotos je Produkt), damit die nächste Suche es findet. */
+export async function learnPhoto(catalogId: number, vec: Float32Array) {
+  const mine = await db.learned.where('catalogId').equals(catalogId).toArray()
+  if (mine.length >= 5 && mine[0].id != null) await db.learned.delete(mine[0].id)
+  await db.learned.add({ catalogId, vec, at: Date.now() })
 }

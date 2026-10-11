@@ -33,6 +33,9 @@ export interface SetRef {
   abbreviation?: string; logo?: string; symbol?: string; releaseDate?: string
 }
 
+/** Vom Nutzer bestätigte Foto-Zuordnung: dieses Foto (Bildvektor) gehört zu diesem Katalogprodukt. */
+export interface LearnedPhoto { id?: number; catalogId: number; vec: Float32Array; at: number }
+
 export interface DexNames { id: number; v?: number; de?: string; en?: string; ja?: string; zhTw?: string; zhCn?: string }
 
 export interface Product {
