@@ -10,6 +10,10 @@ const MODEL = 'Xenova/dinov2-small'
 const UA = { 'User-Agent': 'Sammelmappe/0.1 (private collection tracker)' }
 const catalog = JSON.parse(await readFile(new URL('../public/catalog.json', import.meta.url), 'utf8'))
 const imageUrl = (id) => `https://tcgplayer-cdn.tcgplayer.com/product/${id}_400w.jpg`
+// Eigene Produkte (public/custom-products.json) mit lokalem Bild in public/custom/
+let custom = []
+try { custom = JSON.parse(await readFile(new URL('../public/custom-products.json', import.meta.url), 'utf8')).filter((c) => c.image) } catch { /* keine */ }
+catalog.products = [...custom.map((c) => ({ id: c.id, local: new URL(`../public/custom/${c.image}`, import.meta.url).pathname })), ...catalog.products]
 
 // Vorhandene Vektoren laden (lokal, sonst von der Live-Seite)
 const have = new Map()
@@ -36,7 +40,7 @@ if (todo.length) {
   let done = 0, failed = 0
   for (const p of todo) {
     try {
-      const t = await extractor(imageUrl(p.id))
+      const t = await extractor(p.local ?? imageUrl(p.id))
       const v = Array.from(t.data.slice(0, DIM)) // CLS-Token
       const n = Math.hypot(...v) || 1
       const max = Math.max(...v.map((x) => Math.abs(x / n))) || 1

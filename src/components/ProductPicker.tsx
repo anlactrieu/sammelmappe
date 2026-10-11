@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { catalogTime, loadCatalog, productImage, searchCatalog, searchLoose, toEur, usdToEur, type Catalog, type CatalogProduct } from '../services/catalog'
+import { catalogEur, catalogImage, catalogTime, loadCatalog, searchCatalog, searchLoose, usdToEur, type Catalog, type CatalogProduct } from '../services/catalog'
 import { formatEur, relativeTime } from '../lib/format'
 
 /** Versiegelte Produkte im Katalog suchen (Name, deutsch oder englisch). */
@@ -30,10 +30,10 @@ export function ProductPicker({ query, onQuery, onPick, autoFocus, photoTexts, r
       <ul className="list">
         {results.map((p) => (
           <li key={p.id}>
-            <button className="rowbtn" onClick={() => onPick(p, p.p != null ? toEur(p.p, rate) : null)}>
-              <img src={productImage(p.id)} alt="" loading="lazy" />
+            <button className="rowbtn" onClick={() => onPick(p, catalogEur(p, rate))}>
+              <img src={catalogImage(p)} alt="" loading="lazy" />
               <div className="grow"><strong>{p.l && <><b className="langtag">{p.l}</b> </>}{p.n}</strong><small className="muted">{cat?.groups[p.g]}</small></div>
-              <span className="price">{p.p != null ? <strong>≈ {formatEur(toEur(p.p, rate))}</strong> : <span className="missing">kein Preis</span>}</span>
+              <span className="price">{catalogEur(p, rate) != null ? <strong>{p.e != null ? '' : '≈ '}{formatEur(catalogEur(p, rate))}</strong> : <span className="missing">kein Preis</span>}</span>
             </button>
           </li>))}
       </ul>

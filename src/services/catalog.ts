@@ -1,6 +1,9 @@
 import { getSetting, setSetting } from '../db'
 
-export interface CatalogProduct { id: number; g: number; n: string; p: number | null; l?: string }
+export interface CatalogProduct { id: number; g: number; n: string; p: number | null; l?: string; e?: number | null; img?: string }
+
+/** Eigene Produkte (public/custom-products.json): Name, Sprache, Bilddatei in public/custom/, Preis direkt in EUR. */
+export interface CustomProduct { id: number; name: string; region?: string; price?: number | null; image?: string; note?: string }
 export interface Catalog { source: string; generatedAt: string; groups: Record<string, string>; products: CatalogProduct[] }
 
 let cache: Promise<Catalog | null> | null = null
@@ -8,15 +11,31 @@ let cache: Promise<Catalog | null> | null = null
 /** Statischer Produktkatalog (npm run catalog). Immer frisch vom Server probieren, sonst Cache. */
 export function loadCatalog(force = false): Promise<Catalog | null> {
   if (!cache || force) {
-    cache = fetch('./catalog.json', { cache: 'no-cache' }).then((r) => (r.ok ? (r.json() as Promise<Catalog>) : null)).catch(() => null)
+    cache = fetch('./catalog.json', { cache: 'no-cache' }).then(async (r) => {
+      if (!r.ok) return null
+      const cat = (await r.json()) as Catalog
+      const custom = await fetch('./custom-products.json', { cache: 'no-cache' }).then((x) => (x.ok ? (x.json() as Promise<CustomProduct[]>) : [])).catch(() => [] as CustomProduct[])
+      return mergeCustom(cat, custom)
+    }).catch(() => null)
   }
   return cache
 }
+
+/** Eigene Produkte (negative IDs) vorn in den Katalog einhängen. */
+export function mergeCustom(cat: Catalog, custom: CustomProduct[]): Catalog {
+  if (!custom.length) return cat
+  const mine: CatalogProduct[] = custom.map((c) => ({ id: c.id, g: 0, n: c.name, p: null, e: c.price ?? null, l: c.region, img: c.image ? `./custom/${c.image}` : undefined }))
+  return { ...cat, groups: { ...cat.groups, 0: 'Eigene Produkte' }, products: [...mine, ...cat.products] }
+}
+
+/** Preis eines Katalogeintrags in EUR (eigener EUR-Preis, sonst USD umgerechnet). */
+export const catalogEur = (p: CatalogProduct, rate: number): number | null => (p.e != null ? p.e : p.p != null ? toEur(p.p, rate) : null)
 
 /** "2026-10-10T20:06:02+0000" (Safari-sicher) → ms */
 export const catalogTime = (c: Catalog) => Date.parse(c.source.replace(/([+-]\d\d)(\d\d)$/, '$1:$2')) || Date.parse(c.generatedAt)
 
 export const productImage = (id: number, size: 200 | 400 = 200) => `https://tcgplayer-cdn.tcgplayer.com/product/${id}_${size}w.jpg`
+export const catalogImage = (p: CatalogProduct, size: 200 | 400 = 200) => p.img ?? productImage(p.id, size)
 
 /** Katalogeinträge sind englisch benannt: deutsche Begriffe auf englische Suchwörter abbilden. */
 const PHRASES: [RegExp, string][] = [
@@ -31,7 +50,7 @@ const WORDS: Record<string, string[]> = {
 export function normalizeQuery(q: string): string[][] {
   let s = q.toLowerCase().trim()
   for (const [re, rep] of PHRASES) s = s.replace(re, rep)
-  return s.split(/[^a-z0-9äöüß'+]+/).filter(Boolean).map((t) => [t, ...(WORDS[t] ?? [])])
+  return s.split(/[^\p{L}\p{N}'+]+/u).filter(Boolean).map((t) => [t, ...(WORDS[t] ?? [])])
 }
 
 export function searchCatalog(cat: Catalog, query: string, limit = 40): CatalogProduct[] {

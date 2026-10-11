@@ -3,7 +3,7 @@ import { db } from '../db'
 import { fileToThumb } from '../lib/photo'
 import { findByPhoto } from '../services/photoFind'
 import { ProductPicker } from './ProductPicker'
-import { catalogTime, guessType, loadCatalog, productImage, type CatalogProduct } from '../services/catalog'
+import { catalogImage, catalogTime, guessType, loadCatalog, type CatalogProduct } from '../services/catalog'
 import { loadSets } from '../services/tcgdex'
 import type { SetRef } from '../types'
 import { addProduct, cardmarketSearchUrl } from '../lib/actions'
@@ -32,7 +32,7 @@ export function ProductSheet({ open, ean, prefill, onClose, onAdded }: { open: b
   const [reading, setReading] = useState(false)
   const [query, setQuery] = useState('')
   const [region, setRegion] = useState('DE')
-  const [catalog, setCatalog] = useState<{ id: number; price: number | null; at?: number } | null>(null)
+  const [catalog, setCatalog] = useState<{ id: number; price: number | null; at?: number; img?: string; mine?: boolean } | null>(null)
 
   useEffect(() => {
     if (!open) return
@@ -62,7 +62,7 @@ export function ProductSheet({ open, ean, prefill, onClose, onAdded }: { open: b
     finally { setReading(false) }
   }
   function pickCatalog(c: CatalogProduct, eur: number | null) {
-    setRegion(c.l ?? 'EN'); setCatalog({ id: c.id, price: eur }); loadCatalog().then((cat) => cat && setCatalog((cur) => (cur && cur.id === c.id ? { ...cur, at: catalogTime(cat) } : cur)))
+    setRegion(c.l ?? 'EN'); setCatalog({ id: c.id, price: eur, img: c.img, mine: c.id < 0 }); loadCatalog().then((cat) => cat && setCatalog((cur) => (cur && cur.id === c.id ? { ...cur, at: catalogTime(cat) } : cur)))
     setTouched(true); setName(c.n); setType(guessType(c.n))
     setPrice(eur != null ? String(eur).replace('.', ',') : ''); setQuery('')
   }
@@ -73,7 +73,7 @@ export function ProductSheet({ open, ean, prefill, onClose, onAdded }: { open: b
     if (isBadAmount(price) || isBadAmount(buy)) return toast('Bitte gültige Beträge eingeben, z. B. 12,50')
     setSaving(true)
     try {
-      await addProduct({ name: name.trim(), type, ean, image: photo ?? (catalog ? productImage(catalog.id, 400) : undefined), catalogId: catalog?.id, priceUpdated: catalog?.at, region, priceSource: catalog && parseEur(price) === catalog.price ? 'catalog' : 'manual', setName: pickedSet || undefined, price: parseEur(price) }, qty, parseEur(buy))
+      await addProduct({ name: name.trim(), type, ean, image: photo ?? (catalog ? catalogImage({ id: catalog.id, img: catalog.img } as CatalogProduct, 400) : undefined), catalogId: catalog?.id, priceUpdated: catalog?.at, region, priceSource: catalog && !catalog.mine && parseEur(price) === catalog.price ? 'catalog' : 'manual', setName: pickedSet || undefined, price: parseEur(price) }, qty, parseEur(buy))
       toast(`${qty}× ${name.trim()} hinzugefügt`)
       onAdded?.(); onClose()
     } finally { setSaving(false) }
@@ -119,6 +119,10 @@ export function ProductSheet({ open, ean, prefill, onClose, onAdded }: { open: b
         <input inputMode="decimal" value={price} onChange={(e) => setPrice(e.target.value)} placeholder="z. B. 54,90" />
       </label>
       <a className="link" target="_blank" rel="noreferrer" href={cardmarketSearchUrl(name || 'Pokemon')}>Preis auf Cardmarket nachschauen ↗</a>
+      {(region === 'ZH' || region === 'KO' || region === 'JA') && <>
+        <a className="link" target="_blank" rel="noreferrer" href={`https://www.ebay.de/sch/i.html?_nkw=${encodeURIComponent(`pokemon ${region === 'ZH' ? 'chinese' : region === 'KO' ? 'korean' : 'japanese'} ${name}`.trim())}&LH_Sold=1&LH_Complete=1`}>Verkaufte Preise auf eBay ansehen ↗</a>
+        <a className="link" target="_blank" rel="noreferrer" href="https://lens.google.com/">Produkt per Foto im Web finden (Google Lens) ↗</a>
+      </>}
       {ean && <a className="link" target="_blank" rel="noreferrer" href={`https://www.google.com/search?q=${encodeURIComponent(ean + ' pokemon')}`}>Barcode im Web nachschlagen ↗</a>}
       <p className="hint">Für versiegelte Produkte gibt es keine freie Preis-API. Trage den Preis einmal ein – du kannst ihn später in der Sammlung mit einem Tap aktualisieren.</p>
     </Sheet>

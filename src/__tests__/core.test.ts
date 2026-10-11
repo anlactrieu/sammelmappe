@@ -10,7 +10,7 @@ import { frameToVideo, numberStrips } from '../lib/strips'
 import { mapCard } from '../services/tcgdex'
 import { cardKey, langTag, parseKey } from '../lib/lang'
 import { cardNames } from '../services/names'
-import { catalogTime, guessType, searchCatalog, searchLoose, toEur } from '../services/catalog'
+import { catalogEur, catalogTime, guessType, mergeCustom, searchCatalog, searchLoose, toEur } from '../services/catalog'
 import type { CardRef, Item } from '../types'
 
 const card: CardRef = {
@@ -173,6 +173,12 @@ describe('Produktkatalog', () => {
     const r = searchLoose(cat, ['POKÉMON TCG', 'Booster Bundle', 'Jubiläum', 'xq zz'])
     expect(r[0].id).toBe(1)
     expect(searchLoose(cat, ['Pokémon', 'Sammelkartenspiel'])).toEqual([])
+  })
+  it('eigene Produkte werden eingehängt und mit EUR-Preis bewertet', () => {
+    const m = mergeCustom(cat, [{ id: -1, name: '宝可梦 礼盒', region: 'ZH', price: 45, image: 'a.jpg' }])
+    expect(m.products[0]).toMatchObject({ id: -1, n: '宝可梦 礼盒', l: 'ZH', e: 45, img: './custom/a.jpg' })
+    expect(catalogEur(m.products[0], 0.9)).toBe(45); expect(catalogEur(cat.products[0], 0.89)).toBe(64.25)
+    expect(searchCatalog(m, '礼盒')[0].id).toBe(-1)
   })
   it('Case hinter dem Einzelprodukt', () => expect(searchCatalog(cat, 'booster bundle').map((p) => p.id)).toEqual([1, 2]))
   it('Typ & Zeit & Umrechnung', () => {

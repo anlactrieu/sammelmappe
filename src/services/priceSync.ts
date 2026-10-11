@@ -1,6 +1,6 @@
 import { db, getSetting, setSetting } from '../db'
 import { fetchCard } from './tcgdex'
-import { catalogTime, loadCatalog, toEur, usdToEur } from './catalog'
+import { catalogEur, catalogTime, loadCatalog, usdToEur } from './catalog'
 import { totals, unitPrice } from '../lib/pricing'
 
 export const SYNC_INTERVAL_MS = 24 * 3600 * 1000
@@ -27,8 +27,9 @@ export async function syncProductPrices(): Promise<number> {
   let n = 0
   for (const p of linked) {
     const c = byId.get(p.catalogId!)
-    if (c?.p == null) continue
-    await db.products.update(p.id, { price: toEur(c.p, rate), priceUpdated: at }); n++
+    const eur = c ? catalogEur(c, rate) : null
+    if (eur == null) continue
+    await db.products.update(p.id, { price: eur, priceUpdated: at }); n++
   }
   return n
 }
