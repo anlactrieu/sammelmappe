@@ -71,7 +71,7 @@ export default function Add() {
       <Segmented label="Was hinzufügen" value={mode} onChange={setMode} options={[{ value: 'card', label: 'Karte' }, { value: 'product', label: 'Produkt' }]} />
       {mode === 'product' ? (<>
         <div className="actions" style={{ marginTop: 0 }}>
-          <Link className="btn primary" to="/scan-live?mode=barcode">Barcode scannen</Link>
+          <Link className="btn primary" to="/scan">Produkt fotografieren</Link>
           <label className="btn file-btn">Packung fotografieren
             <input type="file" accept="image/*" capture="environment" className="file-overlay" onChange={(e) => { onPhoto(e.target.files?.[0]); e.target.value = '' }} /></label>
           <button className="btn ghost" onClick={() => { setPrefill(undefined); setProductOpen(true) }}>Manuell</button>

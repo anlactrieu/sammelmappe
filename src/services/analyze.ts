@@ -3,9 +3,7 @@ import type { CardRef } from '../types'
 import { detectEanInCanvas } from './barcode'
 import { catalogEur, loadCatalog, usdToEur, type CatalogProduct } from './catalog'
 import { embedCanvas, searchCardsByVec, searchProductsByVec } from './imageSearch'
-import { readNumberAnywhere } from './ocr'
-import { fetchCard, resolveByNumber } from './tcgdex'
-import { parseCardText } from '../lib/parse'
+import { fetchCard } from './tcgdex'
 
 export interface ProductHit { p: CatalogProduct; eur: number | null; score: number }
 export interface Analysis {
@@ -28,7 +26,7 @@ function centerCrop(src: HTMLCanvasElement, f = 0.72): HTMLCanvasElement {
   return c
 }
 
-/** Ein Foto auswerten: Barcode, Bildvergleich (Karten + Produkte, alle Sprachen) und Kartennummer – alles in einem Schritt. */
+/** Ein Foto auswerten: Bildvergleich (Karten + Produkte, alle Sprachen) und, falls im Bild, der Barcode. Keine Texterkennung. */
 export async function analyzePhoto(photo: HTMLCanvasElement, onStatus: (s: string) => void): Promise<Analysis> {
   onStatus('Suche Barcode …')
   const eanRaw = await timeout(detectEanInCanvas(photo).catch(() => null), 4000, null)
@@ -55,18 +53,7 @@ export async function analyzePhoto(photo: HTMLCanvasElement, onStatus: (s: strin
     }
   } catch { /* Bilderkennung nicht verfügbar → nur Barcode/Nummer */ }
 
-  // Kartennummer (nur wenn der Text es hergibt) – liefert eindeutige Treffer
-  onStatus('Lese Kartennummer …')
-  const text = await timeout(readNumberAnywhere(photo).catch(() => ''), 5000, '')
-  const num = parseCardText(text)
   const certain: CardRef[] = []
-  if (num.number) {
-    for (const l of ['de', 'en', 'ja', 'zh-tw'] as const) {
-      const found = await resolveByNumber(num.number, num.totals, num.words, l).catch(() => [])
-      if (found.length) { certain.push(...found.slice(0, 3)); break }
-    }
-  }
-
   const cardKeys = Array.from(cardBest, ([k, s]) => ({ k, s })).sort((a, b) => b.s - a.s).slice(0, 6)
   const known = new Set(certain.map((c) => c.id))
   const imgCards = (await Promise.all(cardKeys.filter((x) => !known.has(x.k)).map((x) => fetchCard(x.k, undefined, false).catch(() => null)))).filter((c): c is CardRef => !!c)

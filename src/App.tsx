@@ -4,7 +4,6 @@ import { ToastProvider } from './components/ui'
 import Home from './pages/Home'
 import Collection from './pages/Collection'
 import Scan from './pages/Scan'
-import ScanLive from './pages/ScanLive'
 import Add from './pages/Add'
 import Quick from './pages/Quick'
 import Wishlist from './pages/Wishlist'
@@ -44,7 +43,6 @@ function Shell() {
           <Route path="/" element={<Home />} />
           <Route path="/collection" element={<Collection />} />
           <Route path="/scan" element={<Scan />} />
-          <Route path="/scan-live" element={<ScanLive />} />
           <Route path="/add" element={<Add />} />
           <Route path="/quick" element={<Quick />} />
           <Route path="/sets" element={<SetList />} />

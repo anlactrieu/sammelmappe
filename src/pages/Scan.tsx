@@ -77,7 +77,7 @@ export default function Scan() {
       </header>
 
       {phase === 'idle' && (<>
-        <p className="muted">Eine Karte oder ein Produkt pro Foto. Die App erkennt selbst, was es ist – auch Japanisch und Chinesisch, auch Barcodes. Danach kannst du das Handy weglegen.</p>
+        <p className="muted">Eine Karte oder ein Produkt pro Foto. Die App erkennt am Bild, was es ist – in jeder Sprache, auch Japanisch und Chinesisch. Danach kannst du das Handy weglegen.</p>
         <label className="btn primary snap-btn">
           <Icon name="camera" size={26} /> Foto aufnehmen
           <input type="file" accept="image/*" capture="environment" className="file-overlay" onChange={(e) => { start(e.target.files); e.target.value = '' }} />
@@ -88,12 +88,11 @@ export default function Scan() {
         </label>
         <ul className="snap-tips">
           <li>Karte: ganze Vorderseite, möglichst bildfüllend.</li>
-          <li>Produkt: ganze Vorderseite oder Barcode im Bild.</li>
+          <li>Produkt: ganze Vorderseite. Ein Barcode im Bild hilft zusätzlich.</li>
           <li>Besser ohne Spiegelung und mit ruhiger Hand – ein scharfes Foto genügt.</li>
         </ul>
         <div className="snap-links">
           <Link className="link" to="/quick">Tippen statt fotografieren →</Link>
-          <Link className="link" to="/scan-live">Live-Kamera (Dauerscan) →</Link>
         </div>
       </>)}
 
@@ -134,8 +133,8 @@ export default function Scan() {
             </ul>
           </section>)))}
 
-        {!res.index.cards && !res.index.products && !res.ean && <p className="hint">Die Bilderkennung ist gerade nicht verfügbar (offline?). Barcode und Kartennummer wurden trotzdem versucht – oder suche per Namen.</p>}
-        {res.index.products && !res.index.cards && res.cards.length === 0 && <p className="hint">Die Karten-Bilderkennung wird gerade aufgebaut und kennt noch nicht alle Karten. Notfalls Nummer oder Namen eintippen.</p>}
+        {!res.index.cards && !res.index.products && !res.ean && <p className="hint">Die Bilderkennung ist gerade nicht verfügbar (offline?). Suche in dem Fall per Namen.</p>}
+        {res.index.products && !res.index.cards && res.cards.length === 0 && <p className="hint">Die Karten-Bilderkennung wird gerade aufgebaut und kennt noch nicht alle Karten. Bis dahin: per Namen suchen.</p>}
         {res.ean && <p className="muted small">Barcode gelesen: <code>{res.ean}</code></p>}
 
         <div className="actions">
