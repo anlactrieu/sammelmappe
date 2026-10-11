@@ -200,3 +200,7 @@ textarea { padding: 10px 12px; resize: vertical; }
 .badge.lang { top: auto; right: auto; left: 6px; bottom: 6px; background: var(--label); color: var(--label-ink); border: 1.5px solid var(--ink); }
 .langtag { font: 700 .68rem var(--mono); background: var(--label); color: var(--label-ink); padding: 1px 4px; border-radius: 3px; }
 .scan-lang { display: flex; justify-content: center; } .scan .chip { background: #131a29; border-color: #2a3550; color: #fff; } .scan .chip.on { background: var(--label); color: var(--label-ink); border-color: var(--label); }
+.mode-banner { position: absolute; z-index: 2; top: 10px; left: 50%; transform: translateX(-50%); background: #05070d; color: var(--label); border: 2px solid var(--label); padding: 5px 12px; border-radius: 6px; font: 700 .72rem var(--mono); text-transform: uppercase; letter-spacing: .08em; white-space: nowrap; }
+.viewfinder.mode-photo .mode-banner { background: var(--label); color: var(--label-ink); }
+.frame.is-photo { width: 86%; aspect-ratio: 1 / 1; max-height: 78%; border-style: dashed; border-color: #fff; }
+.shutter { min-height: 56px; font-size: 1.05rem; }

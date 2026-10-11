@@ -14,18 +14,23 @@ import { imageUrl, resolveByNumber } from '../services/tcgdex'
 import { normalizeEan, parseCardText } from '../lib/parse'
 import type { CardRef } from '../types'
 
-type Mode = 'card' | 'barcode'
+type Mode = 'card' | 'barcode' | 'photo'
+const MODE_HELP: Record<Mode, { banner: string; status: string }> = {
+  card: { banner: 'Karte scannen', status: 'Halte die Karte ruhig in den Rahmen' },
+  barcode: { banner: 'Barcode scannen', status: 'Barcode der Verpackung in den Rahmen halten – wird automatisch erkannt' },
+  photo: { banner: 'Produkt fotografieren', status: 'Ganze Vorderseite ins Bild, dann „Foto aufnehmen“' },
+}
 
 export default function Scan() {
   const [params] = useSearchParams()
   const nav = useNavigate()
   const [cardLang, setCardLangState] = useState<Lang>(() => { try { return (localStorage.getItem('cardLang') as Lang) || 'de' } catch { return 'de' } })
   const setCardLang = (l: Lang) => { setCardLangState(l); try { localStorage.setItem('cardLang', l) } catch { /* privater Modus */ } }
-  const [mode, setMode] = useState<Mode>(params.get('mode') === 'barcode' ? 'barcode' : 'card')
+  const [mode, setMode] = useState<Mode>(params.get('mode') === 'barcode' ? 'barcode' : params.get('mode') === 'photo' ? 'photo' : 'card')
   const video = useRef<HTMLVideoElement>(null)
   const frameEl = useRef<HTMLDivElement>(null)
   const [camError, setCamError] = useState('')
-  const [status, setStatus] = useState('Halte die Karte ruhig in den Rahmen')
+  const [status, setStatus] = useState(MODE_HELP[params.get('mode') === 'barcode' ? 'barcode' : params.get('mode') === 'photo' ? 'photo' : 'card'].status)
   const [cands, setCands] = useState<CardRef[]>([])
   const [card, setCard] = useState<CardRef | null>(null)
   const [ean, setEan] = useState<string | undefined>()
@@ -49,14 +54,14 @@ export default function Scan() {
   useEffect(() => { mounted.current = true; return () => { mounted.current = false } }, [])
 
   const start = useCallback(async () => {
-    if (!navigator.mediaDevices) { setCamError('Kamera nur über https oder localhost verfügbar. Nutze unten die Nummern-Eingabe.'); return }
+    if (!navigator.mediaDevices) { setCamError('Kamera nur über https oder localhost verfügbar. Nutze die Suche unten.'); return }
     try {
       const s = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' }, width: { ideal: 1920 } }, audio: false })
       if (!mounted.current) { s.getTracks().forEach((t) => t.stop()); return } // Seite wurde während der Berechtigungsabfrage verlassen
       setCamError('')
       s.getVideoTracks()[0]?.addEventListener('ended', () => { if (streamRef.current === s) setStream(null) })
       setStream(s)
-    } catch { setCamError('Kein Kamerazugriff. Erlaube die Kamera im Browser oder nutze unten die Nummern-Eingabe.') }
+    } catch { setCamError('Kein Kamerazugriff. Erlaube die Kamera im Browser oder nutze die Suche unten.') }
   }, [])
 
   // Stream-Lebenszyklus: starten, beim Rückkehren nur bei totem Track neu starten, beim Verlassen stoppen
@@ -100,7 +105,7 @@ export default function Scan() {
 
   const tick = useCallback(async () => {
     const v = video.current
-    if (busy.current || paused || !v || v.readyState < 2) return
+    if (busy.current || paused || !v || v.readyState < 2 || mode === 'photo') return
     busy.current = true
     const g = gen.current
     try {
@@ -121,7 +126,7 @@ export default function Scan() {
   }, [mode, paused, lookup])
 
   useEffect(() => {
-    if (camError) return
+    if (camError || mode === 'photo') return
     const id = setInterval(tick, mode === 'barcode' ? 600 : 2500)
     return () => clearInterval(id)
   }, [tick, mode, camError])
@@ -156,11 +161,12 @@ export default function Scan() {
     <div className="scan">
       <div className="scan-top">
         <button className="icon-btn scan-x" onClick={() => nav('/collection')} aria-label="Scan beenden und zur Sammlung">✕</button>
-        <Segmented label="Scan-Art" value={mode} onChange={(m) => { gen.current++; setMode(m); setStatus(m === 'card' ? 'Halte die Karte ruhig in den Rahmen' : 'Barcode auf der Verpackung in den Rahmen halten') }}
-          options={[{ value: 'card', label: 'Karte' }, { value: 'barcode', label: 'Produkt' }]} />
+        <Segmented label="Scan-Art" value={mode} onChange={(m) => { gen.current++; setMode(m); setStatus(MODE_HELP[m].status) }}
+          options={[{ value: 'card', label: 'Karte' }, { value: 'barcode', label: 'Barcode' }, { value: 'photo', label: 'Foto' }]} />
         {added > 0 ? <button className="btn small-btn scan-done" onClick={() => nav('/collection')}>Fertig ({added})</button> : <span className="scan-x" aria-hidden />}
       </div>
-      <div className="viewfinder">
+      <div className={`viewfinder mode-${mode}`}>
+        <div className="mode-banner" aria-hidden>{MODE_HELP[mode].banner}</div>
         {!camError && <video ref={video} playsInline muted autoPlay aria-label="Kamera-Vorschau" onPlaying={() => setLive(true)} />}
         {!camError && !live && <p className="cam-error">{slow ? 'Die Kamera liefert noch kein Bild. Tippe einmal auf den Bildschirm, lade die Seite neu oder prüfe die Kameraberechtigung des Browsers.' : 'Kamera startet …'}</p>}
         {camError && <p className="cam-error">{camError}</p>}
@@ -169,20 +175,20 @@ export default function Scan() {
       {mode === 'card' && <div className="scan-lang"><LangChips value={cardLang} onChange={setCardLang} label="Sprache der Karte" /></div>}
       <p className="scan-status" role="status">{status}</p>
       <div className="scan-bottom">
-        {mode === 'card'
-          ? <button className="btn primary" disabled={!!camError} onClick={tick}>Jetzt lesen</button>
-          : <button className="btn primary" disabled={!!camError} onClick={photoSearch}>Packung fotografieren</button>}
+        {mode === 'card' && <button className="btn primary" disabled={!!camError} onClick={tick}>Jetzt lesen</button>}
+        {mode === 'barcode' && <button className="btn primary" disabled={!!camError} onClick={tick}>Jetzt scannen</button>}
+        {mode === 'photo' && <button className="btn primary shutter" disabled={!!camError} onClick={photoSearch}>Foto aufnehmen</button>}
         <label className="switch"><input type="checkbox" checked={series} onChange={(e) => setSeries(e.target.checked)} /> Mehrere nacheinander</label>
       </div>
       <details className="scan-alt" open={!!camError || undefined}>
-        <summary>{mode === 'barcode' ? 'Barcode klappt nicht? Produkt suchen' : 'Klappt nicht? Nummer eintippen oder Namen suchen'}</summary>
+        <summary>{mode === 'card' ? 'Klappt nicht? Nummer eintippen oder Namen suchen' : 'Klappt nicht? Produkt per Name suchen'}</summary>
       {mode === 'card' && (
         <form className="manual" onSubmit={async (e) => { e.preventDefault(); if (!manual) return; const r = await lookup(manual, gen.current, false); if (r === 'none') setStatus('Nichts gefunden – Format: 025/198') }}>
           <input value={manual} onChange={(e) => setManual(e.target.value)} placeholder="Nummer eintippen, z. B. 025/198" aria-label="Kartennummer manuell" />
           <button className="btn">Suchen</button>
         </form>)}
 
-      <Link className="link" to={mode === 'barcode' ? '/add?mode=product' : '/add'}>{mode === 'barcode' ? 'Produkt im Katalog suchen →' : 'Per Namen suchen →'}</Link>
+      <Link className="link" to={mode === 'card' ? '/add' : '/add?mode=product'}>{mode === 'card' ? 'Per Namen suchen →' : 'Produkt im Katalog suchen →'}</Link>
       </details>
 
       <Sheet open={cands.length > 0 && !card} onClose={closeAll} title="Welche Karte ist es?">
