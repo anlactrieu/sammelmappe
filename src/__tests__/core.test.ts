@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 import { db } from '../db'
-import { isValidEan, normalizeLocalId, parseCardText, totalCandidates } from '../lib/parse'
+import { eanList, isValidEan, normalizeEan, normalizeLocalId, parseCardText, totalCandidates } from '../lib/parse'
 import { cardBasePrice, priceChange, totals, unitPrice } from '../lib/pricing'
 import { formatEur, isBadAmount, parseEur, relativeTime } from '../lib/format'
 import { addCard, addProduct, setProductPrice } from '../lib/actions'
@@ -77,6 +77,14 @@ describe('format', () => {
   it('ungültig ≠ leer', () => { expect(isBadAmount('abc')).toBe(true); expect(isBadAmount('  ')).toBe(false) })
   it('formatiert', () => { expect(formatEur(1234.5)).toMatch(/1\.234,50\s€/); expect(formatEur(null)).toBe('–') })
   it('relative Zeit', () => { const n = 1e9; expect(relativeTime(n - 3 * 3600e3, n)).toBe('vor 3 Std.'); expect(relativeTime(undefined)).toBe('nie') })
+})
+
+describe('EAN', () => {
+  it('UPC-A und EAN-13 passen zusammen, mehrere EANs je Eintrag', () => {
+    expect(normalizeEan('820650454097')).toBe('0820650454097'); expect(normalizeEan('0820650454097')).toBe('0820650454097')
+    expect(eanList('4007396203226, 0820650454097')).toEqual(['4007396203226', '0820650454097'])
+    expect(eanList('4007396203226, 820650454097').includes(normalizeEan('0820650454097'))).toBe(true)
+  })
 })
 
 describe('strips', () => {

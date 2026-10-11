@@ -22,6 +22,12 @@ export function parseCardText(text: string): ParsedCardText {
 /** "025" → "25", "TG05" bleibt "TG05" – für Vergleiche mit localId. */
 export const normalizeLocalId = (id: string) => id.replace(/^([A-Za-z]*)0+(?=\d)/, '$1')
 
+/** UPC-A (12 Ziffern) → EAN-13 mit führender 0; sonst unverändert. So passen 0820… und 820… zusammen. */
+export const normalizeEan = (code: string) => { const d = code.replace(/\D/g, ''); return d.length === 12 ? '0' + d : d }
+
+/** Mehrere EANs in einem Feld ("4007…, 0820…") */
+export const eanList = (field?: string) => (field ?? '').split(/[,\s;]+/).filter(Boolean).map(normalizeEan)
+
 /** EAN/UPC plausibel? (8, 12, 13 oder 14 Ziffern + Prüfsumme) */
 export function isValidEan(code: string): boolean {
   if (!/^\d{8}$|^\d{12,14}$/.test(code)) return false

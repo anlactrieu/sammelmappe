@@ -43,10 +43,12 @@ export default defineConfig({
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,svg,wasm,json,png}'],
-        globIgnores: ['**/catalog.json', '**/catalog-emb.*', '**/ort-wasm*'],
+        globIgnores: ['**/catalog.json', '**/custom-products.json', '**/catalog-emb.*', '**/ort-wasm*'],
         maximumFileSizeToCacheInBytes: 8 * 1024 * 1024,
         runtimeCaching: [
-          { urlPattern: /(ort-wasm.*\.(wasm|mjs)|catalog-emb\.(bin|json))$/, handler: 'CacheFirst', options: { cacheName: 'imagesearch', expiration: { maxEntries: 8 }, cacheableResponse: { statuses: [200] } } },
+          { urlPattern: /ort-wasm.*\.(wasm|mjs)$/, handler: 'CacheFirst', options: { cacheName: 'imagesearch', expiration: { maxEntries: 4 }, cacheableResponse: { statuses: [200] } } },
+          // Index und eigene Produktliste ändern sich täglich: Netz zuerst, Cache nur offline
+          { urlPattern: /(catalog-emb\.(bin|json)|custom-products\.json|\/custom\/.*)$/, handler: 'NetworkFirst', options: { cacheName: 'catalog-data', networkTimeoutSeconds: 6, cacheableResponse: { statuses: [200] } } },
           { urlPattern: /^https:\/\/(huggingface\.co|cdn-lfs[\w.-]*\.(hf|huggingface)\.co|[\w-]+\.hf\.co)\/.*/, handler: 'CacheFirst', options: { cacheName: 'models', expiration: { maxEntries: 20 }, cacheableResponse: { statuses: [200] } } },
           { urlPattern: /\/catalog\.json$/, handler: 'NetworkFirst', options: { cacheName: 'catalog', networkTimeoutSeconds: 5 } },
           { urlPattern: /^https:\/\/assets\.tcgdex\.net\/.*/, handler: 'CacheFirst',

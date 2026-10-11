@@ -11,7 +11,7 @@ import { findByPhoto } from '../services/photoFind'
 import { ProductPicker } from '../components/ProductPicker'
 import type { CatalogProduct } from '../services/catalog'
 import { imageUrl, resolveByNumber } from '../services/tcgdex'
-import { parseCardText } from '../lib/parse'
+import { normalizeEan, parseCardText } from '../lib/parse'
 import type { CardRef } from '../types'
 
 type Mode = 'card' | 'barcode'
@@ -107,7 +107,7 @@ export default function Scan() {
       if (mode === 'barcode') {
         const code = await detectEan(v)
         if (g !== gen.current) return
-        if (code && !(Date.now() < cooldown.current.until && cooldown.current.keys.has(code))) { navigator.vibrate?.(60); setEan(code) }
+        if (code && !(Date.now() < cooldown.current.until && cooldown.current.keys.has(code))) { navigator.vibrate?.(60); setEan(normalizeEan(code)) }
       } else {
         setStatus('Lese Karte …')
         const text = await readCardNumber(v, frameEl.current)

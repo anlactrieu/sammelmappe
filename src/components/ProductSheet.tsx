@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { db } from '../db'
+import { eanList, normalizeEan } from '../lib/parse'
 import { fileToThumb } from '../lib/photo'
 import { findByPhoto } from '../services/photoFind'
 import { ProductPicker } from './ProductPicker'
@@ -43,7 +44,7 @@ export function ProductSheet({ open, ean, prefill, onClose, onAdded }: { open: b
     if (ean) db.products.where('ean').equals(ean).first().then((p) => {
       if (!p) {
         // Unbekannter Barcode: steht er in der eigenen Produktliste (custom-products.json)?
-        loadCatalog().then((cat) => { const c = cat?.products.find((x) => x.ean === ean); if (c) pickCatalog(c, catalogEur(c, 0.89)) })
+        loadCatalog().then((cat) => { const want = normalizeEan(ean); const c = cat?.products.find((x) => eanList(x.ean).includes(want)); if (c) pickCatalog(c, catalogEur(c, 0.89)) })
         return
       }
       setKnown(true); setName(p.name); setType(p.type)
