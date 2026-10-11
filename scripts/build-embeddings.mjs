@@ -57,6 +57,7 @@ if (todo.length) {
 
 // Nur Produkte des aktuellen Katalogs behalten, in Katalogreihenfolge schreiben
 const ids = catalog.products.map((p) => p.id).filter((id) => have.has(id))
-await writeFile(new URL('../public/catalog-emb.json', import.meta.url), JSON.stringify({ model: MODEL, dim: DIM, ids }))
+const rev = Date.now().toString(36)
+await writeFile(new URL('../public/catalog-emb.json', import.meta.url), JSON.stringify({ model: MODEL, dim: DIM, rev, ids }))
 await writeFile(new URL('../public/catalog-emb.bin', import.meta.url), Buffer.concat(ids.map((id) => have.get(id))))
 console.log(`${ids.length} Vektoren gespeichert`)

@@ -9,7 +9,9 @@ const UA = { 'User-Agent': 'Sammelmappe/0.1 (private collection tracker)' }
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms))
 const get = async (url) => { for (let i = 0; i < 3; i++) { await sleep(100); try { const r = await fetch(url, { headers: UA }); if (r.ok) return (await r.json()).results } catch { /* retry */ } } return [] }
 
-const stamp = (await (await fetch('https://tcgcsv.com/last-updated.txt', { headers: UA })).text()).trim()
+let stamp = ''
+try { const r = await fetch('https://tcgcsv.com/last-updated.txt', { headers: UA }); if (r.ok) stamp = (await r.text()).trim() } catch { /* offline */ }
+if (!stamp) { console.log('tcgcsv nicht erreichbar – bestehender Katalog bleibt'); process.exit(0) }
 const file = new URL('../public/catalog.json', import.meta.url)
 // Bereits vorhandener Katalog: gleicher Datenstand → nur fehlende Kategorien nachladen (kein erneuter Komplettabruf am selben Tag)
 let prev = null

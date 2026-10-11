@@ -9,12 +9,14 @@ let extractorP: Promise<(img: HTMLCanvasElement) => Promise<Float32Array>> | nul
 export function loadIndex(): Promise<Index | null> {
   indexP ??= (async () => {
     try {
-      const [m, b] = await Promise.all([fetch('./catalog-emb.json'), fetch('./catalog-emb.bin')])
-      if (!m.ok || !b.ok) return null
-      const meta = (await m.json()) as { model: string; dim: number; ids: number[] }
+      const m = await fetch('./catalog-emb.json')
+      if (!m.ok) return null
+      const meta = (await m.json()) as { model: string; dim: number; ids: number[]; rev?: string }
       if (meta.model !== MODEL || meta.dim !== DIM) return null
+      const b = await fetch(`./catalog-emb.bin?rev=${meta.rev ?? ''}`) // Revision im Namen: json und bin gehören immer zusammen
+      if (!b.ok) return null
       const buf = await b.arrayBuffer(), row = 4 + DIM, n = meta.ids.length
-      if (buf.byteLength < n * row) return null
+      if (buf.byteLength !== n * row) return null // exakt, sonst passt die Datei nicht zur Liste
       const scales = new Float32Array(n), q = new Int8Array(n * DIM)
       const dv = new DataView(buf), bytes = new Int8Array(buf)
       for (let i = 0; i < n; i++) { scales[i] = dv.getFloat32(i * row, true); q.set(bytes.subarray(i * row + 4, i * row + row), i * DIM) }
@@ -161,4 +163,10 @@ export async function searchCardsByVec(v: Float32Array, limit = 8): Promise<Card
     if (top.length < limit || score > floor) { top.push({ key: index.keys[i], score }); top.sort((a, b) => b.score - a.score); if (top.length > limit) top.pop(); floor = top[top.length - 1].score }
   }
   return top
+}
+
+/** Gibt es überhaupt einen Index (Karten oder Produkte)? Dann erst lohnt sich der Modell-Download. */
+export async function hasIndex(): Promise<boolean> {
+  const [a, b] = await Promise.all([loadIndex(), loadCardIndex()])
+  return !!(a || b)
 }

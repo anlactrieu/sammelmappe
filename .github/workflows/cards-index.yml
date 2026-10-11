@@ -31,7 +31,17 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           URL="https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
-          git clone --depth 1 --branch data "$URL" data 2>/dev/null || { mkdir data && git -C data init -q -b data && git -C data remote add origin "$URL"; }
+          set +e
+          git ls-remote --exit-code --heads "$URL" data >/dev/null 2>&1
+          RC=$?
+          set -e
+          if [ "$RC" = "0" ]; then
+            git clone --depth 1 --branch data "$URL" data          # Klonen darf nicht scheitern, sonst würde der Index überschrieben
+          elif [ "$RC" = "2" ]; then
+            mkdir data && git -C data init -q -b data && git -C data remote add origin "$URL"
+          else
+            echo "GitHub nicht erreichbar (Code $RC) – Abbruch, damit nichts überschrieben wird"; exit 1
+          fi
           git -C data config user.name "github-actions"
           git -C data config user.email "actions@github.com"
           # amend braucht mindestens einen Commit

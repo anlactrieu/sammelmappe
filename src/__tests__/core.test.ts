@@ -160,6 +160,12 @@ describe('db actions', () => {
     expect(items.find((i) => i.buyPrice === 50)?.qty).toBe(1)
     expect(totals(items.map((item) => ({ item, price: { value: 10, source: 'product' as const } }))).cost).toBe(50)
   })
+  it('Katalog-Hinzufügen überschreibt weder eigenen Preis noch eigenes Foto', async () => {
+    await addProduct({ name: 'Bundle', type: 'Booster', catalogId: 5, price: 80, priceSource: 'manual', image: 'eigen.jpg' }, 1)
+    await addProduct({ name: 'Bundle', type: 'Booster', catalogId: 5, price: 64.25, priceSource: 'catalog', image: 'katalog.jpg' }, 1)
+    const p = (await db.products.toArray())[0]
+    expect(p).toMatchObject({ price: 80, priceSource: 'manual', image: 'eigen.jpg' })
+  })
   it('Preis-Zeitstempel bleibt, wenn Preis gleich', async () => {
     await addProduct({ name: 'Box', type: 'Display', ean: '4006381333931', price: 10 }, 1)
     const p0 = (await db.products.toArray())[0]

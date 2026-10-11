@@ -14,7 +14,7 @@ permissions:
 
 concurrency:
   group: pages
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   deploy:
@@ -30,7 +30,11 @@ jobs:
           node-version: 20
           cache: npm
       - run: npm ci
-      - run: npm run catalog        # Produktkatalog erneuern (höchstens 1 Abruf/Tag, eigener User-Agent)
+      - name: Aktuellen Katalog von der Live-Seite holen (kein erneuter Abruf bei jedem Push)
+        run: curl -fsSL "https://anlactrieu.github.io/sammelmappe/catalog.json" -o public/catalog.json.live && mv public/catalog.json.live public/catalog.json || rm -f public/catalog.json.live
+      - name: Produktkatalog erneuern (nur nachts bzw. von Hand – tcgcsv.com erlaubt höchstens 1 Abruf/Tag)
+        if: github.event_name != 'push'
+        run: npm run catalog
       - run: npm run embeddings     # Bild-Vektoren für die Foto-Suche (nur neue Produkte werden berechnet)
       - name: Karten-Index vom Daten-Branch holen (falls vorhanden)
         run: |

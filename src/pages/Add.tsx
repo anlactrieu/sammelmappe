@@ -1,9 +1,9 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useQuickAdd } from '../components/quickAdd'
 import { LangChips } from '../components/LangChips'
 import { langTag, type Lang } from '../lib/lang'
 import { Link, useSearchParams } from 'react-router-dom'
-import { fetchCard, imageUrl, searchCards, type CardBrief } from '../services/tcgdex'
+import { fetchCard, imageUrl, loadSets, searchCards, type CardBrief } from '../services/tcgdex'
 import { Icon } from '../components/Icon'
 import { Empty, Segmented, useToast } from '../components/ui'
 import { AddCardSheet } from '../components/CardSheets'
@@ -23,6 +23,7 @@ export default function Add() {
   const [mode, setMode] = useState<'card' | 'product'>(params.get('mode') === 'product' ? 'product' : 'card')
   const [q, setQ] = useState('')
   const [res, setRes] = useState<CardBrief[] | null>(null)
+  const [setNames, setSetNames] = useState<Map<string, { name: string; order: number }>>(new Map())
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [card, setCard] = useState<CardRef | null>(null)
@@ -49,6 +50,10 @@ export default function Add() {
   const [prefill, setPrefill] = useState<{ c: CatalogProduct; eur: number | null } | undefined>()
   const [limit, setLimit] = useState(60)
 
+  useEffect(() => { loadSets(lang).then((s) => setSetNames(new Map(s.map((x, i) => [x.id, { name: x.name, order: i }])))).catch(() => undefined) }, [lang])
+  const apiSetId = (id: string) => id.replace(/^(en|ja|zh-tw|zh-cn):/, '').replace(/-[^-]+$/, '')
+  // Treffer: exakter Name zuerst, dann neuere Sets zuerst (die Set-Liste kommt von alt nach neu)
+  const sorted = useMemo(() => [...(res ?? [])].sort((a, b) => (Number(b.name.toLowerCase() === q.trim().toLowerCase()) - Number(a.name.toLowerCase() === q.trim().toLowerCase())) || ((setNames.get(apiSetId(b.id))?.order ?? -1) - (setNames.get(apiSetId(a.id))?.order ?? -1))), [res, setNames, q])
   useEffect(() => {
     if (q.trim().length < 2) { setRes(null); setError(''); return }
     const ctrl = new AbortController()
@@ -88,10 +93,10 @@ export default function Add() {
         {res && res.length === 0 && !loading && <Empty icon="🔍" title="Nichts gefunden" text="Probiere den deutschen Kartennamen (z. B. „Glurak“ statt „Charizard“)." />}
         {!res && !error && lang === 'de' && <p className="hint">Tipp: Alle Namen sind deutsch. Mit Scan geht’s noch schneller.</p>}
         <ul className="grid">
-          {(res ?? []).slice(0, limit).map((b) => (
+          {sorted.slice(0, limit).map((b) => (
             <li key={b.id} className="tile-wrap"><button className="quick" onClick={() => quickAdd(b.id)} aria-label={`${b.name} direkt hinzufügen`}>＋</button><button className="tile" onClick={() => pick(b)}>
               <div className="tile-img">{b.image ? <img src={imageUrl(b.image)} alt="" loading="lazy" /> : <span className="thumb-ph big"><Icon name="card" size={40} /></span>}</div>
-              <strong className="tile-name">{b.name}</strong><small className="muted tile-sub">{lang !== 'de' && <b className="langtag">{langTag(lang)}</b>} {b.id.replace(/^(en|ja|zh-tw|zh-cn):/, '').replace(/-[^-]+$/, '').toUpperCase()} · {b.localId}</small>
+              <strong className="tile-name">{b.name}</strong><small className="muted tile-sub">{lang !== 'de' && <b className="langtag">{langTag(lang)}</b>} {setNames.get(apiSetId(b.id))?.name ?? apiSetId(b.id).toUpperCase()} · {b.localId}</small>
             </button></li>))}
         </ul>
         {res && res.length > limit && <button className="btn" onClick={() => setLimit(limit + 60)}>Mehr laden ({res.length - limit} weitere)</button>}

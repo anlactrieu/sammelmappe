@@ -16,7 +16,7 @@ export function loadCatalog(force = false): Promise<Catalog | null> {
       const cat = (await r.json()) as Catalog
       const custom = await fetch('./custom-products.json', { cache: 'no-cache' }).then((x) => (x.ok ? (x.json() as Promise<CustomProduct[]>) : [])).catch(() => [] as CustomProduct[])
       return mergeCustom(cat, custom)
-    }).catch(() => null)
+    }).catch(() => null).then((c) => { if (!c) cache = null; return c })
   }
   return cache
 }

@@ -31,6 +31,7 @@ export default function Scan() {
   const [prefill, setPrefill] = useState<{ c: ProductHit['p']; eur: number | null } | undefined>()
   const [added, setAdded] = useState(0)
   const run = useRef(0)
+  const [picked, setPicked] = useState<number | null>(null)
 
   useEffect(() => () => { if (thumb) URL.revokeObjectURL(thumb) }, [thumb])
 
@@ -58,10 +59,10 @@ export default function Scan() {
   const next = () => {
     if (pos + 1 < queue.length) { setPos(pos + 1); analyze(queue[pos + 1]) } else { setPhase('idle'); setQueue([]); setPos(0); setRes(null) }
   }
-  const afterAdd = () => { setAdded((n) => n + 1); setCard(null); setPrefill(undefined); next() }
+  const afterAdd = () => { if (picked != null && res?.vec) learnPhoto(picked, res.vec).catch(() => undefined); setPicked(null); setAdded((n) => n + 1); setCard(null); setPrefill(undefined); next() }
 
   const pickProduct = (h: ProductHit) => {
-    if (res?.vec) learnPhoto(h.p.id, res.vec).catch(() => undefined)
+    setPicked(h.p.id)
     setPrefill({ c: h.p, eur: h.eur })
   }
 

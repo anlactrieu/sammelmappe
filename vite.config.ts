@@ -54,7 +54,7 @@ export default defineConfig({
           { urlPattern: /^https:\/\/(huggingface\.co|cdn-lfs[\w.-]*\.(hf|huggingface)\.co|[\w-]+\.hf\.co)\/.*/, handler: 'CacheFirst', options: { cacheName: 'models', expiration: { maxEntries: 20 }, cacheableResponse: { statuses: [200] } } },
           { urlPattern: /\/catalog\.json$/, handler: 'NetworkFirst', options: { cacheName: 'catalog', networkTimeoutSeconds: 5 } },
           { urlPattern: /^https:\/\/assets\.tcgdex\.net\/.*/, handler: 'CacheFirst',
-            options: { cacheName: 'card-images', expiration: { maxEntries: 300, maxAgeSeconds: 60 * 60 * 24 * 60 }, cacheableResponse: { statuses: [0, 200] } } },
+            options: { cacheName: 'card-images', expiration: { maxEntries: 300, maxAgeSeconds: 60 * 60 * 24 * 60 }, cacheableResponse: { statuses: [200] } } },
           { urlPattern: /^https:\/\/(cdn\.jsdelivr\.net|tessdata\.projectnaptha\.com)\/.*/, handler: 'CacheFirst',
             options: { cacheName: 'ocr-assets', expiration: { maxEntries: 20, maxAgeSeconds: 60 * 60 * 24 * 180 }, cacheableResponse: { statuses: [200] } } },
           { urlPattern: /^https:\/\/fonts\.(googleapis|gstatic)\.com\/.*/, handler: 'StaleWhileRevalidate',

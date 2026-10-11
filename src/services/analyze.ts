@@ -2,7 +2,7 @@ import { eanList, normalizeEan } from '../lib/parse'
 import type { CardRef } from '../types'
 import { detectEanInCanvas } from './barcode'
 import { catalogEur, loadCatalog, usdToEur, type CatalogProduct } from './catalog'
-import { embedCanvas, searchCardsByVec, searchProductsByVec } from './imageSearch'
+import { embedCanvas, hasIndex, searchCardsByVec, searchProductsByVec } from './imageSearch'
 import { fetchCard } from './tcgdex'
 
 export interface ProductHit { p: CatalogProduct; eur: number | null; score: number }
@@ -39,12 +39,13 @@ export async function analyzePhoto(photo: HTMLCanvasElement, onStatus: (s: strin
   // Barcode → Produkt (eigene Liste/Katalog)
   const eanHit = ean && cat ? cat.products.find((x) => eanList(x.ean).includes(ean)) : undefined
 
-  // Bildvergleich: ganzes Foto und Bildmitte, bester Wert je Treffer zählt
+  // Bildvergleich: ganzes Foto und zwei Bildmitten (72 % / 60 %, Karte liegt selten bildfüllend), bester Wert je Treffer zählt
   onStatus('Vergleiche mit Karten und Produkten …')
   const cardBest = new Map<string, number>(), prodBest = new Map<number, number>()
   let indexCards = false, indexProducts = false, vec: Float32Array | undefined
   try {
-    for (const img of [photo, centerCrop(photo)]) {
+    if (!(await hasIndex())) throw new Error('kein Index')
+    for (const img of [photo, centerCrop(photo, 0.72), centerCrop(photo, 0.6)]) {
       const v = await embedCanvas(img, (pct) => onStatus(`Lade Bilderkennung (einmalig): ${Math.round(pct)} %`))
       vec ??= v
       const [ch, ph] = await Promise.all([searchCardsByVec(v, 8), searchProductsByVec(v, 8)])
@@ -56,7 +57,7 @@ export async function analyzePhoto(photo: HTMLCanvasElement, onStatus: (s: strin
   const certain: CardRef[] = []
   const cardKeys = Array.from(cardBest, ([k, s]) => ({ k, s })).sort((a, b) => b.s - a.s).slice(0, 6)
   const known = new Set(certain.map((c) => c.id))
-  const imgCards = (await Promise.all(cardKeys.filter((x) => !known.has(x.k)).map((x) => fetchCard(x.k, undefined, false).catch(() => null)))).filter((c): c is CardRef => !!c)
+  const imgCards = (await Promise.all(cardKeys.filter((x) => !known.has(x.k)).map((x) => timeout(fetchCard(x.k, undefined, false), 8000, null).catch(() => null)))).filter((c): c is CardRef => !!c)
   const cards = [...certain, ...imgCards].slice(0, 8)
 
   const prodList = Array.from(prodBest, ([id, s]) => ({ id, s })).sort((a, b) => b.s - a.s).slice(0, 6)

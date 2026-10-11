@@ -27,12 +27,24 @@ console.log(`${have.size} Karten-Vektoren vorhanden`)
 
 // Alle Karten mit Bild einsammeln
 const todo = []
+const enImages = new Map()
+for (const s of (await get(`${API}/en/sets`)) ?? []) {
+  await sleep(40)
+  for (const c of (await get(`${API}/en/sets/${encodeURIComponent(s.id)}`))?.cards ?? []) if (c.image) enImages.set(c.id, c.image)
+}
 for (const lang of LANGS) {
   const sets = (await get(`${API}/${lang}/sets`)) ?? []
   for (const s of sets) {
     await sleep(40)
     const d = await get(`${API}/${lang}/sets/${encodeURIComponent(s.id)}`)
-    for (const c of d?.cards ?? []) if (c.image && !have.has(key(lang, c.id))) todo.push({ k: key(lang, c.id), url: `${c.image}/low.webp` })
+    for (const c of d?.cards ?? []) {
+      if (have.has(key(lang, c.id))) continue
+      if (c.image) todo.push({ k: key(lang, c.id), url: `${c.image}/low.webp` })
+      else if (lang === 'de') { // deutsche Karte ohne Bild: Bild der englischen Karte mit gleicher ID (gleiches Motiv)
+        const en = enImages.get(c.id)
+        if (en) todo.push({ k: key(lang, c.id), url: `${en}/low.webp` })
+      }
+    }
   }
   console.log(`${lang}: ${todo.length} neue Karten gesamt`)
 }

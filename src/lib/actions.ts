@@ -35,9 +35,14 @@ async function addProductTx(p: { name: string; type: ProductType; ean?: string; 
   const existing = (p.ean ? await db.products.where('ean').equals(p.ean).first() : undefined)
     ?? (p.catalogId != null ? (await db.products.toArray()).find((x) => x.catalogId === p.catalogId) : undefined)
   const id = existing?.id ?? productId(p.name, p.ean)
-  const product: Product = { ...(existing ?? {}), id, name: existing?.name ?? p.name, type: existing?.type ?? p.type, ean: p.ean ?? existing?.ean, setName: p.setName ?? existing?.setName, image: p.image ?? existing?.image, region: p.region ?? existing?.region, catalogId: p.catalogId ?? existing?.catalogId,
-    priceSource: p.price != null && p.price !== existing?.price ? p.priceSource ?? 'manual' : existing?.priceSource ?? p.priceSource,
-    price: p.price ?? existing?.price, priceUpdated: p.price != null && p.price !== existing?.price ? p.priceUpdated ?? Date.now() : existing?.priceUpdated, custom: true }
+  const product: Product = { ...(existing ?? {}), id, name: existing?.name ?? p.name, type: existing?.type ?? p.type, ean: p.ean ?? existing?.ean, setName: p.setName ?? existing?.setName, image: existing?.image ?? p.image, region: p.region ?? existing?.region, catalogId: p.catalogId ?? existing?.catalogId,
+    // Ein vom Nutzer gesetzter Preis wird beim erneuten Hinzufügen aus dem Katalog nie überschrieben
+    ...(existing?.priceSource === 'manual' && existing.price != null && p.priceSource !== 'manual'
+      ? { price: existing.price, priceSource: 'manual' as const, priceUpdated: existing.priceUpdated }
+      : {
+        priceSource: p.price != null && p.price !== existing?.price ? p.priceSource ?? 'manual' : existing?.priceSource ?? p.priceSource,
+        price: p.price ?? existing?.price, priceUpdated: p.price != null && p.price !== existing?.price ? p.priceUpdated ?? Date.now() : existing?.priceUpdated }),
+    custom: true }
   await db.products.put(product)
   const item = (await db.items.where('refId').equals(id).toArray()).find((i) => (i.buyPrice == null) === (buyPrice == null))
   if (item?.id != null) {

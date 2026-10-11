@@ -12,4 +12,4 @@ npm run build       # Produktions-Build (PWA)
 ```
 - Preise: TCGdex (Cardmarket EUR), Auto-Update bei App-Start/Rückkehr wenn >24 h, manuell per „Preise aktualisieren“.
 - Daten liegen lokal (IndexedDB). Backup: Profil → JSON/CSV.
-- Karten-Scan: Kartennummer unten am Rand („025/198“) muss im Rahmen lesbar sein; Fallback: Nummer eintippen oder Namenssuche.
+- Foto-Scan: ein Foto von Karte oder Produkt (Kamera oder Galerie) – die App erkennt es per Bildvergleich in allen Sprachen, plus Barcode im Bild. Fallback: Namenssuche / „Schnell erfassen“. Technik: siehe ARCHITEKTUR.md.
