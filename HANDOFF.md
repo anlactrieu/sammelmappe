@@ -41,3 +41,24 @@ Technische Gesamtdoku: `ARCHITEKTUR.md`. Scan ist nur noch Foto (Nummer-/Live-Sc
 - JP-Bilder-Fallback ist umgesetzt: TCGCSV-Katalog (`cards-ja.json`, live 27.920 Karten/402 Sets, US-Preis in Euro, Bild tcgplayer-CDN) + Dubletten-Abgleich mit TCGdex (`src/services/jaCards.ts`). Der Punkt „JP-Bilder fehlen" oben ist damit erledigt.
 - Foto-Index (Branch `data`, `cards-emb.*`) hatte beim Lauf vom 12.10. 0 Einträge `ja:cat-…` (Log: „japanische Katalogkarten: 0 neu", vermutlich war `cards-ja.json` live noch nicht deployt). Neuer Lauf `cards-index.yml` am 13.10. 18:27 UTC per workflow_dispatch gestartet (Run 38446924096).
 - Danach prüfen: Index enthält `ja:cat-*`; Foto-Test mit einer JP-Karte ohne TCGdex-Bild, plus Necrozma SM106, 079/198, 081/198 (SV1 ist de/en, nicht JP).
+
+
+## Stand 2026-10-13 (abends) – Juice-Feature
+**Stand:** Juice nach dem Hinzufügen umgesetzt und gepusht (SPEC.md-Abschnitt „Juice"). tsc ok, Vitest 57/57, Build ok. Index-Lauf `cards-index.yml` (Run 38446924096) wurde gestartet – Ergebnis noch nicht geprüft (Index soll `ja:cat-*` enthalten).
+
+**Letzte 3 Entscheidungen**
+1. Overlay nur beim Einzel-Hinzufügen (`AddCardSheet`), Schnell-Modus nur Flug + „+N" am Tab – damit Dauer-Erfassen nicht bremst.
+2. Meilenstein-Logik als reine Funktion in `src/lib/milestones.ts` (`findMilestone`, `isHighlight`, `collectionStats`) – testbar ohne UI; Priorität Set > Gesamtzahl > erstes Holo.
+3. Keine Bibliothek: Flug per Web Animations API, Konfetti als kleines Canvas, Tab per `document.querySelector('.tabbar a[href$="/collection"]')` – keine Änderung an `App.tsx`-Navigation nötig.
+
+**Offen**
+- Echte Handy-Prüfung der Animationen (Konfetti/Glanz nicht visuell bestätigt).
+- `/code-review` über den Diff nicht gelaufen.
+- Wunschlisten-Treffer ohne eigenen Effekt.
+- Index-Lauf prüfen, dann JP-Foto-Test (siehe oben).
+
+**Dateien:** `src/components/Celebrate.tsx` (`CelebrateProvider`, `useCelebrate`), `src/lib/milestones.ts`, `src/components/quickAdd.ts`, `src/components/CardSheets.tsx` (`AddCardSheet.save`), Styles am Ende von `src/styles.css`.
+
+**Learnings**
+- Das Browser-Pane meldet `prefers-reduced-motion: reduce` → Animationen sind dort aus; zum Testen `window.matchMedia` per Skript überschreiben. WAAPI (`element.animate`) wird vom globalen CSS-`animation:none` nicht gestoppt, darum prüft `Celebrate.tsx` `reduced()` selbst.
+- Timer im verdeckten Browser-Pane laufen gedrosselt (javascript_tool-Timeouts bei langen `await`-Schleifen).
