@@ -4,7 +4,7 @@ import { catalogImageFor, jaCardRef, searchJaCards, type JaCatalog } from '../se
 import { eanList, isValidEan, parseNumberQuery, parseQty, totalVariants, normalizeEan, normalizeLocalId, parseCardText, totalCandidates } from '../lib/parse'
 import { cardBasePrice, priceChange, setFx, totals, unitPrice } from '../lib/pricing'
 import { formatEur, isBadAmount, parseEur, relativeTime } from '../lib/format'
-import { addCard, addProduct, setProductPrice } from '../lib/actions'
+import { addCard, addProduct, repairItemLanguages, setProductPrice } from '../lib/actions'
 import { exportCsv, exportJson, importJson } from '../services/backup'
 import { nameSuggestions } from '../lib/photo'
 import { countdownLabel, daysUntil, formatDate, upcoming } from '../services/releases'
@@ -347,5 +347,16 @@ describe('Sprach-Migration', () => {
     const json = JSON.stringify({ app: 'sammelmappe', items: [{ kind: 'card', refId: 'x', qty: 1, condition: 'NM', variant: 'normal', language: 'JP', addedAt: 1 }], cards: [], products: [] })
     await db.items.clear(); await importJson(json, 'replace')
     expect((await db.items.toArray())[0].language).toBe('JA')
+  })
+})
+
+describe('repairItemLanguages', () => {
+  it('setzt DE bei JA-Karte auf JA, lässt deutsche Karten', async () => {
+    await db.items.clear(); await db.cards.clear()
+    await db.cards.bulkPut([{ id: 'ja:A-1', lang: 'ja', name: 'a', localId: '1', setId: 'A', setName: 'A' }, { id: 'de-1', name: 'b', localId: '1', setId: 'd', setName: 'd' }] as any)
+    const base = { kind: 'card', qty: 1, condition: 'NM', variant: 'normal', language: 'DE', addedAt: 1 }
+    await db.items.bulkAdd([{ ...base, refId: 'ja:A-1' }, { ...base, refId: 'de-1' }] as any)
+    expect(await repairItemLanguages()).toBe(1)
+    expect((await db.items.toArray()).map((i) => i.language).sort()).toEqual(['DE', 'JA'])
   })
 })

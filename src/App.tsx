@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import { HashRouter, NavLink, Route, Routes, useLocation } from 'react-router-dom'
 import { ToastProvider } from './components/ui'
+import { repairItemLanguages } from './lib/actions'
 import { backfillJaImages } from './services/jaCards'
 import { CelebrateProvider } from './components/Celebrate'
 import { ErrorBoundary } from './components/ErrorBoundary'
@@ -27,6 +28,7 @@ function Shell() {
     const run = () => { if (document.visibilityState === 'visible') syncIfDue().catch(() => undefined) }
     run()
     backfillJaImages().catch(() => undefined)
+    repairItemLanguages().catch(() => undefined)
     navigator.storage?.persist?.().catch(() => undefined) // iOS/Safari darf lokale Daten sonst bei Platzmangel räumen
     document.addEventListener('visibilitychange', run); window.addEventListener('online', run)
     return () => { document.removeEventListener('visibilitychange', run); window.removeEventListener('online', run) }

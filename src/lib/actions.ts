@@ -1,4 +1,5 @@
 import { db } from '../db'
+import { langTag } from './lang'
 import type { CardRef, Condition, Item, Product, ProductType, Variant } from '../types'
 
 export interface AddOpts { qty: number; condition: Condition; variant: Variant; language: string; buyPrice?: number; manualPrice?: number; graded?: Item['graded'] }
@@ -76,3 +77,13 @@ export async function setProductPrice(productId: string, price: number | undefin
 export async function removeItem(id: number) { await db.items.delete(id) }
 
 export const cardmarketSearchUrl = (q: string) => `https://www.cardmarket.com/de/Pokemon/Products/Search?searchString=${encodeURIComponent(q)}`
+
+/** Einträge japanischer/chinesischer/englischer Karten, die fälschlich „DE" tragen, bekommen das Kürzel ihrer Kartensprache. */
+export async function repairItemLanguages(): Promise<number> {
+  const items = (await db.items.toArray()).filter((i) => i.kind === 'card' && i.language === 'DE')
+  if (!items.length) return 0
+  const cards = new Map((await db.cards.bulkGet([...new Set(items.map((i) => i.refId))])).filter((c): c is CardRef => !!c).map((c) => [c.id, c]))
+  let n = 0
+  for (const i of items) { const lang = cards.get(i.refId)?.lang; if (lang && i.id != null) { await db.items.update(i.id, { language: langTag(lang) }); n++ } }
+  return n
+}
