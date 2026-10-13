@@ -10,6 +10,7 @@ import { AddCardSheet } from '../components/CardSheets'
 import { LangChips } from '../components/LangChips'
 import { parseKey, type Lang } from '../lib/lang'
 import type { CardRef, SetRef } from '../types'
+import { inBaseId } from '../lib/milestones'
 
 /** Grundset = rein numerische Nummer ≤ offizielle Kartenzahl (TG/GG/Promos zählen nicht). */
 
