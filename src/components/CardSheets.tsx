@@ -8,6 +8,7 @@ import { addCard, cardmarketSearchUrl, removeItem, setProductPrice, type AddOpts
 import type { CardRef, Condition, Item, Product, Variant } from '../types'
 import { PriceLine, Sheet, useToast } from './ui'
 import { Lightbox } from './Lightbox'
+import { useCelebrate } from './Celebrate'
 import { langLabel, langTag } from '../lib/lang'
 import { cardNames } from '../services/names'
 
@@ -60,6 +61,7 @@ function VariantHelp() {
 export function AddCardSheet({ card, onClose, onAdded, compare }: { card: CardRef | null; onClose: () => void; onAdded?: () => void; compare?: string }) {
   const [zoom, setZoom] = useState(false)
   const toast = useToast()
+  const celebrate = useCelebrate()
   const [qty, setQty] = useState(1)
   const [condition, setCondition] = useState<Condition>('NM')
   const [variant, setVariant] = useState<Variant>('normal')
@@ -83,8 +85,7 @@ export function AddCardSheet({ card, onClose, onAdded, compare }: { card: CardRe
     if (isBadAmount(buy) || isBadAmount(manual)) return toast('Bitte gültige Beträge eingeben, z. B. 12,50')
     setSaving(true)
     try {
-      await addCard(card, opts())
-      toast(`${qty}× ${cardNames(card).name}${card.lang ? ' (' + langTag(card.lang) + ')' : ''} hinzugefügt`)
+      await celebrate(card, { qty, condition, variant }, () => addCard(card, opts()))
       onAdded?.()
       if (andClose) onClose(); else { setQty(1); setBuy(''); setManual('') }
     } finally { setSaving(false) }

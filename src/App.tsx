@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import { HashRouter, NavLink, Route, Routes, useLocation } from 'react-router-dom'
 import { ToastProvider } from './components/ui'
+import { CelebrateProvider } from './components/Celebrate'
 import { ErrorBoundary } from './components/ErrorBoundary'
 import Home from './pages/Home'
 import Collection from './pages/Collection'
@@ -74,5 +75,5 @@ function Shell() {
 }
 
 export default function App() {
-  return <HashRouter><ToastProvider><Shell /></ToastProvider></HashRouter>
+  return <HashRouter><ToastProvider><CelebrateProvider><Shell /></CelebrateProvider></ToastProvider></HashRouter>
 }

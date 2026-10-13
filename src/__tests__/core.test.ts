@@ -10,6 +10,7 @@ import { nameSuggestions } from '../lib/photo'
 import { countdownLabel, daysUntil, formatDate, upcoming } from '../services/releases'
 import { frameToVideo, numberStrips } from '../lib/strips'
 import { mapCard } from '../services/tcgdex'
+import { findMilestone, isHighlight } from '../lib/milestones'
 import { cardKey, langTag, parseKey } from '../lib/lang'
 import { cardNames } from '../services/names'
 import { catalogEur, catalogTime, guessType, mergeCustom, searchCatalog, searchLoose, toEur } from '../services/catalog'
@@ -300,5 +301,23 @@ describe('Sprachen', () => {
   it('mapCard setzt Sprache und Schlüssel', () => {
     const c = mapCard({ id: 'SV2a-025', localId: '025', name: 'ピカチュウ', dexId: [25], set: { id: 'SV2a', name: '151', cardCount: { official: 165 } } }, 'ja')
     expect(c).toMatchObject({ id: 'ja:SV2a-025', lang: 'ja', dexId: 25, setId: 'SV2a', setTotal: 165 })
+  })
+})
+
+describe('Meilensteine', () => {
+  const card = { setName: 'Test', setTotal: 100 }
+  const st = (total: number, setOwned: number, hasHolo = true) => ({ total, setOwned, cardQty: 1, hasHolo })
+  it('Set-Schwelle schlägt Gesamtzahl', () => {
+    expect(findMilestone(st(9, 24), st(10, 25), card, 'normal')?.title).toBe('25 % vom Set')
+  })
+  it('Set komplett', () => { expect(findMilestone(st(50, 99), st(51, 100), card, 'normal')?.title).toBe('Set komplett!') })
+  it('Gesamtzahl', () => { expect(findMilestone(st(99, 3), st(100, 4), card, 'normal')?.title).toBe('100. Karte!') })
+  it('Duplikat im Set zählt nicht fürs Set', () => { expect(findMilestone(st(20, 25), st(21, 25), card, 'normal')).toBeNull() })
+  it('erstes Holo', () => { expect(findMilestone(st(3, 1, false), st(4, 2, true), card, 'holo')?.kind).toBe('holo') })
+  it('kein Meilenstein', () => { expect(findMilestone(st(3, 1), st(4, 2), card, 'normal')).toBeNull() })
+  it('Highlight nach Preis oder Seltenheit', () => {
+    expect(isHighlight({ rarity: 'Common' }, 25)).toBe(true)
+    expect(isHighlight({ rarity: 'Illustration rare' }, 2)).toBe(true)
+    expect(isHighlight({ rarity: 'Common' }, 2)).toBe(false)
   })
 })

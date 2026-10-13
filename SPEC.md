@@ -88,6 +88,6 @@ MVP umgesetzt (siehe README.md für Start/Test).
 - Muss: `prefers-reduced-motion` respektieren (bereits globales Abschalten in `styles.css:178` → Overlay bleibt statisch), kostenlos/ohne neue Dienste, Mobile-first, `frontend-design`/`ui-ux-pro-max` anwenden.
 - Tests: Meilenstein-Berechnung als reine Funktion mit Vitest; UI im Browser-Pane (Mobile) prüfen.
 
-**Offen:** Schwelle für „Highlight"; ob der Wunschliste-Treffer („Wunschkarte erfüllt") eigenen Effekt bekommt.
+**Status 2026-10-13: umgesetzt** (`src/components/Celebrate.tsx`, `src/lib/milestones.ts`; Highlight ab 20 € oder seltener Seltenheit). Offen: Wunschlisten-Treffer ohne eigenen Effekt; Animationen nur mit künstlich abgeschaltetem reduced-motion im Browser-Pane geprüft, echtes Handy steht aus.
 
 **Vorgehen:** Umsetzung in frischer Session mit dieser Spec als Referenz.
