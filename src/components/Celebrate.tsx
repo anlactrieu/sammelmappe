@@ -7,7 +7,7 @@ import { collectionStats, findMilestone, isHighlight, type Milestone, type Stats
 import { cardNames } from '../services/names'
 import type { CardRef, Condition, Variant } from '../types'
 
-export interface CelebrateOpts { qty: number; condition: Condition; variant: Variant }
+export interface CelebrateOpts { qty: number; condition: Condition; variant: Variant; manualPrice?: number }
 type Run = (card: CardRef, opts: CelebrateOpts, add: () => Promise<unknown>, light?: boolean) => Promise<void>
 const Ctx = createContext<Run | null>(null)
 /** Karte hinzufügen und feiern: `add` führt das eigentliche Speichern aus (Fehler werden weitergereicht). */
@@ -57,12 +57,14 @@ interface Show { card: CardRef; qty: number; isNew: boolean; owned: number; setO
 export function CelebrateProvider({ children }: { children: ReactNode }) {
   const [show, setShow] = useState<Show | null>(null)
   const counter = useRef(0)
+  const done = useCallback(() => setShow(null), [])
   const run = useCallback<Run>(async (card, o, add, light) => {
     let before: Stats | null = null
     if (!light) try { before = await collectionStats(card) } catch { /* ohne Kontext weiter */ }
     await add()
-    const unit = (cardBasePrice(card, o.variant)?.value ?? catalogCardEur(card) ?? null)
-    const delta = unit != null ? unit * CONDITION_FACTOR[o.condition] * o.qty : null
+    // Eigenpreis gilt pro Stück und gewinnt (kein Zustandsabschlag), sonst Katalogpreis × Zustandsfaktor
+    const unit = o.manualPrice ?? (cardBasePrice(card, o.variant)?.value ?? catalogCardEur(card) ?? null)
+    const delta = unit != null ? unit * (o.manualPrice != null ? 1 : CONDITION_FACTOR[o.condition]) * o.qty : null
     if (light) { // Schnell-Modus: nur Flug + Zähler, nichts, was bremst
       const w = Math.min(120, innerWidth * 0.3), h = w * 1.4
       if (card.image) flyToTab(imageUrl(card.image, 'low'), new DOMRect(innerWidth / 2 - w / 2, innerHeight * 0.45 - h / 2, w, h), o.qty); else pulseTab(o.qty)
@@ -74,7 +76,7 @@ export function CelebrateProvider({ children }: { children: ReactNode }) {
     setShow({ card, qty: o.qty, isNew: !before || before.cardQty === 0, owned: after?.cardQty ?? o.qty, setOwned: after?.setOwned ?? 0, value: unit, delta,
       highlight: isHighlight(card, unit) || !!milestone, milestone, n: ++counter.current })
   }, [])
-  return <Ctx.Provider value={run}>{children}{show && <Overlay key={show.n} s={show} onDone={() => setShow(null)} />}</Ctx.Provider>
+  return <Ctx.Provider value={run}>{children}{show && <Overlay key={show.n} s={show} onDone={done} />}</Ctx.Provider>
 }
 
 function Overlay({ s, onDone }: { s: Show; onDone: () => void }) {

@@ -85,7 +85,7 @@ export function AddCardSheet({ card, onClose, onAdded, compare }: { card: CardRe
     if (isBadAmount(buy) || isBadAmount(manual)) return toast('Bitte gültige Beträge eingeben, z. B. 12,50')
     setSaving(true)
     try {
-      await celebrate(card, { qty, condition, variant }, () => addCard(card, opts()))
+      await celebrate(card, { qty, condition, variant, manualPrice: parseEur(manual) }, () => addCard(card, opts()))
       onAdded?.()
       if (andClose) onClose(); else { setQty(1); setBuy(''); setManual('') }
     } finally { setSaving(false) }

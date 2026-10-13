@@ -1,6 +1,9 @@
 import { db } from '../db'
 import type { CardRef, Variant } from '../types'
 
+/** Grundset: nur Nummern ≤ offizielle Kartenzahl (ohne Secret Rares). */
+export const inBaseId = (localId: string, official: number) => /^\d+$/.test(localId) && parseInt(localId, 10) <= official
+
 export const HIGHLIGHT_EUR = 20
 const HIGHLIGHT_RARITY = /ultra|secret|illustration|hyper|rainbow|gold|special|shiny|mega|vmax|vstar|ace spec/i
 const COUNT_STEPS = [10, 25, 50, 100, 250, 500, 1000]
@@ -33,9 +36,11 @@ export function findMilestone(before: Stats, after: Stats, card: Pick<CardRef, '
 /** Sammlungsstand aus Dexie: Stückzahl gesamt, verschiedene Karten im Set, Menge dieser Karte, Holo vorhanden. */
 export async function collectionStats(card: CardRef): Promise<Stats> {
   const items = (await db.items.toArray()).filter((i) => i.kind === 'card')
-  const sets = new Map((await db.cards.where('setId').equals(card.setId).toArray()).map((c) => [c.id, c.lang ?? 'de'] as const))
   const lang = card.lang ?? 'de'
-  const inSet = new Set(items.filter((i) => sets.get(i.refId) === lang).map((i) => i.refId))
+  // nur Grundset zählen (wie die Sets-Seite), sonst überschreiten Secret Rares die offizielle Kartenzahl
+  const base = new Set((await db.cards.where('setId').equals(card.setId).toArray())
+    .filter((c) => (c.lang ?? 'de') === lang && (!card.setTotal || inBaseId(c.localId, card.setTotal))).map((c) => c.id))
+  const inSet = new Set(items.filter((i) => base.has(i.refId)).map((i) => i.refId))
   return {
     total: items.reduce((s, i) => s + i.qty, 0),
     setOwned: inSet.size,

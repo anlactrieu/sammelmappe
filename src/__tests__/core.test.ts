@@ -10,7 +10,7 @@ import { nameSuggestions } from '../lib/photo'
 import { countdownLabel, daysUntil, formatDate, upcoming } from '../services/releases'
 import { frameToVideo, numberStrips } from '../lib/strips'
 import { mapCard } from '../services/tcgdex'
-import { findMilestone, isHighlight } from '../lib/milestones'
+import { collectionStats, findMilestone, isHighlight } from '../lib/milestones'
 import { cardKey, langTag, parseKey } from '../lib/lang'
 import { cardNames } from '../services/names'
 import { catalogEur, catalogTime, guessType, mergeCustom, searchCatalog, searchLoose, toEur } from '../services/catalog'
@@ -319,5 +319,17 @@ describe('Meilensteine', () => {
     expect(isHighlight({ rarity: 'Common' }, 25)).toBe(true)
     expect(isHighlight({ rarity: 'Illustration rare' }, 2)).toBe(true)
     expect(isHighlight({ rarity: 'Common' }, 2)).toBe(false)
+  })
+})
+
+describe('collectionStats', () => {
+  beforeEach(async () => { await db.items.clear(); await db.cards.clear() })
+  const mk = (id: string, localId: string, lang?: 'en'): any => ({ id, name: id, localId, setId: 's1', setName: 'S', setTotal: 10, lang })
+  const own = async (c: any, variant = 'normal') => { await db.cards.put(c); await db.items.add({ kind: 'card', refId: c.id, qty: 2, condition: 'NM', variant, language: 'DE', addedAt: 1 } as any) }
+  it('zählt nur Grundset und Sprache, Holo und Mengen', async () => {
+    const a = mk('s1-1', '1'), secret = mk('s1-11', '11'), en = mk('en-s1-1', '1', 'en')
+    await own(a); await own(secret, 'holo'); await own(en)
+    const st = await collectionStats(a)
+    expect(st).toMatchObject({ total: 6, setOwned: 1, cardQty: 2, hasHolo: true })
   })
 })

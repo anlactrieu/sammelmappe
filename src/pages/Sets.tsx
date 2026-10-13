@@ -12,7 +12,6 @@ import { parseKey, type Lang } from '../lib/lang'
 import type { CardRef, SetRef } from '../types'
 
 /** Grundset = rein numerische Nummer ≤ offizielle Kartenzahl (TG/GG/Promos zählen nicht). */
-const inBaseId = (localId: string, official: number) => /^\d+$/.test(localId) && parseInt(localId, 10) <= official
 
 export function SetList() {
   const [params, setParams] = useSearchParams()
