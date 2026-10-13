@@ -210,7 +210,7 @@ export function ItemSheet({ item, card, product, onClose }: { item: Item | null;
         <div className="field" role="group">Zustand<div className="chips tight">{CONDITIONS.map((c) => (
           <button key={c} aria-pressed={c === f.condition} className={`chip${c === f.condition ? ' on' : ''}`} onClick={() => setF({ ...f, condition: c })}>{c}</button>))}</div><ConditionHelp /></div>
         <label className="field">Sprache
-          <select value={f.language} onChange={(e) => setF({ ...f, language: e.target.value })}>{LANGS.map((l) => <option key={l}>{l}</option>)}</select></label>
+          <select value={f.language} onChange={(e) => setF({ ...f, language: e.target.value })}>{[...new Set([f.language, ...LANGS])].map((l) => <option key={l}>{l}</option>)}</select></label>
         <div className="row2">
           <label className="field">Grading
             <select value={gradeCo} onChange={(e) => setGradeCo(e.target.value)}>
