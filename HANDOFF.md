@@ -62,3 +62,27 @@ Technische Gesamtdoku: `ARCHITEKTUR.md`. Scan ist nur noch Foto (Nummer-/Live-Sc
 **Learnings**
 - Das Browser-Pane meldet `prefers-reduced-motion: reduce` → Animationen sind dort aus; zum Testen `window.matchMedia` per Skript überschreiben. WAAPI (`element.animate`) wird vom globalen CSS-`animation:none` nicht gestoppt, darum prüft `Celebrate.tsx` `reduced()` selbst.
 - Timer im verdeckten Browser-Pane laufen gedrosselt (javascript_tool-Timeouts bei langen `await`-Schleifen).
+
+
+## Stand 2026-10-13 (Review-Checkpoint)
+**Stand:** `/code-review` (high) über das Juice-Feature gelaufen, 7 Befunde, noch keiner behoben. Index-Lauf `cards-index.yml` (Run 38446924096) lief zuletzt noch; Ergebnis (`ja:cat-*` im Index) steht aus.
+
+**Letzte 3 Entscheidungen**
+1. Review-Befunde erst nach Rückfrage beheben (User hat noch nicht geantwortet) – 1–3 und 7 sind echte Fehler, 4–6 klein.
+2. Index-Lauf nicht gepollt, später erneut prüfen (läuft mehrere Stunden).
+3. HANDOFF.md nur anhängen statt umschreiben, damit der Verlauf lesbar bleibt.
+
+**Offene TODOs (Review-Befunde)**
+1. `collectionStats` (`src/lib/milestones.ts`): Set-Zähler nur Grundset zählen (`inBaseId(localId, official)` wie `Sets.tsx`), sonst „203/198“ / zu frühes „Set komplett!".
+2. `CelebrateProvider`: `onDone` stabil (useCallback/Ref), sonst setzt Provider-Re-Render Timer + Konfetti zurück.
+3. Wertzuwachs im Overlay: `manualPrice` aus dem Sheet berücksichtigen (`CelebrateOpts` erweitern), Highlight-Prüfung ebenso.
+4. `after`-Stats aus `before` ableiten statt zweiter Voll-Abfrage.
+5. `pulseTab`: schnelle Folge-Adds (+N hochzählen, Timer pro Aufruf).
+6. Overlay per Tastatur schließbar (Escape, Rolle/Fokus).
+7. Test für `collectionStats` (zwei Sprachen, Secret Rare).
+- Außerdem: echte Handy-Prüfung der Animationen, Wunschlisten-Treffer-Effekt, Index-Lauf prüfen.
+
+**Dateien:** `src/lib/milestones.ts`, `src/components/Celebrate.tsx`, `src/__tests__/core.test.ts` (Block „Meilensteine"), `src/pages/Sets.tsx` (`baseCount`/`inBaseId` als Vorbild).
+
+**Learnings**
+- Set-Fortschritt muss überall dieselbe Definition nutzen (Grundset = Nummer ≤ offizielle Kartenzahl); `setTotal` ist die offizielle Zahl, Secret Rares liegen darüber.
