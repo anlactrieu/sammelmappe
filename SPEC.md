@@ -70,3 +70,24 @@ Angezeigte Werte sind **Cardmarket-Richtwerte** auf Produktebene (Trend), nicht 
 
 ## Status
 MVP umgesetzt (siehe README.md für Start/Test).
+
+
+## Feature: „Juice" nach dem Hinzufügen einer Karte (2026-10-13)
+**Ziel:** Nach dem Anlegen soll sich das Hinzufügen belohnend anfühlen (bisher nur Toast in `AddCardSheet`/`quickAdd.ts`).
+
+**Entscheidungen (AskUserQuestion):**
+- Enthalten: (1) Karten-Flug in die Sammlung, (2) Konfetti/Glanz bei Highlights, (3) Erfolgs-Karte mit Kontext. Kein Sound/Haptik.
+- Intensität: voll beim Einzel-Hinzufügen (`AddCardSheet`); im Schnell-Modus (`Quick.tsx`/`quickAdd.ts`) nur kurzer Flug + Zähler, nichts, was bremst.
+- Meilensteine: ja – Set-Fortschritt (z. B. 25/50/75/100 %), Gesamtzahl (z. B. 100. Karte), erstes Holo/Highlight mit Sondermoment.
+
+**Umsetzung (Vorschlag):**
+- Erfolgs-Overlay statt Toast beim Einzel-Hinzufügen: große Karte, Name, Wert, „Neu im Set X: n/total" mit Fortschrittsbalken, Sammlungswert +X €. Auto-Schließen nach ~2,5 s, per Tap sofort.
+- Flug: Kartenbild skaliert zum Sammlungs-Tab; Tab pulsiert, Zähler springt hoch (CSS-Transform/Web Animations, keine Library).
+- Highlight-Kriterium: seltene Seltenheit oder Preis ≥ Schwelle (Konstante, z. B. 20 €) → Glanz-Sweep/Konfetti (Canvas, klein, selbst geschrieben).
+- Meilensteine: nach `addCard` aus Dexie berechnen (Set-Anteil vorher/nachher, Gesamtanzahl); höchster erreichter Meilenstein ersetzt den Standard-Text.
+- Muss: `prefers-reduced-motion` respektieren (bereits globales Abschalten in `styles.css:178` → Overlay bleibt statisch), kostenlos/ohne neue Dienste, Mobile-first, `frontend-design`/`ui-ux-pro-max` anwenden.
+- Tests: Meilenstein-Berechnung als reine Funktion mit Vitest; UI im Browser-Pane (Mobile) prüfen.
+
+**Offen:** Schwelle für „Highlight"; ob der Wunschliste-Treffer („Wunschkarte erfüllt") eigenen Effekt bekommt.
+
+**Vorgehen:** Umsetzung in frischer Session mit dieser Spec als Referenz.
