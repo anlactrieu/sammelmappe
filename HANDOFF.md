@@ -86,3 +86,24 @@ Technische Gesamtdoku: `ARCHITEKTUR.md`. Scan ist nur noch Foto (Nummer-/Live-Sc
 
 **Learnings**
 - Set-Fortschritt muss überall dieselbe Definition nutzen (Grundset = Nummer ≤ offizielle Kartenzahl); `setTotal` ist die offizielle Zahl, Secret Rares liegen darüber.
+
+
+## Stand 2026-10-13 (spät) – Bilder-Fallback & Sprache
+**Stand:** Alles gepusht, tsc ok, Vitest 59/59, Build ok. Juice-Review-Befunde 1–3 und 7 behoben; 4–6 bewusst offen (doppelte `collectionStats`-Abfrage, überlagerte „+1" bei schnellen Taps, Overlay nicht per Tastatur schließbar). Index-Lauf `cards-index.yml` (Run 38446924096) läuft, zuletzt 1.925 von ~28.000 `ja:cat-*` indiziert.
+
+**Letzte 3 Entscheidungen**
+1. Bildlose JA/ZH-Karten bekommen das Bild der JP-Katalogkarte mit gleichem Set-Kürzel + Nummer (`catalogImageFor` in `jaCards.ts`; angewandt in `fetchCard`, `searchCards`/`fillImages`, `fetchSetCards`, `backfillJaImages` beim App-Start). Grund: TCGdex hat bei 9.124/13.006 JA-, 5.290/7.436 zh-tw- und allen zh-cn-Karten kein Bild; 40er-Stichprobe per Pokédex-Nr. ohne Fehlzuordnung.
+2. Bei zh ist es das Motiv der japanischen Karte (nicht die chinesische Karte selbst) – bewusst akzeptiert, kostenlose Quelle gibt es nicht.
+3. Detail-Sheet: Sprach-Select enthält jetzt immer den gespeicherten Wert (vorher sprang JA/ZH auf „DE").
+
+**Offen**
+- Sprach-Codes vereinheitlichen: `LANGS` in `CardSheets.tsx` hat `JP`, gespeichert wird `JA` (ggf. Migration alter `JP`-Items).
+- Rest ohne Bild: ~3.800 JA, ~1.800 zh-tw (v. a. chinesische Exklusiv-Sets `SC1a/SC1b`, Promos).
+- Index-Lauf prüfen; danach Foto-Test mit JP-Karte.
+- Echte Handy-Prüfung Juice-Animationen; Wunschlisten-Effekt; Review-Befunde 4–6.
+
+**Dateien:** `src/services/jaCards.ts` (`catalogImageFor`, `backfillJaImages`), `src/services/tcgdex.ts` (`ASIA`, `fillImages`, `fetchCard`, `fetchSetCards`), `src/components/CardSheets.tsx` (Sprach-Select), `src/lib/milestones.ts` (`inBaseId`, `collectionStats`).
+
+**Learnings**
+- Ein `<select>` zeigt den ersten Eintrag, wenn der gespeicherte Wert nicht in den Optionen steht – Wert immer mit aufnehmen.
+- `cmd1; git commit && git push` nach einem fehlgeschlagenen `cmd1 &&` pusht trotzdem: Build vor dem Push gesondert prüfen (einmal kaputten Stand gepusht, direkt repariert).
