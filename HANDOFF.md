@@ -107,3 +107,11 @@ Technische Gesamtdoku: `ARCHITEKTUR.md`. Scan ist nur noch Foto (Nummer-/Live-Sc
 **Learnings**
 - Ein `<select>` zeigt den ersten Eintrag, wenn der gespeicherte Wert nicht in den Optionen steht – Wert immer mit aufnehmen.
 - `cmd1; git commit && git push` nach einem fehlgeschlagenen `cmd1 &&` pusht trotzdem: Build vor dem Push gesondert prüfen (einmal kaputten Stand gepusht, direkt repariert).
+
+
+## Offen: Karten ohne Bild/Daten (Foto 2026-10-13, Entscheidung offen)
+- McDonald's 2019 (de: Evoli 12/12, Pikachu 6/12, Menki 8/12): TCGdex hat Set nur en (`2019sm`), dort alle ohne Bild → keine Quelle.
+- Knarbon `mep-022` (de/en vorhanden, ohne Bild) → Foto-Erkennung findet sie nicht; Idee: englischer tcgcsv-Katalog (Kategorie 3) als Bildquelle für bildlose de/en-Karten.
+- zh-cn Banette `CSMPiC-045`: ohne Bild, JP-Fallback greift nicht (Set-Kürzel fehlt im JP-Katalog).
+- Hitokage 289/S-P (ja): im JP-Katalog, wird mit Index-Lauf (`ja:cat-597462`) auffindbar.
+- Optionen: (a) EN-Katalog als Bildquelle, (b) eigene Einzelkarten mit Nutzerfoto (analog `custom-products.json`). User noch unsicher.
