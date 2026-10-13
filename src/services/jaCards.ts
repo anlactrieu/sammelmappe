@@ -63,10 +63,10 @@ export function catalogImageFor(cat: JaCatalog, setId: string, localId: string):
   return id != null ? jaImage(id) : undefined
 }
 
-/** Einmal beim Start: gespeicherte japanische Karten ohne Bild bekommen das Katalogbild nachträglich. */
+/** Einmal beim Start: gespeicherte japanische/chinesische Karten ohne Bild bekommen das Katalogbild nachträglich. */
 export async function backfillJaImages(): Promise<number> {
   const cat = await loadJaCards(); if (!cat) return 0
-  const missing = (await db.cards.toArray()).filter((c) => c.lang === 'ja' && !c.image && !isCatKey(c.id.replace(/^ja:/, '')))
+  const missing = (await db.cards.toArray()).filter((c) => (c.lang === 'ja' || c.lang === 'zh-tw' || c.lang === 'zh-cn') && !c.image && !c.id.includes('cat-'))
   let n = 0
   for (const c of missing) { const img = catalogImageFor(cat, c.setId, c.localId); if (img) { await db.cards.update(c.id, { image: img }); n++ } }
   return n

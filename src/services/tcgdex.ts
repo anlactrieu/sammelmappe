@@ -57,7 +57,7 @@ export async function fetchCard(key: string, signal?: AbortSignal, persist = tru
     return c
   }
   let card = mapCard(await get<RawCard>(`/cards/${encodeURIComponent(apiId)}`, lang, signal), lang)
-  if (lang === 'ja' && !card.image) { const cat = await loadJaCards(); const img = cat && catalogImageFor(cat, card.setId, card.localId); if (img) card.image = img } // TCGdex hat oft kein JP-Bild
+  if (ASIA.has(lang) && !card.image) { const cat = await loadJaCards(); const img = cat && catalogImageFor(cat, card.setId, card.localId); if (img) card.image = img } // TCGdex hat oft kein Bild: Motiv der japanischen Karte (gleiches Set-Kürzel + Nummer)
   if (!persist) return lang === 'de' ? card : await attachGermanName(card).catch(() => card) // Vorschau: keine Datenbank nötig
   const old = await db.cards.get(key)
   card.nameDe = old?.nameDe
@@ -108,6 +108,13 @@ async function searchByNumber(n: NonNullable<ReturnType<typeof parseNumberQuery>
   return out
 }
 
+const ASIA = new Set<Lang>(['ja', 'zh-tw', 'zh-cn'])
+
+/** Bildlose TCGdex-Treffer bekommen das Katalogbild (ja: gleiche Karte, zh: gleiches Motiv, gleiches Set-Kürzel + Nummer). */
+function fillImages(cat: Awaited<ReturnType<typeof loadJaCards>> & object, list: CardBrief[]): CardBrief[] {
+  return list.map((c) => { if (c.image) return c; const id = c.id.slice(c.id.indexOf(':') + 1); const img = catalogImageFor(cat, id.slice(0, id.lastIndexOf('-')), c.localId); return img ? { ...c, image: img } : c })
+}
+
 /** Japanisch: Katalogkarten (tcgcsv, US-Preis) ergänzen die TCGdex-Treffer – dort fehlen viele Karten/Bilder. */
 async function withJaCatalog(q: string, tcgdex: CardBrief[], signal?: AbortSignal): Promise<CardBrief[]> {
   const cat = await loadJaCards()
@@ -115,13 +122,14 @@ async function withJaCatalog(q: string, tcgdex: CardBrief[], signal?: AbortSigna
   const have = new Set(tcgdex.map((c) => { const id = c.id.replace(/^ja:/, ''); const i = id.lastIndexOf('-'); return `${id.slice(0, i).toLowerCase()}-${parseInt(c.localId, 10)}` }))
   const english = parseNumberQuery(q) ? undefined : (await translateName(q, 'en', signal).catch(() => []))[0]
   const extra = searchJaCards(cat, q, english, have)
-  const filled = tcgdex.map((c) => { if (c.image) return c; const id = c.id.replace(/^ja:/, ''); const img = catalogImageFor(cat, id.slice(0, id.lastIndexOf('-')), c.localId); return img ? { ...c, image: img } : c })
-  return [...filled, ...extra]
+  return [...fillImages(cat, tcgdex), ...extra]
 }
 
 export async function searchCards(query: string, lang: Lang = 'de', signal?: AbortSignal): Promise<CardBrief[]> {
   const base = await searchCardsBase(query, lang, signal)
-  return lang === 'ja' ? withJaCatalog(query.trim(), base, signal) : base
+  if (lang === 'ja') return withJaCatalog(query.trim(), base, signal)
+  if (lang === 'zh-tw' || lang === 'zh-cn') { const cat = await loadJaCards(); return cat ? fillImages(cat, base) : base }
+  return base
 }
 
 async function searchCardsBase(query: string, lang: Lang = 'de', signal?: AbortSignal): Promise<CardBrief[]> {
@@ -168,7 +176,9 @@ export async function fetchSetCards(lang: Lang, setId: string): Promise<{ set: S
   const set: SetRef = { key: `${lang}/${raw.id}`, lang, id: raw.id, name: raw.name, logo: raw.logo, symbol: raw.symbol, abbreviation: raw.abbreviation,
     releaseDate: raw.releaseDate, total: raw.cardCount.total, official: raw.cardCount.official }
   await db.setcache.put(set)
-  return { set, cards: withLang(raw.cards, lang) }
+  const cards = withLang(raw.cards, lang)
+  const cat = ASIA.has(lang) ? await loadJaCards() : null
+  return { set, cards: cat ? fillImages(cat, cards) : cards }
 }
 
 /**
