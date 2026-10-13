@@ -1,4 +1,5 @@
 import type { CardRef } from '../types'
+import { db } from '../db'
 import type { CardBrief } from './tcgdex'
 
 /** Japanische Einzelkarten aus dem Katalog (tcgcsv/TCGplayer JP): englischer Name, Nummer, Bild, US-Preis. Datei: cards-ja.json */
@@ -51,4 +52,22 @@ export function jaCardRef(cat: JaCatalog, id: number): CardRef | undefined {
   const g = cat.groups[c[1]] ?? ['', '', '']
   return { id: catKey(id), lang: 'ja', name: c[3], localId: c[2].split('/')[0], setId: g[0] || String(c[1]), setName: `${g[1]}${g[0] ? ` (${g[0]})` : ''}`,
     setTotal: Number(c[2].split('/')[1]) || undefined, image: jaImage(id), usd: c[4] ?? undefined, priceSource: 'catalog-ja', variants: { normal: true }, priceFetchedAt: Date.parse(cat.source.replace(/([+-]\d\d)(\d\d)$/, '$1:$2')) || Date.now() }
+}
+
+/** Bild der Katalogkarte zu einer TCGdex-Karte ohne Bild (gleiches Set-Kürzel und gleiche Nummer). */
+const imgIndex = new WeakMap<JaCatalog, Map<string, number>>()
+export function catalogImageFor(cat: JaCatalog, setId: string, localId: string): string | undefined {
+  let m = imgIndex.get(cat)
+  if (!m) { m = new Map(); for (const c of cat.cards) { const k = dedupeKey(cat, c); if (!m.has(k)) m.set(k, c[0]) } imgIndex.set(cat, m) }
+  const id = m.get(`${setId.toLowerCase()}-${parseInt(localId, 10)}`)
+  return id != null ? jaImage(id) : undefined
+}
+
+/** Einmal beim Start: gespeicherte japanische Karten ohne Bild bekommen das Katalogbild nachträglich. */
+export async function backfillJaImages(): Promise<number> {
+  const cat = await loadJaCards(); if (!cat) return 0
+  const missing = (await db.cards.toArray()).filter((c) => c.lang === 'ja' && !c.image && !isCatKey(c.id.replace(/^ja:/, '')))
+  let n = 0
+  for (const c of missing) { const img = catalogImageFor(cat, c.setId, c.localId); if (img) { await db.cards.update(c.id, { image: img }); n++ } }
+  return n
 }

@@ -4,7 +4,7 @@ import { normalizeLocalId, parseNumberQuery, totalVariants } from '../lib/parse'
 
 import { cardKey, parseKey, type Lang } from '../lib/lang'
 import { attachGermanName, dexNames } from './names'
-import { isCatKey, jaCardRef, loadJaCards, searchJaCards } from './jaCards'
+import { catalogImageFor, isCatKey, jaCardRef, loadJaCards, searchJaCards } from './jaCards'
 
 const apiBase = (lang: Lang) => `https://api.tcgdex.net/v2/${lang}`
 
@@ -57,6 +57,7 @@ export async function fetchCard(key: string, signal?: AbortSignal, persist = tru
     return c
   }
   let card = mapCard(await get<RawCard>(`/cards/${encodeURIComponent(apiId)}`, lang, signal), lang)
+  if (lang === 'ja' && !card.image) { const cat = await loadJaCards(); const img = cat && catalogImageFor(cat, card.setId, card.localId); if (img) card.image = img } // TCGdex hat oft kein JP-Bild
   if (!persist) return lang === 'de' ? card : await attachGermanName(card).catch(() => card) // Vorschau: keine Datenbank nötig
   const old = await db.cards.get(key)
   card.nameDe = old?.nameDe
@@ -114,7 +115,8 @@ async function withJaCatalog(q: string, tcgdex: CardBrief[], signal?: AbortSigna
   const have = new Set(tcgdex.map((c) => { const id = c.id.replace(/^ja:/, ''); const i = id.lastIndexOf('-'); return `${id.slice(0, i).toLowerCase()}-${parseInt(c.localId, 10)}` }))
   const english = parseNumberQuery(q) ? undefined : (await translateName(q, 'en', signal).catch(() => []))[0]
   const extra = searchJaCards(cat, q, english, have)
-  return [...tcgdex, ...extra]
+  const filled = tcgdex.map((c) => { if (c.image) return c; const id = c.id.replace(/^ja:/, ''); const img = catalogImageFor(cat, id.slice(0, id.lastIndexOf('-')), c.localId); return img ? { ...c, image: img } : c })
+  return [...filled, ...extra]
 }
 
 export async function searchCards(query: string, lang: Lang = 'de', signal?: AbortSignal): Promise<CardBrief[]> {

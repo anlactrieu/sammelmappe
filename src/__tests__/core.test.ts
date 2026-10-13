@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 import { db } from '../db'
-import { jaCardRef, searchJaCards, type JaCatalog } from '../services/jaCards'
+import { catalogImageFor, jaCardRef, searchJaCards, type JaCatalog } from '../services/jaCards'
 import { eanList, isValidEan, parseNumberQuery, parseQty, totalVariants, normalizeEan, normalizeLocalId, parseCardText, totalCandidates } from '../lib/parse'
 import { cardBasePrice, priceChange, setFx, totals, unitPrice } from '../lib/pricing'
 import { formatEur, isBadAmount, parseEur, relativeTime } from '../lib/format'
@@ -331,5 +331,13 @@ describe('collectionStats', () => {
     await own(a); await own(secret, 'holo'); await own(en)
     const st = await collectionStats(a)
     expect(st).toMatchObject({ total: 6, setOwned: 1, cardQty: 2, hasHolo: true })
+  })
+})
+
+describe('JP-Bild-Fallback', () => {
+  const cat: JaCatalog = { source: 'x', groups: { '7': ['SV2a', '151', '2023-06-16'] }, cards: [[111, 7, '025/165', 'Pikachu', 1]] }
+  it('liefert Katalogbild zu Set-Kürzel und Nummer (Nullen egal, Groß/Klein egal)', () => {
+    expect(catalogImageFor(cat, 'sv2a', '25')).toContain('/111_')
+    expect(catalogImageFor(cat, 'SV2a', '026')).toBeUndefined()
   })
 })
