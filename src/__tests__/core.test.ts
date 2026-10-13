@@ -341,3 +341,11 @@ describe('JP-Bild-Fallback', () => {
     expect(catalogImageFor(cat, 'SV2a', '026')).toBeUndefined()
   })
 })
+
+describe('Sprach-Migration', () => {
+  it('Backup-Import wandelt JP in JA', async () => {
+    const json = JSON.stringify({ app: 'sammelmappe', items: [{ kind: 'card', refId: 'x', qty: 1, condition: 'NM', variant: 'normal', language: 'JP', addedAt: 1 }], cards: [], products: [] })
+    await db.items.clear(); await importJson(json, 'replace')
+    expect((await db.items.toArray())[0].language).toBe('JA')
+  })
+})

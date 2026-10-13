@@ -25,6 +25,8 @@ class AppDB extends Dexie {
     // v2: mehrsprachige Sets (Schlüssel „sprache/id“), Pokédex-Namen; alte Set-Tabelle entfällt (wird neu geladen)
     this.version(2).stores({ sets: null, setcache: 'key', dex: 'id' })
     this.version(3).stores({ learned: '++id, catalogId' })
+    // v4: Sprach-Kürzel vereinheitlicht (früher manuell „JP", jetzt „JA" wie bei Kartensprache)
+    this.version(4).stores({}).upgrade((tx) => tx.table('items').toCollection().modify((i) => { if (i.language === 'JP') i.language = 'JA' }))
   }
 }
 export const db = new AppDB()

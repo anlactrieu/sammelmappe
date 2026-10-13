@@ -12,7 +12,7 @@ import { useCelebrate } from './Celebrate'
 import { langLabel, langTag } from '../lib/lang'
 import { cardNames } from '../services/names'
 
-const LANGS = ['DE', 'EN', 'FR', 'IT', 'ES', 'JP']
+const LANGS = ['DE', 'EN', 'FR', 'IT', 'ES', 'JA', 'ZH', 'ZH-CN']
 
 export function availableVariants(card: CardRef): Variant[] {
   const v = card.variants

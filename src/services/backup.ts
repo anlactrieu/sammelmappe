@@ -17,7 +17,7 @@ export async function importJson(text: string, mode: 'merge' | 'replace' = 'repl
   if (data.app !== 'sammelmappe' || !Array.isArray(data.items)) throw new Error('Keine gültige Sammelmappe-Sicherung.')
   await db.transaction('rw', [db.items, db.cards, db.products, db.wishlist, db.snapshots], async () => {
     if (mode === 'replace') await Promise.all([db.items.clear(), db.wishlist.clear(), db.snapshots.clear()])
-    const items = data.items!.map(({ id: _id, ...rest }) => rest as Item)
+    const items = data.items!.map(({ id: _id, ...rest }) => ({ ...rest, language: rest.language === 'JP' ? 'JA' : rest.language }) as Item) // alte Sicherungen: JP → JA
     await db.items.bulkAdd(items)
     await db.cards.bulkPut(data.cards ?? [])
     await db.products.bulkPut(data.products ?? [])
