@@ -35,3 +35,9 @@ Sprachen de/en/ja/zh-tw/zh-cn (TCGdex `/v2/{lang}`; ko bewusst nicht: 239 Karten
 
 ## Aktuell (2026-10-11, spät)
 Technische Gesamtdoku: `ARCHITEKTUR.md`. Scan ist nur noch Foto (Nummer-/Live-Scan entfernt). Karten-Index-Lauf (`cards-index.yml`) läuft/setzt fort; danach mit den drei Test-Karten (Necrozma SM106, Galar-Lauchzelot 079/198, Galagladi 081/198) prüfen. Regel: alles kostenlos halten (Repo öffentlich).
+
+
+## Stand 2026-10-13
+- JP-Bilder-Fallback ist umgesetzt: TCGCSV-Katalog (`cards-ja.json`, live 27.920 Karten/402 Sets, US-Preis in Euro, Bild tcgplayer-CDN) + Dubletten-Abgleich mit TCGdex (`src/services/jaCards.ts`). Der Punkt „JP-Bilder fehlen" oben ist damit erledigt.
+- Foto-Index (Branch `data`, `cards-emb.*`) hatte beim Lauf vom 12.10. 0 Einträge `ja:cat-…` (Log: „japanische Katalogkarten: 0 neu", vermutlich war `cards-ja.json` live noch nicht deployt). Neuer Lauf `cards-index.yml` am 13.10. 18:27 UTC per workflow_dispatch gestartet (Run 38446924096).
+- Danach prüfen: Index enthält `ja:cat-*`; Foto-Test mit einer JP-Karte ohne TCGdex-Bild, plus Necrozma SM106, 079/198, 081/198 (SV1 ist de/en, nicht JP).
