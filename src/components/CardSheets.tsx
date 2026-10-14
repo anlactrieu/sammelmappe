@@ -4,7 +4,7 @@ import { db } from '../db'
 import { imageUrl } from '../services/tcgdex'
 import { formatEur, isBadAmount, parseEur } from '../lib/format'
 import { CONDITIONS, CONDITION_LABEL, VARIANT_LABEL, unitPrice, priceChange, cardBasePrice, catalogCardEur } from '../lib/pricing'
-import { addCard, cardmarketSearchUrl, removeItem, setProductPrice, type AddOpts } from '../lib/actions'
+import { addCard, cardmarketSearchUrl, catalogCardId, tcgplayerUrl, removeItem, setProductPrice, type AddOpts } from '../lib/actions'
 import type { CardRef, Condition, Item, Product, Variant } from '../types'
 import { PriceLine, Sheet, useToast } from './ui'
 import { Lightbox } from './Lightbox'
@@ -110,6 +110,7 @@ export function AddCardSheet({ card, onClose, onAdded, compare }: { card: CardRe
           <p className="muted small">Nr. {card.localId}{card.setTotal ? `/${card.setTotal}` : ''}{card.rarity ? ` · ${card.rarity}` : ''}</p>
           <p className="big">{preview != null ? formatEur(preview) : 'Kein Preis'}</p>
           <p className="muted small">{card.usd != null && !card.cm ? 'US-Marktpreis (TCGplayer, Japan) – in Euro umgerechnet, Richtwert' : card.cm ? `Cardmarket-Trend (NM)${card.lang === 'ja' || card.lang === 'zh-tw' || card.lang === 'zh-cn' ? ' – Richtwert der asiatischen Ausgabe' : ''}` : 'Noch kein Marktpreis – unten manuell eintragen'}</p>
+          {catalogCardId(card) != null && card.priceSource === 'catalog-ja' && <a className="link small" target="_blank" rel="noreferrer" href={tcgplayerUrl(catalogCardId(card)!)}>Quelle: TCGplayer ↗</a>}
         </div>
       </div>
 
@@ -230,6 +231,7 @@ export function ItemSheet({ item, card, product, onClose }: { item: Item | null;
         <input inputMode="decimal" value={manual} onChange={(e) => setManual(e.target.value)} placeholder="z. B. 129,90" />
       </label>
       <a className="link" target="_blank" rel="noreferrer" href={cardmarketSearchUrl(name + (card ? ' ' + card.localId : ''))}>Preis auf Cardmarket nachschauen ↗</a>
+      {(() => { const id = card?.priceSource === 'catalog-ja' ? catalogCardId(card) : product?.priceSource === 'catalog' ? product.catalogId : undefined; return id != null && id > 0 ? <a className="link" target="_blank" rel="noreferrer" href={tcgplayerUrl(id)}>Preisquelle: TCGplayer ↗</a> : null })()}
       <label className="field">Notiz<textarea rows={2} value={f.notes ?? ''} onChange={(e) => setF({ ...f, notes: e.target.value })} /></label>
       {card && <Link className="link" to={`/sets/${card.lang ?? 'de'}/${card.setId}`} onClick={onClose}>Ganzes Set ansehen →</Link>}
     </Sheet>

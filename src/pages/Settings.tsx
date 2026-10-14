@@ -93,7 +93,7 @@ export default function Settings() {
         <h2>Gefahrenzone</h2>
         <button className="btn danger" onClick={wipe}>Alle Daten löschen</button>
       </section>
-      <p className="muted small center">Sammelmappe · inoffiziell, nicht mit Nintendo, The Pokémon Company oder Cardmarket verbunden. Preise sind Richtwerte ohne Gewähr. · <Link className="link" to="/datenschutz">Datenschutz</Link></p>
+      <p className="muted small center">Sammelmappe · inoffiziell, nicht mit Nintendo, The Pokémon Company oder Cardmarket verbunden. Preise sind Richtwerte ohne Gewähr. This product uses TCGplayer data but is not endorsed or certified by TCGplayer. · <Link className="link" to="/datenschutz">Datenschutz</Link></p>
     </div>
   )
 }

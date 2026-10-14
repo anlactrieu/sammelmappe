@@ -24,6 +24,8 @@ Sammelmappe ist ein inoffizielles Fan-Projekt und steht in keiner Verbindung zu 
 
 **Datenquellen:** [TCGdex](https://tcgdex.dev) (Karten, Sets, Bilder, Cardmarket-Preisrichtwerte), [TCGplayer](https://www.tcgplayer.com) über [tcgcsv.com](https://tcgcsv.com) (Produkte, japanische Katalogkarten), [PokeAPI](https://pokeapi.co) (Namen), [Frankfurter](https://frankfurter.dev) (Wechselkurs). Schriften: Big Shoulders Display, JetBrains Mono, Schibsted Grotesk (SIL Open Font License, über `@fontsource`).
 
+**Preisquellen und Hinweis:** Preise stammen von Cardmarket (über TCGdex) und von TCGplayer (über tcgcsv.com, bei Produkten und japanischen Katalogkarten). This product uses TCGplayer data but is not endorsed or certified by TCGplayer. Bei TCGplayer-Preisen führt in der App ein Link zur jeweiligen TCGplayer-Produktseite.
+
 **Datenschutz:** Die Sammlung bleibt lokal im Browser. Welche Fremdserver die App anspricht, steht in der App unter Profil → Datenschutz. Schriften werden selbst ausgeliefert, nicht von Google geladen.
 
 **Löschwünsche:** Wenn du Rechteinhaber bist und etwas entfernt haben möchtest (zum Beispiel ein Produktfoto in `public/custom/`), öffne ein [Issue](https://github.com/anlactrieu/sammelmappe/issues). Ich kümmere mich zeitnah darum.

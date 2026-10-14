@@ -87,3 +87,7 @@ export async function repairItemLanguages(): Promise<number> {
   for (const i of items) { const lang = cards.get(i.refId)?.lang; if (lang && i.id != null) { await db.items.update(i.id, { language: langTag(lang) }); n++ } }
   return n
 }
+
+/** Produktseite bei TCGplayer (Quellenangabe für Preise aus dem Katalog verlangen deren API-Bedingungen). */
+export const tcgplayerUrl = (productId: number) => `https://www.tcgplayer.com/product/${productId}`
+export const catalogCardId = (card: CardRef): number | undefined => { const m = /cat-(\d+)$/.exec(card.id); return m ? Number(m[1]) : undefined }
