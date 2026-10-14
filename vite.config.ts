@@ -43,7 +43,7 @@ export default defineConfig({
         ],
       },
       workbox: {
-        globPatterns: ['**/*.{js,css,html,svg,wasm,json,png}'],
+        globPatterns: ['**/*.{js,css,html,svg,wasm,json,png,woff2}'],
         globIgnores: ['**/catalog.json', '**/custom-products.json', '**/releases.json', '**/upcoming.json', '**/catalog-emb.*', '**/cards-emb.*', '**/ort-wasm*'],
         maximumFileSizeToCacheInBytes: 8 * 1024 * 1024,
         runtimeCaching: [

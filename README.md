@@ -21,3 +21,9 @@ Der Quellcode steht unter der [MIT-Lizenz](LICENSE). Die App ist kostenlos, werb
 **Nicht enthalten in der Lizenz:** Pokémon-Namen, Kartenbilder, Logos und Preisdaten. Sie gehören ihren jeweiligen Rechteinhabern und Datenanbietern und werden zur Laufzeit von dort geladen (TCGdex, TCGplayer über tcgcsv.com, Pokémon-Daten von PokeAPI).
 
 Sammelmappe ist ein inoffizielles Fan-Projekt und steht in keiner Verbindung zu Nintendo, The Pokémon Company, Creatures, Game Freak, Cardmarket oder TCGplayer. Pokémon und Pokémon-Charaktere sind Marken der jeweiligen Inhaber. Preise sind unverbindliche Richtwerte.
+
+**Datenquellen:** [TCGdex](https://tcgdex.dev) (Karten, Sets, Bilder, Cardmarket-Preisrichtwerte), [TCGplayer](https://www.tcgplayer.com) über [tcgcsv.com](https://tcgcsv.com) (Produkte, japanische Katalogkarten), [PokeAPI](https://pokeapi.co) (Namen), [Frankfurter](https://frankfurter.dev) (Wechselkurs). Schriften: Big Shoulders Display, JetBrains Mono, Schibsted Grotesk (SIL Open Font License, über `@fontsource`).
+
+**Datenschutz:** Die Sammlung bleibt lokal im Browser. Welche Fremdserver die App anspricht, steht in der App unter Profil → Datenschutz. Schriften werden selbst ausgeliefert, nicht von Google geladen.
+
+**Löschwünsche:** Wenn du Rechteinhaber bist und etwas entfernt haben möchtest (zum Beispiel ein Produktfoto in `public/custom/`), öffne ein [Issue](https://github.com/anlactrieu/sammelmappe/issues). Ich kümmere mich zeitnah darum.
