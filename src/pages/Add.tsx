@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useState } from 'react'
-import { useQuickAdd } from '../components/quickAdd'
 import { LangChips } from '../components/LangChips'
 import { langLabel, langTag, type Lang } from '../lib/lang'
 import { Link, useSearchParams } from 'react-router-dom'
@@ -16,7 +15,6 @@ import type { CardRef } from '../types'
 
 export default function Add() {
   const toast = useToast()
-  const quickAdd = useQuickAdd()
   const [lang, setLangState] = useState<Lang>(() => { try { return (localStorage.getItem('cardLang') as Lang) || 'de' } catch { return 'de' } })
   const setLang = (l: Lang) => { setLangState(l); try { localStorage.setItem('cardLang', l) } catch { /* privater Modus */ } }
   const [params] = useSearchParams()
@@ -94,7 +92,7 @@ export default function Add() {
         {!res && !error && lang === 'de' && <p className="hint">Tipp: Alle Namen sind deutsch. Mit Scan geht’s noch schneller.</p>}
         <ul className="grid">
           {sorted.slice(0, limit).map((b) => (
-            <li key={b.id} className="tile-wrap"><button className="quick" onClick={() => quickAdd(b.id)} aria-label={`${b.name} direkt hinzufügen`}>＋</button><button className="tile" onClick={() => pick(b)}>
+            <li key={b.id} className="tile-wrap"><button className="tile" onClick={() => pick(b)}>
               <div className="tile-img">{b.image ? <img src={imageUrl(b.image)} alt="" loading="lazy" /> : <span className="thumb-ph big"><Icon name="card" size={40} /></span>}</div>
               <strong className="tile-name">{b.name}</strong><small className="muted tile-sub">{lang !== 'de' && <b className="langtag">{langTag(lang)}</b>} {b.setName ?? setNames.get(apiSetId(b.id))?.name ?? apiSetId(b.id).toUpperCase()} · {b.localId}</small>
             </button></li>))}
