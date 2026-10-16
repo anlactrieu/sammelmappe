@@ -49,20 +49,21 @@ export function unitPrice(item: Item, card?: CardRef, product?: Product, now = D
     return { value: product.price, source: cat ? 'catalog' : 'product', estimated: cat, updatedAt: product.priceUpdated, stale: product.priceUpdated ? now - product.priceUpdated > STALE_MS : false }
   }
   if (!card) return { value: null, source: 'none' }
+  // Slab: Raw-Preise gelten nicht für gegradete Karten – ohne Eigenpreis kein Wert (statt falscher Schätzung)
+  if (item.graded) return { value: null, source: 'none' }
   if (card.usd != null && !card.cm) {
     const at = card.priceFetchedAt
-    return { value: r2(card.usd * fx * (item.graded ? 1 : CONDITION_FACTOR[item.condition])), source: 'catalog', estimated: true, updatedAt: at, stale: at ? now - at > STALE_MS : true }
+    return { value: r2(card.usd * fx * CONDITION_FACTOR[item.condition]), source: 'catalog', estimated: true, updatedAt: at, stale: at ? now - at > STALE_MS : true }
   }
   const base = cardBasePrice(card, item.variant)
   if (!base) return { value: null, source: 'none' }
-  const gradedNoManual = !!item.graded
-  const factor = item.graded ? 1 : CONDITION_FACTOR[item.condition]
+  const factor = CONDITION_FACTOR[item.condition]
   const updatedAt = card.cm?.updated ? Date.parse(card.cm.updated) : card.priceFetchedAt
   return {
     value: r2(base.value * factor),
     source: 'cardmarket',
     updatedAt,
-    estimated: base.estimated || factor !== 1 || gradedNoManual,
+    estimated: base.estimated || factor !== 1,
     stale: updatedAt ? now - updatedAt > STALE_MS : true,
   }
 }

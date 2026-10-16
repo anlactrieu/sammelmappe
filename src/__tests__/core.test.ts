@@ -55,6 +55,8 @@ describe('pricing', () => {
     const lp = unitPrice(base({ condition: 'LP' }), { ...card, cm: { ...card.cm!, trend: 10 } })
     expect(lp.value).toBe(6); expect(lp.estimated).toBe(true)
     expect(unitPrice(base({ manualPrice: 99 }), card)).toMatchObject({ value: 99, source: 'manual' })
+    expect(unitPrice(base({ graded: { company: 'PSA', grade: '10' } }), card)).toMatchObject({ value: null, source: 'none' })
+    expect(unitPrice(base({ graded: { company: 'PSA', grade: '10' }, manualPrice: 250 }), card)).toMatchObject({ value: 250, source: 'manual' })
   })
   it('markiert veraltete Preise', () => {
     const old = { ...card, cm: { ...card.cm!, updated: new Date(Date.now() - 9 * 864e5).toISOString() } }

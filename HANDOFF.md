@@ -130,4 +130,4 @@ Technische Gesamtdoku: `ARCHITEKTUR.md`. Scan ist nur noch Foto (Nummer-/Live-Sc
 - Fehlende Bilder (30-Jahre-Set) liegen an TCGdex, kein Code-Fix.
 - ＋ auf Sets-Seite bleibt (User-Entscheidung 2026-10-16).
 - `/code-review` für diese zwei Commits nicht gelaufen.
-- Slab-Feature verworfen (keine kostenlose automatische Preisquelle), Begründung in `SPEC.md` Abschnitt „Slabs“. Offen/unentschieden: Das bestehende `graded`-Feld im Bearbeiten-Fenster bewertet Slabs ohne Eigenpreis weiter mit dem Raw-NM-Preis (`pricing.ts:58-65`).
+- Slab-Feature verworfen (keine kostenlose automatische Preisquelle), Begründung in `SPEC.md` Abschnitt „Slabs“. `graded` bleibt optional im Bearbeiten-Fenster; Slab ohne Eigenpreis = „Preis fehlt“ (`pricing.ts`), mit Eigenpreis normal bewertet.
