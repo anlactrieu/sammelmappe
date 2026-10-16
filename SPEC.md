@@ -91,3 +91,26 @@ MVP umgesetzt (siehe README.md für Start/Test).
 **Status 2026-10-13: umgesetzt** (`src/components/Celebrate.tsx`, `src/lib/milestones.ts`; Highlight ab 20 € oder seltener Seltenheit). Offen: Wunschlisten-Treffer ohne eigenen Effekt; Animationen nur mit künstlich abgeschaltetem reduced-motion im Browser-Pane geprüft, echtes Handy steht aus.
 
 **Vorgehen:** Umsetzung in frischer Session mit dieser Spec als Referenz.
+
+
+## Slabs (gegradete Karten) – PLAN, noch nicht umgesetzt (Stand 2026-10-16)
+**Anlass:** Tester-Feedback: App deckt Raw Cards ab; Slab-Sammler vermissen Bewertungen (PriceCharting-Vergleich). Vorgabe: simpel bleiben, keine Charts/Tiefendaten, **kostenlos** (siehe Memory „must-stay-free“). Mit Advisor abgestimmt.
+
+**Ist-Stand:** `Item.graded {company, grade}` existiert; Eingabe nur im Bearbeiten-Fenster (`CardSheets.tsx` ~169–180), nicht im `AddCardSheet`; Badge in `Collection.tsx:81`; `addCard` merged Gegradete nicht (`actions.ts:13`). **Problem:** `unitPrice` (`pricing.ts:58-65`) bewertet einen Slab ohne Eigenpreis mit dem Raw-NM-Preis (Faktor 1, nur „≈“) – das verfälscht den Gesamtwert (PSA 10 ≫ Raw, PSA 6 < Raw).
+
+**Phase 1 (minimal, ohne neue Datenquelle)**
+1. Preislogik: Slab ohne Eigenwert = „Wert fehlt“ (zählt in `missing`, nicht in `value`); Raw-Preis nur als Referenz in der Detailansicht. *(Entscheidung offen, Empfehlung so.)*
+2. `AddCardSheet`: Schalter „Gegradet“ (eingeklappt): Firma (PSA/CGC/BGS/Sonstige), Note, optional Cert-Nr., Wert; Zustands-Chips bei Slab ausblenden. Raw-Nutzer sehen nichts davon.
+3. Bearbeiten-Fenster: Zustand bei Slab ausblenden.
+4. Link-out statt API (Muster TCGplayer-Link): „Preis auf PriceCharting“ / „eBay-Suche“ mit **englischem** Namen (`dexNames.en`) + Nummer + „PSA 10“; Hinweis, dass der Preis bei DE-Karten meist den englischen Druck meint. Such-URL-Format vorher prüfen (PriceCharting blockt automatische Abrufe mit 403 – manuell im Browser testen).
+5. Sammlung: Filter Raw/Gegradet.
+6. Prüfen: CSV/JSON-Export/-Import nehmen `graded` mit; Dexie braucht ohne neuen Index keine neue Version.
+7. Tests: `unitPrice` gegradet mit/ohne Eigenwert; Export-Roundtrip.
+
+**Quellen-Recherche (Ergebnis)**
+- eBay Sold: offiziell nur Partner-API (Marketplace Insights), Scraping gegen AGB → **raus**.
+- PriceCharting-API: Konditionen nicht verifizierbar (403); vermutlich bezahlt → vor Nutzung selbst prüfen; sonst raus.
+- PokemonPriceTracker: Free-Plan (laut Suchtreffern ~100 Credits/Tag, 2 Req/min, Key nötig), Bedingungen widersprüchlich. Gemeinsamer Key im öffentlichen Client unzulässig; Cron geht nicht (Sammlung lokal). Höchstens **eigener Key pro Nutzer** in den Einstellungen (Phase 2, braucht Freigabe wegen neuer Dienst + CORS-/AGB-Prüfung).
+
+**Offene Entscheidungen (User):** Slab-Support ja/nein/später · Slab ohne Eigenwert = „fehlt“ vs. Raw-Schätzung · Link-out ja/nein · Phase 2 mit eigenem API-Key ja/nein.
+**Umsetzung:** in frischer Session mit dieser Spec.
