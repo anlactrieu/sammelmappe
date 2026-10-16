@@ -128,5 +128,5 @@ Technische Gesamtdoku: `ARCHITEKTUR.md`. Scan ist nur noch Foto (Nummer-/Live-Sc
 **Offen**
 - Tester-Rückmeldung zum Scrollen abwarten.
 - Fehlende Bilder (30-Jahre-Set) liegen an TCGdex, kein Code-Fix.
-- ＋ auf Sets-Seite ggf. ebenfalls entfernen (User fragen).
+- ＋ auf Sets-Seite bleibt (User-Entscheidung 2026-10-16).
 - `/code-review` für diese zwei Commits nicht gelaufen.
