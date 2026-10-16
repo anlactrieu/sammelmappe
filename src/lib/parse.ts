@@ -50,6 +50,13 @@ export function parseNumberQuery(q: string): { number: string; total?: number; p
   return null
 }
 
+/** "Glurak 006", "Pikachu 25/198": Name + Kartennummer (Price-Charting-Stil) → { name, number, total? } oder null. */
+export function parseNameNumberQuery(q: string): { name: string; number: string; total?: number } | null {
+  const m = q.trim().match(/^(.*\p{L}.*?)\s+#?([A-Za-z]{0,4}\d{1,3})(?:\s*\/\s*[A-Za-z]{0,3}(\d{2,3}))?$/u)
+  if (!m || !/\d/.test(m[2])) return null
+  return { name: m[1].trim(), number: m[2], total: m[3] ? Number(m[3]) : undefined }
+}
+
 /** UPC-A (12 Ziffern) → EAN-13 mit führender 0; sonst unverändert. So passen 0820… und 820… zusammen. */
 export const normalizeEan = (code: string) => { const d = code.replace(/\D/g, ''); return d.length === 12 ? '0' + d : d }
 

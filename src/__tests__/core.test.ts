@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 import { db } from '../db'
 import { catalogImageFor, jaCardRef, searchJaCards, type JaCatalog } from '../services/jaCards'
-import { eanList, isValidEan, parseNumberQuery, parseQty, totalVariants, normalizeEan, normalizeLocalId, parseCardText, totalCandidates } from '../lib/parse'
+import { eanList, isValidEan, parseNameNumberQuery, parseNumberQuery, parseQty, totalVariants, normalizeEan, normalizeLocalId, parseCardText, totalCandidates } from '../lib/parse'
 import { cardBasePrice, priceChange, setFx, totals, unitPrice } from '../lib/pricing'
 import { formatEur, isBadAmount, parseEur, relativeTime } from '../lib/format'
 import { addCard, addProduct, repairItemLanguages, setProductPrice } from '../lib/actions'
@@ -116,6 +116,10 @@ describe('Nummern-Suche', () => {
     expect(parseNumberQuery('079/198')).toEqual({ number: '079', total: 198 })
     expect(parseNumberQuery('79 / 198')).toEqual({ number: '79', total: 198 })
     expect(parseNumberQuery('TG05/TG30')).toEqual({ number: 'TG05', total: 30 })
+    expect(parseNameNumberQuery('Glurak 006')).toEqual({ name: 'Glurak', number: '006', total: undefined })
+    expect(parseNameNumberQuery('Pikachu 25/198')).toEqual({ name: 'Pikachu', number: '25', total: 198 })
+    expect(parseNameNumberQuery('Glurak')).toBeNull()
+    expect(parseNameNumberQuery('079/198')).toBeNull()
     expect(parseNumberQuery('SM106')).toEqual({ number: 'SM106', promoCode: 'SM' })
     expect(parseNumberQuery('swsh 245')).toEqual({ number: 'SWSH245', promoCode: 'SWSH' })
     expect(parseNumberQuery('Glurak')).toBeNull(); expect(parseNumberQuery('Pikachu V')).toBeNull(); expect(parseNumberQuery('151')).toBeNull()

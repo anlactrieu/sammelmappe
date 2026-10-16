@@ -1,6 +1,6 @@
 import { db, getSetting, setSetting } from '../db'
 import type { CardRef, CardmarketPrice, SetRef } from '../types'
-import { normalizeLocalId, parseNumberQuery, totalVariants } from '../lib/parse'
+import { normalizeLocalId, parseNameNumberQuery, parseNumberQuery, totalVariants } from '../lib/parse'
 
 import { cardKey, parseKey, type Lang } from '../lib/lang'
 import { attachGermanName, dexNames } from './names'
@@ -137,6 +137,8 @@ async function searchCardsBase(query: string, lang: Lang = 'de', signal?: AbortS
   if (q.length < 2) return []
   const num = parseNumberQuery(q)
   if (num) { const hit = await searchByNumber(num, lang); if (hit.length) return hit }
+  const nn = parseNameNumberQuery(q)
+  if (nn) { const hit = await searchNameNumber(nn, lang, signal); if (hit.length) return hit }
   const direct = async (name: string) => withLang(await get<CardBrief[]>(`/cards?name=${encodeURIComponent(name)}`, lang, signal), lang)
   let list: CardBrief[] = []
   const latin = /^[\p{L}\p{N} .'’:&é-]+$/u.test(q) && !/[\u3040-\u30ff\u3400-\u9fff]/.test(q)
@@ -148,6 +150,20 @@ async function searchCardsBase(query: string, lang: Lang = 'de', signal?: AbortS
   }
   const rank = rankBy(q)
   return [...list].sort((a, b) => rank(a.name) - rank(b.name))
+}
+
+/** "Glurak 006" / "Glurak 6/165": Namenstreffer auf die Nummer (und ggf. Set-Gesamtzahl) eingrenzen; ohne Treffer leer. */
+async function searchNameNumber(nn: NonNullable<ReturnType<typeof parseNameNumberQuery>>, lang: Lang, signal?: AbortSignal): Promise<CardBrief[]> {
+  const list = await searchCardsBase(nn.name, lang, signal).catch(() => [])
+  const want = normalizeLocalId(nn.number).toUpperCase()
+  let hit = list.filter((c) => normalizeLocalId(c.localId).toUpperCase() === want)
+  if (nn.total && hit.length) {
+    const sets = new Map((await loadSets(lang).catch(() => [])).map((x) => [x.id, x]))
+    const totals = new Set(totalVariants(nn.total))
+    const exact = hit.filter((c) => { const s = sets.get(c.id.replace(/^(en|ja|zh-tw|zh-cn):/, '').replace(/-[^-]+$/, '')); return s && (totals.has(s.official) || totals.has(s.total)) })
+    if (exact.length) hit = exact
+  }
+  return hit
 }
 
 export async function loadSets(lang: Lang = 'de', force = false): Promise<SetRef[]> {
