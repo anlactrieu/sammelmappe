@@ -93,7 +93,7 @@ MVP umgesetzt (siehe README.md für Start/Test).
 **Vorgehen:** Umsetzung in frischer Session mit dieser Spec als Referenz.
 
 
-## Slabs (gegradete Karten) – PLAN, noch nicht umgesetzt (Stand 2026-10-16)
+## Slabs (gegradete Karten) – VERWORFEN 2026-10-16 (keine kostenlose Preisquelle; User: „dann lassen wir das Feature aus“). Plan nur als Referenz
 **Anlass:** Tester-Feedback: App deckt Raw Cards ab; Slab-Sammler vermissen Bewertungen (PriceCharting-Vergleich). Vorgabe: simpel bleiben, keine Charts/Tiefendaten, **kostenlos** (siehe Memory „must-stay-free“). Mit Advisor abgestimmt.
 
 **Ist-Stand:** `Item.graded {company, grade}` existiert; Eingabe nur im Bearbeiten-Fenster (`CardSheets.tsx` ~169–180), nicht im `AddCardSheet`; Badge in `Collection.tsx:81`; `addCard` merged Gegradete nicht (`actions.ts:13`). **Problem:** `unitPrice` (`pricing.ts:58-65`) bewertet einen Slab ohne Eigenpreis mit dem Raw-NM-Preis (Faktor 1, nur „≈“) – das verfälscht den Gesamtwert (PSA 10 ≫ Raw, PSA 6 < Raw).
