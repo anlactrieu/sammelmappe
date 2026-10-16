@@ -115,3 +115,18 @@ Technische Gesamtdoku: `ARCHITEKTUR.md`. Scan ist nur noch Foto (Nummer-/Live-Sc
 - zh-cn Banette `CSMPiC-045`: ohne Bild, JP-Fallback greift nicht (Set-Kürzel fehlt im JP-Katalog).
 - Hitokage 289/S-P (ja): im JP-Katalog, wird mit Index-Lauf (`ja:cat-597462`) auffindbar.
 - Optionen: (a) EN-Katalog als Bildquelle, (b) eigene Einzelkarten mit Nutzerfoto (analog `custom-products.json`). User noch unsicher.
+
+
+## Stand 2026-10-16 – Tester-Feedback
+**Stand:** Zwei Commits auf `main` gepusht (tsc ok, Vitest 61/61, Build ok): (1) Scroll-Fix + ＋ aus Namenssuche entfernt, (2) Suche „Name + Nummer“ (`Glurak 006`, `Pikachu 25/198`).
+
+**Letzte 3 Entscheidungen**
+1. `overflow-x: clip` nur am `body` statt `hidden` auf `html`+`body` – Verdacht auf mobiles Scroll-Hängen; ungeprüft auf echtem Gerät.
+2. ＋ (Direkt-Hinzufügen) in `src/pages/Add.tsx` entfernt, damit immer das `AddCardSheet` (Zustand/Sprache/Menge) kommt; in `src/pages/Sets.tsx` bleibt es zum schnellen Abhaken.
+3. Name+Nummer: `parseNameNumberQuery` (`src/lib/parse.ts`) + `searchNameNumber` (`src/services/tcgdex.ts`): Namenssuche, Filter auf `localId`, bei Gesamtzahl zusätzlich Set-Filter; ohne Treffer Fallback auf reine Namenssuche.
+
+**Offen**
+- Tester-Rückmeldung zum Scrollen abwarten.
+- Fehlende Bilder (30-Jahre-Set) liegen an TCGdex, kein Code-Fix.
+- ＋ auf Sets-Seite ggf. ebenfalls entfernen (User fragen).
+- `/code-review` für diese zwei Commits nicht gelaufen.
