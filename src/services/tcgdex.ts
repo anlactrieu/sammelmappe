@@ -96,6 +96,21 @@ async function translateName(q: string, target: Lang, signal?: AbortSignal): Pro
 /** Promo-Präfix → TCGdex-Set-IDs ("SM106" → smp-SM106). */
 const PROMO_SETS: Record<string, string[]> = { SM: ['smp'], SWSH: ['swshp'], SVP: ['svp'], XY: ['xyp'], BW: ['bwp'], DP: ['dpp'], HGSS: ['hgssp'], MEP: ['mep'], SV: ['svp'], NP: ['np'], PR: ['pr-sv'], POP: ['pop'] }
 
+/** Neuauflagen, deren Aufdruck die Originalnummer trägt, die API sie aber anders nummeriert (30 Jahre: Klassische Sammlung: Glurak steht als 001/030, gedruckt 4/102). */
+const REPRINTS: Record<string, string[]> = { 'base1-4': ['30th-c-001'] }
+
+async function withReprints(hits: CardBrief[], lang: Lang): Promise<CardBrief[]> {
+  const out = [...hits]
+  for (const h of hits) {
+    for (const alias of REPRINTS[h.id.replace(/^(en|ja|zh-tw|zh-cn):/, '')] ?? []) {
+      const id = cardKey(lang, alias)
+      if (out.some((x) => x.id === id)) continue
+      try { const c = await fetchCard(id, undefined, false); out.push({ id: c.id, localId: c.localId, name: c.name, image: c.image, lang: c.lang }) } catch { /* Set in dieser Sprache nicht vorhanden */ }
+    }
+  }
+  return out
+}
+
 async function searchByNumber(n: NonNullable<ReturnType<typeof parseNumberQuery>>, lang: Lang): Promise<CardBrief[]> {
   const toBrief = (c: CardRef): CardBrief => ({ id: c.id, localId: c.localId, name: c.name, image: c.image, lang: c.lang })
   if (n.total) return (await resolveByNumber(n.number, [n.total], [], lang).catch(() => [])).map(toBrief)
@@ -136,9 +151,9 @@ async function searchCardsBase(query: string, lang: Lang = 'de', signal?: AbortS
   const q = query.trim()
   if (q.length < 2) return []
   const num = parseNumberQuery(q)
-  if (num) { const hit = await searchByNumber(num, lang); if (hit.length) return hit }
+  if (num) { const hit = await searchByNumber(num, lang); if (hit.length) return withReprints(hit, lang) }
   const nn = parseNameNumberQuery(q)
-  if (nn) { const hit = await searchNameNumber(nn, lang, signal); if (hit.length) return hit }
+  if (nn) { const hit = await searchNameNumber(nn, lang, signal); if (hit.length) return withReprints(hit, lang) }
   const direct = async (name: string) => withLang(await get<CardBrief[]>(`/cards?name=${encodeURIComponent(name)}`, lang, signal), lang)
   let list: CardBrief[] = []
   const latin = /^[\p{L}\p{N} .'’:&é-]+$/u.test(q) && !/[\u3040-\u30ff\u3400-\u9fff]/.test(q)
