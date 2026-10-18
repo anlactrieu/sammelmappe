@@ -48,7 +48,14 @@ export default function Add() {
   const [prefill, setPrefill] = useState<{ c: CatalogProduct; eur: number | null } | undefined>()
   const [limit, setLimit] = useState(60)
 
-  useEffect(() => { loadSets(lang).then((s) => setSetNames(new Map(s.map((x, i) => [x.id, { name: x.name, order: i }])))).catch(() => undefined) }, [lang])
+  useEffect(() => {
+    // TCGdex führt Sets wie „McDonald's Collection“ nur in der englischen Liste, die Karten aber auch auf Deutsch → Namen von dort ergänzen
+    Promise.all([loadSets(lang), lang === 'en' ? Promise.resolve([]) : loadSets('en').catch(() => [])]).then(([s, en]) => {
+      const m = new Map(s.map((x, i) => [x.id, { name: x.name, order: i }]))
+      en.forEach((x, i) => { if (!m.has(x.id)) m.set(x.id, { name: x.name, order: i }) })
+      setSetNames(m)
+    }).catch(() => undefined)
+  }, [lang])
   const apiSetId = (id: string) => id.replace(/^(en|ja|zh-tw|zh-cn):/, '').replace(/-[^-]+$/, '')
   // Treffer: exakter Name zuerst, dann neuere Sets zuerst (die Set-Liste kommt von alt nach neu)
   const sorted = useMemo(() => [...(res ?? [])].sort((a, b) => (Number(b.name.toLowerCase() === q.trim().toLowerCase()) - Number(a.name.toLowerCase() === q.trim().toLowerCase())) || ((setNames.get(apiSetId(b.id))?.order ?? -1) - (setNames.get(apiSetId(a.id))?.order ?? -1))), [res, setNames, q])
