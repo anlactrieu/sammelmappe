@@ -73,7 +73,9 @@ export function AddCardSheet({ card, onClose, onAdded, compare }: { card: CardRe
   useEffect(() => {
     if (!card) return
     setQty(1); setCondition('NM'); setBuy(''); setManual(''); setLanguage(langTag(card.lang ?? 'de'))
-    setVariant(availableVariants(card)[0])
+    const av = availableVariants(card); let last: string | null = null
+    try { last = localStorage.getItem('lastVariant') } catch { /* privater Modus */ }
+    setVariant(av.find((v) => v === last) ?? av[0])
   }, [card])
 
   if (!card) return null
@@ -85,6 +87,7 @@ export function AddCardSheet({ card, onClose, onAdded, compare }: { card: CardRe
     if (isBadAmount(buy) || isBadAmount(manual)) return toast('Bitte gültige Beträge eingeben, z. B. 12,50')
     setSaving(true)
     try {
+      try { localStorage.setItem('lastVariant', variant) } catch { /* privater Modus */ }
       await celebrate(card, { qty, condition, variant, manualPrice: parseEur(manual) }, () => addCard(card, opts()))
       onAdded?.()
       if (andClose) onClose(); else { setQty(1); setBuy(''); setManual('') }
