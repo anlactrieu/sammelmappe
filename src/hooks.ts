@@ -1,12 +1,12 @@
 import { useLiveQuery } from 'dexie-react-hooks'
 import { useMemo } from 'react'
 import { db } from './db'
-import { totals, unitPrice } from './lib/pricing'
+import { totals, unitPrice, VARIANT_LABEL } from './lib/pricing'
 import { cardNames } from './services/names'
 import { langTag } from './lib/lang'
 import type { CardRef, Item, Product, UnitPrice } from './types'
 
-export interface Row { item: Item; card?: CardRef; product?: Product; price: UnitPrice; name: string; sub: string; image?: string; tag?: string }
+export interface Row { item: Item; card?: CardRef; product?: Product; price: UnitPrice; name: string; sub: string; image?: string; tag?: string; variantLabel?: string }
 
 export function useCollection() {
   const items = useLiveQuery(() => db.items.orderBy('addedAt').reverse().toArray(), [])
@@ -24,6 +24,8 @@ export function useCollection() {
         tag: card ? (card.lang ? langTag(card.lang) : undefined) : product?.region && product.region !== 'DE' ? product.region : undefined,
         sub: card ? `${cardNames(card).alt ? cardNames(card).alt + ' · ' : ''}${card.setName} · ${card.localId}${card.setTotal ? '/' + card.setTotal : ''}` : (product?.type ?? ''),
         image: card?.image ?? product?.image,
+        // Variante zeigen, sobald sie sich unterscheiden lässt (nicht „Normal“ bei Karten, die es nur so gibt)
+        variantLabel: card && (item.variant !== 'normal' || Object.values(card.variants ?? {}).filter(Boolean).length > 1) ? VARIANT_LABEL[item.variant] : undefined,
       }
     })
   }, [items, cards, products])

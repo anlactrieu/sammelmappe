@@ -35,7 +35,7 @@ export default function Collection() {
   const list = useMemo(() => {
     let r = rows.filter((x) => (kind === 'all' || x.item.kind === kind) && (!missingOnly || x.price.value == null) &&
       (!fSet || (x.card?.setName ?? x.product?.setName) === fSet) && (!fCond || (x.item.kind === 'card' && x.item.condition === fCond)) && (!fLang || x.item.language === fLang) &&
-      (!q || `${x.name} ${x.sub}`.toLowerCase().includes(q.toLowerCase())))
+      (!q || `${x.name} ${x.sub} ${x.variantLabel ?? ''}`.toLowerCase().includes(q.toLowerCase())))
     const val = (x: Row) => (x.price.value ?? -1) * x.item.qty
     if (sort === 'value') r = [...r].sort((a, b) => val(b) - val(a))
     if (sort === 'name') r = [...r].sort((a, b) => a.name.localeCompare(b.name, 'de'))
@@ -69,7 +69,7 @@ export default function Collection() {
             {view === 'list' ? (
               <button className="rowbtn" onClick={() => setOpen(r)} aria-label={`${r.name}, ${r.item.qty} Stück`}>
                 {r.image ? <img src={imageUrl(r.image)} alt="" loading="lazy" /> : <span className="thumb-ph"><Icon name="box" /></span>}
-                <div className="grow"><strong>{r.name}</strong><small className="muted">{r.sub}{r.item.kind === 'card' ? ` · ${r.item.condition}` : ''}{r.item.qty > 1 ? ` · ${r.item.qty}×` : ''}</small></div>
+                <div className="grow"><strong>{r.name}</strong><small className="muted">{r.sub}{r.variantLabel ? ` · ${r.variantLabel}` : ''}{r.item.kind === 'card' ? ` · ${r.item.condition}` : ''}{r.item.qty > 1 ? ` · ${r.item.qty}×` : ''}</small></div>
                 <PriceLine price={r.price} qty={r.item.qty} compact />
               </button>
             ) : (
@@ -77,6 +77,7 @@ export default function Collection() {
               <div className={`tile-img${isFoil(r) ? ' foil' : ''}`}>
                 {r.image ? <img src={imageUrl(r.image)} alt="" loading="lazy" /> : <span className="thumb-ph big"><Icon name="box" size={40} /></span>}
                 {r.tag && <span className="badge lang">{r.tag}</span>}
+                {r.variantLabel && <span className="badge var">{r.variantLabel}</span>}
                 {r.item.qty > 1 && <span className="badge">{r.item.qty}×</span>}
                 {r.item.graded && <span className="badge grade">{r.item.graded.company} {r.item.graded.grade}</span>}
               </div>

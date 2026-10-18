@@ -92,6 +92,7 @@ textarea { padding: 10px 12px; resize: vertical; }
 .tile-sub { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: 500 .72rem var(--mono); }
 .badge { position: absolute; top: 6px; right: 6px; background: var(--ink); color: var(--paper); font: 700 .75rem var(--mono); padding: 2px 7px; border-radius: 5px; z-index: 1; }
 .badge.grade { right: auto; left: 6px; background: var(--label); color: var(--label-ink); }
+.badge.var { top: auto; bottom: 6px; background: var(--paper); color: var(--ink); border: 1.5px solid var(--ink); }
 .badge.ok { background: var(--up); color: #fff; }
 .thumb-ph { display: grid; place-items: center; width: 44px; height: 60px; background: var(--sleeve-2); border-radius: 6px; color: var(--ink-2); }
 .thumb-ph.big { width: 100%; height: 100%; border-radius: 0; }
