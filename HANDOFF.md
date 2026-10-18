@@ -131,3 +131,23 @@ Technische Gesamtdoku: `ARCHITEKTUR.md`. Scan ist nur noch Foto (Nummer-/Live-Sc
 - ＋ auf Sets-Seite bleibt (User-Entscheidung 2026-10-16).
 - `/code-review` für diese zwei Commits nicht gelaufen.
 - Slab-Feature verworfen (keine kostenlose automatische Preisquelle), Begründung in `SPEC.md` Abschnitt „Slabs“. `graded` bleibt optional im Bearbeiten-Fenster; Slab ohne Eigenpreis = „Preis fehlt“ (`pricing.ts`), mit Eigenpreis normal bewertet.
+
+
+## Stand 2026-10-18 – Tester-Feedback Runde 2
+**Stand:** Alles auf `main` gepusht (tsc ok, Vitest 61/61, Build ok). Nicht auf echtem Gerät/optisch geprüft.
+
+**Letzte 3 Entscheidungen**
+1. Alias-Tabelle `REPRINTS` (`src/services/tcgdex.ts`, `withReprints`): `base1-4` → `30th-c-001`. Die API nummeriert die Klassische-Sammlung-Neuauflage 001/030, gedruckt steht 4/102. Bewusst nur verifizierte Einzelkarten (Namensabgleich würde falsche Treffer bringen); weitere Karten nur mit bestätigter gedruckter Nummer ergänzen.
+2. Variante sichtbar: `Row.variantLabel` (`src/hooks.ts`) → Badge `.badge.var` im Raster, Text in der Liste, durchsuchbar. „Normal“ nur, wenn die Karte mehrere Varianten hat.
+3. Schnell erfassen: Variante-Schalter (Auto/Normal/Holo/Reverse, localStorage `quickVariant`), `useQuickAdd(cardId, qty, wanted)` fällt auf erste Variante zurück; `AddCardSheet` merkt `lastVariant`.
+
+**Offen**
+- Tester-Rückmeldung zu Scrollen (`overflow-x: clip`) und Variantenanzeige abwarten.
+- Fehlende deutsche Bilder (Grundset-Glurak, 30th-c) liegen an TCGdex.
+- Weitere Klassische-Sammlung-Neuauflagen in `REPRINTS` ergänzen, falls gedruckte Nummern bekannt.
+- `/code-review` für die Commits seit 2026-10-16 nicht gelaufen.
+
+**Learnings**
+- TCGdex liefert zeitweise 503 (Ausfall Dritter): bei leeren Live-Tests erst `curl`-Statuscode prüfen, bevor man den eigenen Code verdächtigt.
+- PWA-Nutzer sehen neue Versionen erst nach komplettem Schließen/Neuöffnen (Service Worker) – bei „funktioniert bei mir nicht“-Feedback zuerst Versionsstand klären.
+- `pricing.ts`: Slab (`item.graded`) ohne Eigenpreis = kein Wert (Raw-Preis gilt nicht für Slabs).
