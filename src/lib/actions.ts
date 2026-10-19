@@ -33,9 +33,12 @@ export function addProduct(p: { name: string; type: ProductType; ean?: string; s
   return db.transaction('rw', db.products, db.items, () => addProductTx(p, qty, buyPrice))
 }
 async function addProductTx(p: { name: string; type: ProductType; ean?: string; setName?: string; price?: number; image?: string; catalogId?: number; priceSource?: 'catalog' | 'manual'; priceUpdated?: number; region?: string }, qty: number, buyPrice?: number): Promise<number> {
-  const existing = (p.ean ? await db.products.where('ean').equals(p.ean).first() : undefined)
-    ?? (p.catalogId != null ? (await db.products.toArray()).find((x) => x.catalogId === p.catalogId) : undefined)
-  const id = existing?.id ?? productId(p.name, p.ean)
+  // Katalogprodukte werden über ihre catalogId erkannt; die EAN allein reicht nicht (Varianten wie Lucario/Alola-Kokowei teilen sich einen Barcode)
+  const existing = p.catalogId != null
+    ? (await db.products.toArray()).find((x) => x.catalogId === p.catalogId)
+    : p.ean ? await db.products.where('ean').equals(p.ean).first() : undefined
+  let id = existing?.id ?? productId(p.name, p.ean)
+  if (!existing && await db.products.get(id)) id = `${id}-${p.catalogId ?? Date.now().toString(36)}` // andere Variante mit gleicher EAN: eigenen Datensatz anlegen
   const product: Product = { ...(existing ?? {}), id, name: existing?.name ?? p.name, type: existing?.type ?? p.type, ean: p.ean ?? existing?.ean, setName: p.setName ?? existing?.setName, image: existing?.image ?? p.image, region: p.region ?? existing?.region, catalogId: p.catalogId ?? existing?.catalogId,
     // Ein vom Nutzer gesetzter Preis wird beim erneuten Hinzufügen aus dem Katalog nie überschrieben
     ...(existing?.priceSource === 'manual' && existing.price != null && p.priceSource !== 'manual'

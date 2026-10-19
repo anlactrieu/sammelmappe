@@ -22,26 +22,34 @@ export function ToastProvider({ children }: { children: ReactNode }) {
 }
 
 /* ---------- Bottom Sheet ---------- */
-const openSheets: object[] = [] // Stapel offener Sheets: nur das oberste reagiert auf Escape, Scroll-Sperre bleibt bis zum letzten
-export function Sheet({ open, onClose, title, children, footer }: { open: boolean; onClose: () => void; title?: string; children: ReactNode; footer?: ReactNode }) {
-  const dlg = useRef<HTMLDivElement>(null)
-  const closeRef = useRef(onClose)
-  closeRef.current = onClose
+const layers: object[] = [] // Stapel offener Overlays (Sheets, Lightbox): nur das oberste reagiert auf Escape, Scroll-Sperre bleibt bis zum letzten
+/** Registriert ein Overlay im Stapel; `onEscape` läuft nur, wenn es oben liegt. */
+export function useLayer(active: boolean, onEscape: () => void) {
+  const esc = useRef(onEscape)
+  esc.current = onEscape
   useEffect(() => {
-    if (!open) return
+    if (!active) return
     const me = {}
-    openSheets.push(me)
-    const prev = document.activeElement as HTMLElement | null
-    const t = setTimeout(() => { if (!dlg.current?.contains(document.activeElement)) dlg.current?.focus({ preventScroll: true }) }, 0)
-    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && openSheets[openSheets.length - 1] === me && closeRef.current()
+    layers.push(me)
+    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && layers[layers.length - 1] === me && esc.current()
     document.addEventListener('keydown', onKey)
     document.body.style.overflow = 'hidden'
     return () => {
-      clearTimeout(t); document.removeEventListener('keydown', onKey)
-      openSheets.splice(openSheets.indexOf(me), 1)
-      if (!openSheets.length) document.body.style.overflow = ''
-      prev?.focus?.({ preventScroll: true })
+      document.removeEventListener('keydown', onKey)
+      layers.splice(layers.indexOf(me), 1)
+      if (!layers.length) document.body.style.overflow = ''
     }
+  }, [active])
+}
+
+export function Sheet({ open, onClose, title, children, footer }: { open: boolean; onClose: () => void; title?: string; children: ReactNode; footer?: ReactNode }) {
+  const dlg = useRef<HTMLDivElement>(null)
+  useLayer(open, onClose)
+  useEffect(() => {
+    if (!open) return
+    const prev = document.activeElement as HTMLElement | null
+    const t = setTimeout(() => { if (!dlg.current?.contains(document.activeElement)) dlg.current?.focus({ preventScroll: true }) }, 0)
+    return () => { clearTimeout(t); prev?.focus?.({ preventScroll: true }) }
   }, [open])
   if (!open) return null
   return createPortal(

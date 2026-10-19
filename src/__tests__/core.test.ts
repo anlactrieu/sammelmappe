@@ -4,7 +4,7 @@ import { catalogImageFor, jaCardRef, searchJaCards, type JaCatalog } from '../se
 import { eanList, isValidEan, parseNameNumberQuery, parseNumberQuery, parseQty, totalVariants, normalizeEan, normalizeLocalId, parseCardText, totalCandidates } from '../lib/parse'
 import { cardBasePrice, priceChange, setFx, totals, unitPrice } from '../lib/pricing'
 import { formatEur, isBadAmount, parseEur, relativeTime } from '../lib/format'
-import { addCard, addProduct, deleteInvoice, repairItemLanguages, saveInvoice, setInvoiceLink, setProductPrice } from '../lib/actions'
+import { addCard, addCatalogProduct, addProduct, deleteInvoice, repairItemLanguages, saveInvoice, setInvoiceLink, setProductPrice } from '../lib/actions'
 import { exportCsv, exportJson, importJson } from '../services/backup'
 import { nameSuggestions } from '../lib/photo'
 import { countdownLabel, daysUntil, formatDate, upcoming } from '../services/releases'
@@ -247,7 +247,20 @@ describe('db actions', () => {
   })
 })
 
+describe('Produkte mit gleichem Barcode', () => {
+  beforeEach(async () => { await Promise.all(db.tables.map((t) => t.clear())) })
+  it('Varianten mit geteilter EAN bleiben getrennte Produkte, dasselbe Katalogprodukt wird zusammengeführt', async () => {
+    const opts = { image: 'x.jpg', type: 'Sonstiges' as const, firstEan: '0196214144989' }
+    await addCatalogProduct({ id: -24, n: 'Tech-Sticker Lucario', l: 'DE' }, null, 1, opts)
+    await addCatalogProduct({ id: -25, n: 'Tech-Sticker Alola-Kokowei', l: 'DE' }, null, 1, opts)
+    expect(await db.products.count()).toBe(2); expect(await db.items.count()).toBe(2)
+    await addCatalogProduct({ id: -24, n: 'Tech-Sticker Lucario', l: 'DE' }, null, 1, opts)
+    expect(await db.products.count()).toBe(2); expect((await db.items.toArray()).map((i) => i.qty).sort()).toEqual([1, 2])
+  })
+})
+
 describe('Rechnungen', () => {
+  beforeEach(async () => { await Promise.all(db.tables.map((t) => t.clear())) })
   const mk = async (name: string) => { await addProduct({ name, type: 'Sonstiges' }, 1); return (await db.products.toArray()).find((p) => p.name === name)!.id }
   it('eine Rechnung hängt an mehreren Produkten, Verweise überstehen das Backup', async () => {
     const a = await mk('Tin A'), b = await mk('Tin B')

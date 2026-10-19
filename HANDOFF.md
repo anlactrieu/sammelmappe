@@ -186,3 +186,5 @@ Technische Gesamtdoku: `ARCHITEKTUR.md`. Scan ist nur noch Foto (Nummer-/Live-Sc
 - Dexie: Indexänderung innerhalb derselben, noch unveröffentlichten Version verlangt im Dev-Browser ein `indexedDB.deleteDatabase('sammelmappe')`.
 - `form_input` im Browser-Pane löst bei Checkboxen kein React-onChange aus → echte Klicks (`computer left_click`) nutzen.
 - `toISOString().slice(0,10)` ist UTC → `localDateIso()` in `src/lib/format.ts`.
+
+- Nachtrag: `addProductTx` erkennt Katalogprodukte jetzt zuerst über `catalogId` (nicht EAN); Varianten mit gleicher EAN (Lucario/Alola-Kokowei) bekommen eigene Produkt-ID (`ean-…-<catalogId>`), sonst hätte die zweite Variante die erste überschrieben. Escape-Stapel als `useLayer` in `ui.tsx` (Sheet + Lightbox).
