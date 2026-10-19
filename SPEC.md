@@ -114,3 +114,26 @@ MVP umgesetzt (siehe README.md für Start/Test).
 
 **Offene Entscheidungen (User):** Slab-Support ja/nein/später · Slab ohne Eigenwert = „fehlt“ vs. Raw-Schätzung · Link-out ja/nein · Phase 2 mit eigenem API-Key ja/nein.
 **Umsetzung:** in frischer Session mit dieser Spec.
+
+
+## Feature: Rechnungen zu Produkten (2026-10-19, geklärt, noch nicht umgesetzt)
+**Ziel:** Gekaufte Produkte (sealed, Tins, Blister …) mit Beleg tracken. Alles lokal (IndexedDB), kostenlos, kein Server. **Nur Produkte** (keine Einzelkarten), **ein Foto pro Rechnung**.
+
+**Datenmodell**
+- Neue Dexie-Tabelle `invoices` (Schema-Version 5): `id` (String-UUID, nicht auto-increment!), `date`, `merchant`, `total?` (EUR), `shipping?`, `photo` (JPEG-Data-URL, längste Kante ~1600 px, Qualität ~0,75 → ca. 200–400 KB; Text muss lesbar bleiben, daher größer als Produktfotos), `note?`, `createdAt`.
+- `Item` (kind `product`) bekommt optional `invoiceId`. Mehrere Items können dieselbe Rechnung referenzieren (eine Rechnung für vier Produkte → Foto liegt nur einmal). Bestehendes `Item.buyPrice` (pro Stück) bleibt der Kaufpreis.
+- Rechnung ersetzen/löschen: Ersetzen gilt für alle verknüpften Produkte. Löschen nur mit Warnung („hängt an N Produkten"), Items verlieren dann nur den `invoiceId`.
+
+**UI**
+- Produkt-Detail: Abschnitt „Rechnung" – Foto aufnehmen/auswählen, vorhandene Rechnung zuweisen, Rechnung ansehen (Vollbild, Zoom), entfernen.
+- Neue Rechnung anlegen: Foto (Kamera/Galerie) → Datum, Händler, optional Gesamtbetrag → danach mehrere Produkte aus der Sammlung anhaken und mit einem Schritt verknüpfen; optional Kaufpreis je Produkt eintragen.
+- Liste „Rechnungen" (Einstellungen oder Produkte-Tab): Datum, Händler, Summe, Anzahl Produkte.
+- Dashboard: „Investiert" (Summe `buyPrice × qty` der Produkte) gegenüber aktuellem Marktwert, Gewinn/Verlust. Optional später: Status versiegelt/geöffnet/verkauft.
+
+**Backup (wichtig)**
+- `exportJson`/`importJson` (`src/services/backup.ts`) um `invoices` erweitern, `BackupFile.version` → 2, alte Sicherungen (ohne `invoices`) weiter importierbar. Foto als Data-URL eingebettet → Datei wird größer; Größe in der Einstellungen-Seite anzeigen.
+- **Gotcha:** `importJson` entfernt `Item.id` und vergibt neue IDs; `invoiceId` muss deshalb auf die stabile Invoice-UUID zeigen, nicht auf eine Zahl.
+- Hinweis in der UI: Daten liegen nur auf diesem Gerät, Safari kann Website-Daten löschen → Backup empfehlen. Rechnungen enthalten oft Name/Adresse → bleiben lokal, werden nie ins Repo/CI hochgeladen.
+
+**Tests:** Vitest für Migration v5, Backup-Roundtrip mit `invoiceId`, Mehrfachverknüpfung, Löschen mit Verknüpfungen.
+**Umsetzung:** frische Session mit dieser SPEC als Referenz; danach Verifikation (tsc, vitest, build) und `/code-review` (Multi-File).
