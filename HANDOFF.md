@@ -188,3 +188,24 @@ Technische Gesamtdoku: `ARCHITEKTUR.md`. Scan ist nur noch Foto (Nummer-/Live-Sc
 - `toISOString().slice(0,10)` ist UTC → `localDateIso()` in `src/lib/format.ts`.
 
 - Nachtrag: `addProductTx` erkennt Katalogprodukte jetzt zuerst über `catalogId` (nicht EAN); Varianten mit gleicher EAN (Lucario/Alola-Kokowei) bekommen eigene Produkt-ID (`ean-…-<catalogId>`), sonst hätte die zweite Variante die erste überschrieben. Escape-Stapel als `useLayer` in `ui.tsx` (Sheet + Lightbox).
+
+
+## Checkpoint 2026-10-19 (Ende der Session)
+**Stand:** 2 lokale Commits (`abdde53` Rechnungs-Feature, `bdbf949` EAN-Fix + `useLayer`) **ungepusht**, warten auf OK des Nutzers (Dexie-v5-Migration läuft danach bei Testern; Rückbau auf v4 nicht sauber möglich). Vor Push `gh run list` auf laufende CI prüfen (Concurrency bricht Läufe ab). tsc ok, Vitest 64/64, Build ok.
+
+**Letzte 3 Entscheidungen**
+1. Nicht pushen ohne Nutzer-OK: Migration ist einseitig.
+2. Katalogprodukte über `catalogId` statt EAN erkennen; bei EAN-Kollision eigene ID `ean-…-<catalogId>` (Lucario/Alola-Kokowei teilen 0196214144989).
+3. Escape-Stapel als `useLayer` (`src/components/ui.tsx`) für Sheet und Lightbox.
+
+**Offen**
+- Push nach OK; danach Deploy abwarten.
+- Nutzer legt auf dem Handy die 4 Produkte (-22…-25) an, hängt eine Rechnung an alle vier und trägt Kaufpreise ein.
+- Echter Handytest Foto-Dialog (`<input type=file accept=image/*>`), Bildgröße/Backup-Größe beobachten.
+- Optional: Status versiegelt/geöffnet/verkauft; älterer Punkt: Index-Lauf `ja:cat-*` prüfen.
+
+**Dateien:** `src/components/InvoiceSheet.tsx`, `src/pages/Invoices.tsx`, `src/lib/actions.ts` (`saveInvoice`, `setInvoiceLink`, `addProductTx`), `src/services/backup.ts`, `src/db.ts` (v5).
+
+**Learnings**
+- Tests in neuen `describe`-Blöcken brauchen eigenes `beforeEach` zum Leeren der DB (das vorhandene hängt nur an einem Block).
+- ID-Bildung aus EAN (`productId`) kann bei Varianten mit gleichem Barcode Datensätze überschreiben.
