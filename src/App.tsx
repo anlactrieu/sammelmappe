@@ -14,6 +14,7 @@ import Releases from './pages/Releases'
 import Wishlist from './pages/Wishlist'
 import Settings from './pages/Settings'
 import Privacy from './pages/Privacy'
+import Invoices from './pages/Invoices'
 import { SetDetail, SetList } from './pages/Sets'
 import { Icon } from './components/Icon'
 import { syncIfDue } from './services/priceSync'
@@ -63,6 +64,7 @@ function Shell() {
           <Route path="/sets/:id" element={<SetDetail />} />
           <Route path="/wishlist" element={<Wishlist />} />
           <Route path="/settings" element={<Settings />} />
+          <Route path="/rechnungen" element={<Invoices />} />
           <Route path="/datenschutz" element={<Privacy />} />
           <Route path="*" element={<Home />} />
         </Routes>

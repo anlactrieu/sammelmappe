@@ -4,7 +4,7 @@ import { catalogImageFor, jaCardRef, searchJaCards, type JaCatalog } from '../se
 import { eanList, isValidEan, parseNameNumberQuery, parseNumberQuery, parseQty, totalVariants, normalizeEan, normalizeLocalId, parseCardText, totalCandidates } from '../lib/parse'
 import { cardBasePrice, priceChange, setFx, totals, unitPrice } from '../lib/pricing'
 import { formatEur, isBadAmount, parseEur, relativeTime } from '../lib/format'
-import { addCard, addProduct, repairItemLanguages, setProductPrice } from '../lib/actions'
+import { addCard, addProduct, deleteInvoice, repairItemLanguages, saveInvoice, setInvoiceLink, setProductPrice } from '../lib/actions'
 import { exportCsv, exportJson, importJson } from '../services/backup'
 import { nameSuggestions } from '../lib/photo'
 import { countdownLabel, daysUntil, formatDate, upcoming } from '../services/releases'
@@ -244,6 +244,29 @@ describe('db actions', () => {
     expect(await importJson(json)).toBe(1); expect((await db.items.toArray())[0].qty).toBe(2)
     const csv = await exportCsv(); expect(csv).toContain('Tentagra'); expect(csv).toContain('0,06')
     await expect(importJson('{"foo":1}')).rejects.toThrow()
+  })
+})
+
+describe('Rechnungen', () => {
+  const mk = async (name: string) => { await addProduct({ name, type: 'Sonstiges' }, 1); return (await db.products.toArray()).find((p) => p.name === name)!.id }
+  it('eine Rechnung hängt an mehreren Produkten, Verweise überstehen das Backup', async () => {
+    const a = await mk('Tin A'), b = await mk('Tin B')
+    const id = await saveInvoice({ date: '2026-10-19', merchant: 'Shop', total: 84.95, photo: 'data:image/jpeg;base64,AAAA', refIds: [a, b, a] })
+    expect((await db.invoices.get(id))!.refIds).toEqual([a, b])
+    expect((await db.invoices.where('refIds').equals(b).toArray()).map((i) => i.id)).toEqual([id]) // Index für „Rechnungen dieses Produkts“
+    const json = await exportJson()
+    await db.items.clear(); await db.invoices.clear()
+    await importJson(json)
+    const inv = await db.invoices.get(id); expect(inv?.refIds).toEqual([a, b]); expect(inv?.total).toBe(84.95)
+  })
+  it('alte Sicherung ohne Rechnungen bleibt importierbar, Zuordnung lässt sich ändern', async () => {
+    const a = await mk('Tin C')
+    const id = await saveInvoice({ date: '2026-10-19', merchant: '', photo: 'x', refIds: [] })
+    await setInvoiceLink(id, a, true); expect((await db.invoices.get(id))!.refIds).toEqual([a])
+    await setInvoiceLink(id, a, false); expect((await db.invoices.get(id))!.refIds).toEqual([])
+    const v1 = JSON.stringify({ app: 'sammelmappe', version: 1, items: [], cards: [], products: [], wishlist: [], snapshots: [] })
+    await importJson(v1); expect(await db.invoices.count()).toBe(0)
+    await saveInvoice({ date: '2026-10-19', merchant: 'x', photo: 'x', refIds: [] }).then(deleteInvoice); expect(await db.invoices.count()).toBe(0)
   })
 })
 

@@ -1,6 +1,6 @@
 import { db } from '../db'
 import { langTag } from './lang'
-import type { CardRef, Condition, Item, Product, ProductType, Variant } from '../types'
+import type { CardRef, Condition, Invoice, Item, Product, ProductType, Variant } from '../types'
 
 export interface AddOpts { qty: number; condition: Condition; variant: Variant; language: string; buyPrice?: number; manualPrice?: number; graded?: Item['graded'] }
 
@@ -75,6 +75,24 @@ export async function setProductPrice(productId: string, price: number | undefin
 }
 
 export async function removeItem(id: number) { await db.items.delete(id) }
+
+/** randomUUID gibt es nur in sicheren Kontexten (https/localhost) und ab Safari 15.4. */
+const newId = () => (typeof crypto.randomUUID === 'function' ? crypto.randomUUID() : `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`)
+
+/** Rechnung anlegen oder ersetzen; die Produktverweise (refIds) werden dedupliziert. */
+export async function saveInvoice(inv: Omit<Invoice, 'id' | 'createdAt'> & { id?: string; createdAt?: number }): Promise<string> {
+  const id = inv.id ?? newId()
+  await db.invoices.put({ ...inv, id, refIds: [...new Set(inv.refIds)], createdAt: inv.createdAt ?? Date.now() })
+  return id
+}
+export const deleteInvoice = (id: string) => db.invoices.delete(id)
+/** Verknüpfte Produkte zu einer Rechnung hinzufügen bzw. entfernen (aus dem Produktfenster). */
+export async function setInvoiceLink(invoiceId: string, refId: string, linked: boolean) {
+  const inv = await db.invoices.get(invoiceId)
+  if (!inv) return
+  const refIds = linked ? [...new Set([...inv.refIds, refId])] : inv.refIds.filter((r) => r !== refId)
+  await db.invoices.update(invoiceId, { refIds })
+}
 
 export const cardmarketSearchUrl = (q: string) => `https://www.cardmarket.com/de/Pokemon/Products/Search?searchString=${encodeURIComponent(q)}`
 

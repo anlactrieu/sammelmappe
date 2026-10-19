@@ -22,17 +22,27 @@ export function ToastProvider({ children }: { children: ReactNode }) {
 }
 
 /* ---------- Bottom Sheet ---------- */
+const openSheets: object[] = [] // Stapel offener Sheets: nur das oberste reagiert auf Escape, Scroll-Sperre bleibt bis zum letzten
 export function Sheet({ open, onClose, title, children, footer }: { open: boolean; onClose: () => void; title?: string; children: ReactNode; footer?: ReactNode }) {
   const dlg = useRef<HTMLDivElement>(null)
+  const closeRef = useRef(onClose)
+  closeRef.current = onClose
   useEffect(() => {
     if (!open) return
+    const me = {}
+    openSheets.push(me)
     const prev = document.activeElement as HTMLElement | null
     const t = setTimeout(() => { if (!dlg.current?.contains(document.activeElement)) dlg.current?.focus({ preventScroll: true }) }, 0)
-    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onClose()
+    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && openSheets[openSheets.length - 1] === me && closeRef.current()
     document.addEventListener('keydown', onKey)
     document.body.style.overflow = 'hidden'
-    return () => { clearTimeout(t); document.removeEventListener('keydown', onKey); document.body.style.overflow = ''; prev?.focus?.({ preventScroll: true }) }
-  }, [open, onClose])
+    return () => {
+      clearTimeout(t); document.removeEventListener('keydown', onKey)
+      openSheets.splice(openSheets.indexOf(me), 1)
+      if (!openSheets.length) document.body.style.overflow = ''
+      prev?.focus?.({ preventScroll: true })
+    }
+  }, [open])
   if (!open) return null
   return createPortal(
     <div className="sheet-backdrop" onClick={onClose}>

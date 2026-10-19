@@ -1,4 +1,8 @@
 const eur = new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' })
+/** Lokales Datum als YYYY-MM-DD (toISOString wäre UTC und nachts einen Tag zurück). */
+export const localDateIso = (d = new Date()) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+/** "2026-10-19" → "19.10.2026" */
+export const isoToDe = (iso: string) => iso.split('-').reverse().join('.')
 export const formatEur = (v: number | null | undefined) => (v == null ? '–' : eur.format(v))
 export const formatPct = (v: number) => `${v > 0 ? '+' : ''}${v.toFixed(1).replace('.', ',')} %`
 

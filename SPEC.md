@@ -119,10 +119,10 @@ MVP umgesetzt (siehe README.md für Start/Test).
 ## Feature: Rechnungen zu Produkten (2026-10-19, geklärt, noch nicht umgesetzt)
 **Ziel:** Gekaufte Produkte (sealed, Tins, Blister …) mit Beleg tracken. Alles lokal (IndexedDB), kostenlos, kein Server. **Nur Produkte** (keine Einzelkarten), **ein Foto pro Rechnung**.
 
-**Datenmodell**
-- Neue Dexie-Tabelle `invoices` (Schema-Version 5): `id` (String-UUID, nicht auto-increment!), `date`, `merchant`, `total?` (EUR), `shipping?`, `photo` (JPEG-Data-URL, längste Kante ~1600 px, Qualität ~0,75 → ca. 200–400 KB; Text muss lesbar bleiben, daher größer als Produktfotos), `note?`, `createdAt`.
-- `Item` (kind `product`) bekommt optional `invoiceId`. Mehrere Items können dieselbe Rechnung referenzieren (eine Rechnung für vier Produkte → Foto liegt nur einmal). Bestehendes `Item.buyPrice` (pro Stück) bleibt der Kaufpreis.
-- Rechnung ersetzen/löschen: Ersetzen gilt für alle verknüpften Produkte. Löschen nur mit Warnung („hängt an N Produkten"), Items verlieren dann nur den `invoiceId`.
+**Datenmodell (umgesetzt, weicht leicht von der ersten Skizze ab)**
+- Dexie-Tabelle `invoices` (Schema v5): `id` (String-UUID), `date`, `merchant`, `total?`, `photo` (JPEG-Data-URL, längste Kante 1600 px), `note?`, `refIds: string[]` (= `Product.id`), `createdAt`.
+- **Verweise liegen an der Rechnung (`refIds`), nicht am `Item`**: Items eines Produkts werden bei Nachkäufen zusammengeführt und bekommen beim Backup-Import neue IDs; `Product.id` bleibt stabil. So kann ein Produkt auch an mehreren Rechnungen hängen. Kaufpreis bleibt `Item.buyPrice`.
+- Rechnung löschen entfernt nur die Rechnung (keine Aufräumarbeit an Items nötig).
 
 **UI**
 - Produkt-Detail: Abschnitt „Rechnung" – Foto aufnehmen/auswählen, vorhandene Rechnung zuweisen, Rechnung ansehen (Vollbild, Zoom), entfernen.

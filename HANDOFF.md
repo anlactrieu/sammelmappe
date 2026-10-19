@@ -170,3 +170,19 @@ Technische Gesamtdoku: `ARCHITEKTUR.md`. Scan ist nur noch Foto (Nummer-/Live-Sc
 **Learnings**
 - `sips -c H W --cropOffset Y X in --out out` schneidet zuverlässig; Nutzerfotos sind 1512×2016, Anzeigekoordinaten ≈ ×1,008.
 - Identische Barcodes bei Varianten (Lucario/Kokowei, Glumanda/Nebulak): Lookup nimmt `find` → erster Eintrag gewinnt.
+
+
+## Stand 2026-10-19 (später) – Rechnungs-Feature umgesetzt (lokal committet, Push nach CI-Ende)
+**Stand:** Rechnungen zu Produkten fertig. `invoices`-Tabelle (Dexie v5, Index `id, date, *refIds`), Verweise liegen an der Rechnung (`refIds` = `Product.id`, nicht am `Item`). UI: `src/components/InvoiceSheet.tsx` (`InvoiceSheet`, `ProductInvoices` im `ItemSheet`), Seite `src/pages/Invoices.tsx` (Route `/rechnungen`, Link „Belege“ in Sammlung + Profil). Backup v2 enthält `invoices` (v1 weiter importierbar). tsc ok, Vitest 63/63, Build ok, im Browser-Pane (Desktop + Mobil) geprüft; Review (7 Funde) behoben.
+
+**Letzte 3 Entscheidungen**
+1. `refIds` an der Rechnung statt `invoiceId` am Item: Items werden bei Nachkäufen zusammengeführt und beim Import neu nummeriert, `Product.id` ist stabil; ein Produkt kann an mehreren Rechnungen hängen.
+2. Sheet-Stapel in `ui.tsx` (`openSheets`): nur oberstes Sheet reagiert auf Escape, Scroll-Sperre bis zum letzten – nötig wegen Rechnungsfenster im Produktfenster.
+3. Fotos nur für verknüpfte Rechnungen laden (Index `*refIds`), Auswahl „Bestehende zuordnen“ lädt erst auf Klick.
+
+**Offen:** Push (CI-Lauf vorher prüfen), echter Handytest Foto/Kamera-Dialog bei `<input type=file accept=image/*>`, Dashboard „Investiert vs. Marktwert“ nutzt weiter `Item.buyPrice` (Kaufpreis je Produkt im Produktfenster eintragen – für die 4 neuen Produkte aus der Rechnung nachtragen), optional Status versiegelt/geöffnet/verkauft.
+
+**Learnings**
+- Dexie: Indexänderung innerhalb derselben, noch unveröffentlichten Version verlangt im Dev-Browser ein `indexedDB.deleteDatabase('sammelmappe')`.
+- `form_input` im Browser-Pane löst bei Checkboxen kein React-onChange aus → echte Klicks (`computer left_click`) nutzen.
+- `toISOString().slice(0,10)` ist UTC → `localDateIso()` in `src/lib/format.ts`.

@@ -50,6 +50,7 @@ export default function Collection() {
       <input className="search" type="search" placeholder="Name oder Set suchen …" value={q} onChange={(e) => setQ(e.target.value)} aria-label="Sammlung durchsuchen" />
       <div className="toolbar">
         <Segmented label="Art" value={kind} onChange={setKind} options={[{ value: 'all', label: 'Alle' }, { value: 'card', label: 'Karten' }, { value: 'product', label: 'Produkte' }]} />
+        <Link className="chip" to="/rechnungen">Belege</Link>
       </div>
       <div className="toolbar">
         <button className={`chip${activeFilters ? ' on' : ''}`} onClick={() => setFOpen(true)}>Filter{activeFilters ? ` (${activeFilters})` : ''}</button>

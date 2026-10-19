@@ -81,11 +81,12 @@ export default function Settings() {
       </section>
       <section className="card">
         <h2>Sicherung</h2>
-        <p className="muted">Deine Daten liegen nur auf diesem Gerät. Sichere sie regelmäßig. Letztes Backup: {relativeTime(lastBackup).replace(/\.$/, '')}.</p>
+        <p className="muted">Deine Daten (auch Rechnungsfotos) liegen nur auf diesem Gerät. Sichere sie regelmäßig – das Backup wird mit Rechnungen größer. Letztes Backup: {relativeTime(lastBackup).replace(/\.$/, '')}.</p>
         <div className="actions">
           <button className="btn" onClick={async () => { download(`sammelmappe-${date()}.json`, await exportJson(), 'application/json'); await setSetting('lastBackup', Date.now()) }}>Backup (JSON)</button>
           <button className="btn" onClick={async () => download(`sammlung-${date()}.csv`, await exportCsv(), 'text/csv;charset=utf-8')}>Export (CSV/Excel)</button>
           <button className="btn" onClick={() => file.current?.click()}>Backup einspielen</button>
+          <Link className="btn" to="/rechnungen">Belege &amp; Rechnungen</Link>
           <input ref={file} type="file" accept="application/json,.json" hidden onChange={(e) => onImport(e.target.files?.[0])} />
         </div>
       </section>

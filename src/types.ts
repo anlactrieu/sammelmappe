@@ -71,6 +71,18 @@ export interface Item {
   addedAt: number
 }
 
+/** Kaufbeleg: ein Foto, mehrere Produkte (refIds = Product.id). Verweise liegen an der Rechnung, damit sie Backup-Import überstehen. */
+export interface Invoice {
+  id: string
+  date: string          // YYYY-MM-DD
+  merchant: string
+  total?: number        // Gesamtbetrag laut Rechnung (EUR)
+  photo: string         // verkleinertes JPEG als Data-URL
+  note?: string
+  refIds: string[]
+  createdAt: number
+}
+
 export interface WishItem { id?: number; cardId: string; targetPrice?: number; addedAt: number }
 
 export interface Snapshot { date: string; value: number; cost: number }

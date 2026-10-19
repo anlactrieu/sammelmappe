@@ -11,6 +11,7 @@ import { Lightbox } from './Lightbox'
 import { useCelebrate } from './Celebrate'
 import { langLabel, langTag } from '../lib/lang'
 import { cardNames } from '../services/names'
+import { ProductInvoices } from './InvoiceSheet'
 
 const LANGS = ['DE', 'EN', 'FR', 'IT', 'ES', 'JA', 'ZH', 'ZH-CN']
 
@@ -236,6 +237,7 @@ export function ItemSheet({ item, card, product, onClose }: { item: Item | null;
       <a className="link" target="_blank" rel="noreferrer" href={cardmarketSearchUrl(name + (card ? ' ' + card.localId : ''))}>Preis auf Cardmarket nachschauen ↗</a>
       {(() => { const id = card?.priceSource === 'catalog-ja' ? catalogCardId(card) : product?.priceSource === 'catalog' ? product.catalogId : undefined; return id != null && id > 0 ? <a className="link" target="_blank" rel="noreferrer" href={tcgplayerUrl(id)}>Preisquelle: TCGplayer ↗</a> : null })()}
       <label className="field">Notiz<textarea rows={2} value={f.notes ?? ''} onChange={(e) => setF({ ...f, notes: e.target.value })} /></label>
+      {item.kind === 'product' && <ProductInvoices refId={item.refId} />}
       {card && <Link className="link" to={`/sets/${card.lang ?? 'de'}/${card.setId}`} onClick={onClose}>Ganzes Set ansehen →</Link>}
     </Sheet>
   )

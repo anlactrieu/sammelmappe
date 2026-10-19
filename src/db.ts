@@ -1,5 +1,5 @@
 import Dexie, { type Table } from 'dexie'
-import type { CardRef, DexNames, LearnedPhoto, Item, Product, SetRef, Setting, Snapshot, WishItem } from './types'
+import type { CardRef, DexNames, Invoice, LearnedPhoto, Item, Product, SetRef, Setting, Snapshot, WishItem } from './types'
 
 class AppDB extends Dexie {
   items!: Table<Item, number>
@@ -11,6 +11,7 @@ class AppDB extends Dexie {
   wishlist!: Table<WishItem, number>
   snapshots!: Table<Snapshot, string>
   settings!: Table<Setting, string>
+  invoices!: Table<Invoice, string>
   constructor(name = 'sammelmappe') {
     super(name)
     this.version(1).stores({
@@ -27,6 +28,8 @@ class AppDB extends Dexie {
     this.version(3).stores({ learned: '++id, catalogId' })
     // v4: Sprach-Kürzel vereinheitlicht (früher manuell „JP", jetzt „JA" wie bei Kartensprache)
     this.version(4).stores({}).upgrade((tx) => tx.table('items').toCollection().modify((i) => { if (i.language === 'JP') i.language = 'JA' }))
+    // v5: Rechnungen zu Produkten (Foto lokal, Verweis über Product.id)
+    this.version(5).stores({ invoices: 'id, date, *refIds' })
   }
 }
 export const db = new AppDB()

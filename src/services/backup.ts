@@ -1,28 +1,29 @@
 import { db } from '../db'
-import type { CardRef, Item, Product, Snapshot, WishItem } from '../types'
+import type { CardRef, Invoice, Item, Product, Snapshot, WishItem } from '../types'
 import { CONDITION_LABEL, unitPrice } from '../lib/pricing'
 
-interface BackupFile { app: 'sammelmappe'; version: 1; exportedAt: string
-  items: Item[]; cards: CardRef[]; products: Product[]; wishlist: WishItem[]; snapshots: Snapshot[] }
+interface BackupFile { app: 'sammelmappe'; version: 1 | 2; exportedAt: string
+  items: Item[]; cards: CardRef[]; products: Product[]; wishlist: WishItem[]; snapshots: Snapshot[]; invoices?: Invoice[] }
 
 export async function exportJson(): Promise<string> {
-  const data: BackupFile = { app: 'sammelmappe', version: 1, exportedAt: new Date().toISOString(),
+  const data: BackupFile = { app: 'sammelmappe', version: 2, exportedAt: new Date().toISOString(),
     items: await db.items.toArray(), cards: await db.cards.toArray(), products: await db.products.toArray(),
-    wishlist: await db.wishlist.toArray(), snapshots: await db.snapshots.toArray() }
+    wishlist: await db.wishlist.toArray(), snapshots: await db.snapshots.toArray(), invoices: await db.invoices.toArray() }
   return JSON.stringify(data)
 }
 
 export async function importJson(text: string, mode: 'merge' | 'replace' = 'replace'): Promise<number> {
   const data = JSON.parse(text) as Partial<BackupFile>
   if (data.app !== 'sammelmappe' || !Array.isArray(data.items)) throw new Error('Keine gültige Sammelmappe-Sicherung.')
-  await db.transaction('rw', [db.items, db.cards, db.products, db.wishlist, db.snapshots], async () => {
-    if (mode === 'replace') await Promise.all([db.items.clear(), db.wishlist.clear(), db.snapshots.clear()])
+  await db.transaction('rw', [db.items, db.cards, db.products, db.wishlist, db.snapshots, db.invoices], async () => {
+    if (mode === 'replace') await Promise.all([db.items.clear(), db.wishlist.clear(), db.snapshots.clear(), db.invoices.clear()])
     const items = data.items!.map(({ id: _id, ...rest }) => ({ ...rest, language: rest.language === 'JP' ? 'JA' : rest.language }) as Item) // alte Sicherungen: JP → JA
     await db.items.bulkAdd(items)
     await db.cards.bulkPut(data.cards ?? [])
     await db.products.bulkPut(data.products ?? [])
     await db.wishlist.bulkPut((data.wishlist ?? []).map(({ id: _id, ...r }) => r as WishItem)).catch(() => undefined)
     await db.snapshots.bulkPut(data.snapshots ?? [])
+    await db.invoices.bulkPut(data.invoices ?? []) // alte Sicherungen (v1) haben keine Rechnungen
   })
   return data.items.length
 }
