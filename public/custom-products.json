@@ -179,5 +179,41 @@
     "image": "tech-sticker-erhabene-helden-glumanda.jpg",
     "ean": "0196214132313",
     "note": "Deutsche Ausgabe, Release 30.01.2026 (Pokézentrum): 1 holografische Promokarte Glumanda (020/217), 1 Tech-Stickerbogen (Glumanda & Mega-Glurak Y), 3 Boosterpacks Erhabene Helden. Es gibt auch eine Nebulak-Variante, die Rückseite und vermutlich der Barcode sind gleich. Preis ca. 30 EUR: Cardcosmos 28,99 EUR (Glumanda, ausverkauft), Alternate 29,99 EUR (Snippet, nicht verfügbar), Amazon-Deal 18,99 EUR (abgelaufen, Snippet); US-Katalog 39,24 USD (ca. 35 EUR). Offizielle UVP nicht gefunden; Subagent-Angaben nicht selbst geprüft; Stand 11.10.2026."
+  },
+  {
+    "id": -22,
+    "name": "Pokémon 30th Celebration ex Tin: Quajutsu-ex (deutsch)",
+    "region": "DE",
+    "price": null,
+    "image": "30th-tin-greninja.jpg",
+    "note": "Deutsche Ausgabe, 30th Celebration (Pokémon-Day-Motiv). Foto vom Nutzer 19.10.2026, Packung versiegelt. US-Katalog (TCGplayer): Greninja ex Tin 61,72 USD (Retail) bzw. 57,04 USD (International), nicht auf die deutsche Ausgabe übertragen. Kein Preis eingetragen – kommt aus der Rechnung. Rückseite: Art.-Nr. 10-10466-116, EAN 0196214147041 (Zuordnung aus Position auf den Nutzerfotos abgeleitet; Pendant-Tin hat eine andere EAN).",
+    "ean": "0196214147041"
+  },
+  {
+    "id": -23,
+    "name": "Pokémon 30th Celebration ex Tin: Feelinara-ex (deutsch)",
+    "region": "DE",
+    "price": null,
+    "image": "30th-tin-sylveon.jpg",
+    "note": "Deutsche Ausgabe, 30th Celebration. Foto vom Nutzer 19.10.2026, Packung versiegelt. US-Katalog (TCGplayer): Sylveon ex Tin 59,82 USD (Retail) bzw. 70,12 USD (International), nicht auf die deutsche Ausgabe übertragen. Kein Preis eingetragen – kommt aus der Rechnung. Rückseite: Art.-Nr. 10-10466-110, EAN 0196214146983 (Zuordnung aus Position auf den Nutzerfotos abgeleitet; Pendant-Tin hat eine andere EAN).",
+    "ean": "0196214146983"
+  },
+  {
+    "id": -24,
+    "name": "Pokémon 30th Celebration Tech-Sticker-Kollektion: Lucario (deutsch)",
+    "region": "DE",
+    "price": null,
+    "image": "30th-tech-sticker-lucario.jpg",
+    "note": "Deutsche Ausgabe, 30th Celebration: 3 Boosterpacks, 1 Promokarte Lucario, 1 Tech-Stickerbogen (Pikachu, Mewtu). Foto vom Nutzer 19.10.2026. US-Katalog (TCGplayer): 34,49 USD, nicht übertragen. Kein Preis eingetragen – kommt aus der Rechnung. Rückseite beider Varianten identisch: Art.-Nr. 10-10449-103, EAN 0196214144989 (Lucario und Alola-Kokowei teilen den Barcode, Scan schlägt den ersten Treffer vor).",
+    "ean": "0196214144989"
+  },
+  {
+    "id": -25,
+    "name": "Pokémon 30th Celebration Tech-Sticker-Kollektion: Alola-Kokowei (deutsch)",
+    "region": "DE",
+    "price": null,
+    "image": "30th-tech-sticker-exeggutor.jpg",
+    "note": "Deutsche Ausgabe, 30th Celebration: 3 Boosterpacks, 1 Promokarte Alola-Kokowei, 1 Tech-Stickerbogen (Pikachu, Mew). Foto vom Nutzer 19.10.2026. US-Katalog (TCGplayer): 28,91 USD, nicht übertragen. Kein Preis eingetragen – kommt aus der Rechnung. Rückseite beider Varianten identisch: Art.-Nr. 10-10449-103, EAN 0196214144989 (Lucario und Alola-Kokowei teilen den Barcode, Scan schlägt den ersten Treffer vor).",
+    "ean": "0196214144989"
   }
 ]

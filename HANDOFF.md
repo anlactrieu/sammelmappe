@@ -151,3 +151,22 @@ Technische Gesamtdoku: `ARCHITEKTUR.md`. Scan ist nur noch Foto (Nummer-/Live-Sc
 - TCGdex liefert zeitweise 503 (Ausfall Dritter): bei leeren Live-Tests erst `curl`-Statuscode prüfen, bevor man den eigenen Code verdächtigt.
 - PWA-Nutzer sehen neue Versionen erst nach komplettem Schließen/Neuöffnen (Service Worker) – bei „funktioniert bei mir nicht“-Feedback zuerst Versionsstand klären.
 - `pricing.ts`: Slab (`item.graded`) ohne Eigenpreis = kein Wert (Raw-Preis gilt nicht für Slabs).
+
+
+## Stand 2026-10-19 – Einkaufs-/Rechnungs-Tracking (Planung) + 4 neue Produkte
+**Stand:** 4 deutsche 30th-Celebration-Produkte als eigene Katalogeinträge angelegt (`public/custom-products.json`, IDs -22…-25; Fotos `public/custom/30th-*.jpg`, aus Nutzerfoto zugeschnitten). Preis bewusst `null` (kommt aus Rechnung). **Nicht committet/gepusht** (Frage an Nutzer offen, CI-Lauf darf nicht laufen). tsc ok, JSON gültig.
+
+**Letzte 3 Entscheidungen**
+1. Preis = `null` statt Recherche: Nutzer hat Rechnung, belegter Preis > Händler-Snippets.
+2. Tin-EANs aus Position der Nutzerfotos abgeleitet (Packungen nur umgedreht, gleiche Plätze): Quajutsu = 10-10466-116 / 0196214147041, Feelinara = 10-10466-110 / 0196214146983.
+3. Blister Lucario/Alola-Kokowei teilen EAN 0196214144989 → bei beiden gesetzt (Scan nimmt ersten Treffer, Lucario).
+
+**Geplantes Feature (noch nicht in SPEC.md):** Kaufbelege lokal (IndexedDB/Dexie, Foto als Blob verkleinert). Rechnung als eigene Tabelle `invoices` (Datum, Händler, Gesamtbetrag, Foto), Produkte verweisen per `invoiceId` darauf (eine Rechnung für mehrere Produkte). Status versiegelt/geöffnet/verkauft, Dashboard investiert vs. Marktwert. Backup-Export muss Fotos einbetten (Größe!). Fragen offen: Kaufpreis auch für Einzelkarten? Mehrere Seiten pro Rechnung? Danach SPEC.md, Umsetzung in frischer Session.
+
+**Offen:** Commit/Push der 4 Produkte, SPEC.md für Rechnungsfeature, vorher offene Punkte oben (Index-Lauf `ja:cat-*`).
+
+**Dateien:** `src/services/catalog.ts` (`CustomProduct`, `mergeCustom`), `src/components/ProductSheet.tsx` (EAN-Lookup, `eanList`), `scripts/build-embeddings.mjs`.
+
+**Learnings**
+- `sips -c H W --cropOffset Y X in --out out` schneidet zuverlässig; Nutzerfotos sind 1512×2016, Anzeigekoordinaten ≈ ×1,008.
+- Identische Barcodes bei Varianten (Lucario/Kokowei, Glumanda/Nebulak): Lookup nimmt `find` → erster Eintrag gewinnt.
