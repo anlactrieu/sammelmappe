@@ -322,3 +322,9 @@ a.rowbtn, a.rowbtn:visited { text-decoration: none; color: var(--ink); } a.rowbt
 .invoice-thumb { flex: none; width: 56px; height: 72px; padding: 0; border: 1px solid var(--rule); border-radius: 6px; overflow: hidden; background: var(--sleeve-2); cursor: pointer; }
 .invoice-thumb img { width: 100%; height: 100%; object-fit: cover; }
 a.chip { text-decoration: none; color: inherit; display: inline-flex; align-items: center; }
+
+.dex-gen { margin-top: 16px; } .dex-head { font-size: 1rem; margin: 0 0 4px; display: flex; justify-content: space-between; align-items: baseline; }
+.dex-grid { list-style: none; margin: 10px 0 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(52px, 1fr)); gap: 4px; }
+.dex-grid li { display: flex; flex-direction: column; align-items: center; border-radius: 6px; padding: 2px 0; background: var(--sleeve-2); }
+.dex-grid li.miss img { filter: grayscale(1) brightness(.35); opacity: .45; } .dex-grid li.miss small { opacity: .5; }
+.dex-grid li.have { outline: 1.5px solid var(--ink); } .dex-grid img { image-rendering: pixelated; } .dex-grid small { font-size: .65rem; font-family: var(--mono); }

@@ -14,8 +14,55 @@ import { inBaseId } from '../lib/milestones'
 
 /** Grundset = rein numerische Nummer ≤ offizielle Kartenzahl (TG/GG/Promos zählen nicht). */
 
+const DEX_TOTAL = 1025
+const GENS: [string, number, number][] = [['Gen 1 · Kanto', 1, 151], ['Gen 2 · Johto', 152, 251], ['Gen 3 · Hoenn', 252, 386], ['Gen 4 · Sinnoh', 387, 493], ['Gen 5 · Einall', 494, 649], ['Gen 6 · Kalos', 650, 721], ['Gen 7 · Alola', 722, 809], ['Gen 8 · Galar', 810, 905], ['Gen 9 · Paldea', 906, 1025]]
+const sprite = (n: number) => `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${n}.png`
+
+/** Pokédex-Fortschritt: welche der 1025 Pokémon sind mit mindestens einer Karte in der Sammlung. */
+function DexProgress() {
+  const [onlyMissing, setOnlyMissing] = useState(false)
+  const data = useLiveQuery(async () => {
+    const items = await db.items.where('kind').equals('card').toArray()
+    const ids = Array.from(new Set(items.map((i) => i.refId)))
+    const cards = await db.cards.bulkGet(ids)
+    const have = new Set<number>()
+    let unknown = 0
+    cards.forEach((c) => { if (c?.dexId) have.add(c.dexId); else unknown++ })
+    return { have, unknown }
+  }, [])
+  if (!data) return <div className="skeleton hero" />
+  const { have, unknown } = data
+  const total = Array.from(have).filter((n) => n >= 1 && n <= DEX_TOTAL).length
+  return (
+    <>
+      <div className="card set-summary">
+        <strong>{total} / {DEX_TOTAL}</strong> <span className="muted">Pokémon ({Math.round((total / DEX_TOTAL) * 100)} %)</span>
+        <div className="bar" role="progressbar" aria-valuenow={total} aria-valuemin={0} aria-valuemax={DEX_TOTAL} aria-label="Pokédex-Fortschritt"><i style={{ width: `${(total / DEX_TOTAL) * 100}%` }} /></div>
+        {unknown > 0 && <small className="muted">{unknown} Karten ohne Pokédex-Nr. (Trainer/Energie oder älter gespeichert) zählen nicht.</small>}
+      </div>
+      <label className="switch"><input type="checkbox" checked={onlyMissing} onChange={(e) => setOnlyMissing(e.target.checked)} /> Nur fehlende zeigen</label>
+      {GENS.map(([label, from, to]) => {
+        const nums = Array.from({ length: to - from + 1 }, (_, i) => from + i)
+        const n = nums.filter((x) => have.has(x)).length
+        const shown = onlyMissing ? nums.filter((x) => !have.has(x)) : nums
+        return (
+          <section key={label} className="dex-gen">
+            <h2 className="dex-head">{label} <small className="muted">{n}/{nums.length}</small></h2>
+            <div className="bar"><i style={{ width: `${(n / nums.length) * 100}%` }} /></div>
+            <ul className="dex-grid">
+              {shown.map((x) => (
+                <li key={x} className={have.has(x) ? 'have' : 'miss'} title={`#${x}`} aria-label={`Nr. ${x}${have.has(x) ? ', vorhanden' : ', fehlt'}`}>
+                  <img src={sprite(x)} alt="" loading="lazy" width={48} height={48} /><small>{x}</small></li>))}
+            </ul>
+          </section>)
+      })}
+    </>
+  )
+}
+
 export function SetList() {
   const [params, setParams] = useSearchParams()
+  const view = params.get('view') === 'dex' ? 'dex' : 'sets'
   const lang = (params.get('lang') as Lang) || 'de'
   const [sets, setSets] = useState<SetRef[] | null>(null)
   const [err, setErr] = useState('')
@@ -40,6 +87,8 @@ export function SetList() {
   return (
     <div className="page">
       <header className="page-head"><Link to="/collection" className="back" aria-label="Zurück">‹</Link><h1>Sets</h1><Link className="btn small-btn" to="/releases">Neuheiten</Link></header>
+      <Segmented label="Ansicht" value={view} onChange={(v) => setParams(v === 'dex' ? { view: 'dex' } : {})} options={[{ value: 'sets', label: 'Sets' }, { value: 'dex', label: 'Pokédex' }]} />
+      {view === 'dex' ? <DexProgress /> : <>
       <LangChips value={lang} onChange={(l) => setParams(l === 'de' ? {} : { lang: l })} />
       <input className="search" type="search" placeholder="Set suchen …" value={q} onChange={(e) => setQ(e.target.value)} aria-label="Set suchen" />
       {err && <p className="error">{err}</p>}
@@ -55,7 +104,7 @@ export function SetList() {
               </div>
               <small className="muted">{n}/{s.official}</small></Link></li>)
         })}
-      </ul>
+      </ul></>}
     </div>
   )
 }

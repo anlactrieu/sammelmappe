@@ -209,3 +209,55 @@ Technische Gesamtdoku: `ARCHITEKTUR.md`. Scan ist nur noch Foto (Nummer-/Live-Sc
 **Learnings**
 - Tests in neuen `describe`-Blöcken brauchen eigenes `beforeEach` zum Leeren der DB (das vorhandene hängt nur an einem Block).
 - ID-Bildung aus EAN (`productId`) kann bei Varianten mit gleichem Barcode Datensätze überschreiben.
+
+
+## Checkpoint 2026-10-19 (Risiko-Review Recht/Datenschutz/Sicherheit)
+**Stand:** Reine Analyse, kein Code geändert. Ergebnis im Chat (19 Punkte, priorisiert). Nutzer wurde gefragt, ob Punkt 1 (Bildliste) + Kleinfixes umgesetzt werden sollen – Antwort offen.
+
+**Letzte 3 Entscheidungen**
+1. Keine Änderungen ohne Rückfrage: Bilder-Entfernung (auch aus Git-Historie) und Historien-Umschreiben sind einseitig/öffentlich sichtbar.
+2. Größtes Risiko = Rechte Dritter (Fotos `public/custom/`, Re-Hosting TCGplayer-Daten), nicht Datenschutz/Sicherheit.
+3. Datenschutz-/Impressum-Punkte als „mittel“ eingestuft (Hobby, kostenlos, werbefrei; Haushaltsausnahme fraglich).
+
+**Offen**
+- Herkunft aller 32 Bilder in `public/custom/` klären, fremde entfernen.
+- tcgcsv.com/TCGplayer-Nutzungsbedingungen zu Re-Hosting (`cards-ja.json`, `catalog.json`) lesen.
+- `src/pages/Privacy.tsx`: Verantwortlichen mit Kontakt ergänzen, DPF-Hinweis (USA).
+- `public/custom-products.json`: interne Notizen („vom Subagenten gelesen“) bereinigen.
+- `src/services/backup.ts` `importJson`: Struktur validieren; `index.html`: CSP-Meta; Commit-E-Mail auf GitHub-noreply (Historie zeigt 2 Privatadressen).
+- Optional: Tesseract-/DINOv2-Daten selbst hosten (IP-Übermittlung an HF/jsDelivr).
+
+**Dateien:** `public/custom/`, `public/custom-products.json`, `src/pages/Privacy.tsx`, `src/services/backup.ts`, `.github/workflows/deploy.yml`.
+
+**Learnings**
+- `cards-ja.json` steht in `.gitignore`, wird aber per Deploy-Workflow öffentlich ausgeliefert (Re-Hosting trotz „nicht im Repo“).
+
+
+## Stand 2026-10-24 – Slabs & Bilder-Frage
+**Stand:** Keine Codeänderung. Slab-/Watchlist-Feature erneut geprüft und vom User **verworfen gelassen** (SPEC.md „Slabs – VERWORFEN" bleibt gültig).
+
+**Letzte 3 Entscheidungen**
+1. Slabs bleiben verworfen: PokemonPriceTracker-Free-Plan unklar für PSA-Preise/Verlauf (Doku widersprüchlich, nur privat, Graded wöchentlich); eBay Sold/PriceCharting weiter raus → keine kostenlose Auto-Quelle (Regel: kostenlos bleiben).
+2. Karten ohne Bild: kein Code nötig – `syncPrices` → `fetchCard` lädt die Karte komplett neu (Bild inkl.); JP/ZH-Fallback über `cards-ja.json` (täglich 21:30 UTC).
+3. Produktbilder werden beim Sync NICHT nachgezogen (`syncProductPrices` nur Preis; `addProductTx` behält `existing.image`).
+
+**Offen**
+- Angebot an User: Beim Aktualisieren fehlende Produktbilder aus dem Katalog ergänzen (eigene Fotos `data:` nicht überschreiben) – Antwort steht aus.
+- Alte Punkte (Handy-Tests Juice/Kamera, Index-Lauf `ja:cat-*`, Rechnungs-Feature-Review) unverändert offen.
+
+**Dateien:** `src/services/priceSync.ts` (`runSync`, `syncProductPrices`), `src/services/tcgdex.ts` (`fetchCard`), `src/lib/actions.ts:42`, `src/pages/Home.tsx` (`RefreshButton`).
+
+**Learnings:** Bild-Update bei Karten hängt an der Quelle (TCGdex/Katalog), nicht an der App; nach Sync ggf. harter Reload wegen Browser-/SW-Cache.
+
+
+## Stand 2026-10-28 – Pokédex-Fortschritt (lokal, nicht committet)
+`src/pages/Sets.tsx`: Umschalter Sets | Pokédex (`?view=dex`), Komponente `DexProgress` zählt `CardRef.dexId` aller besessenen Karten gegen 1025, Raster je Generation mit PokeAPI-Sprites (`raw.githubusercontent.com/PokeAPI/sprites`), Styles `.dex-*` in `styles.css`. tsc + vitest 64/64 ok; im Browser noch nicht visuell geprüft.
+
+Letzte Entscheidungen:
+1. Zählung über `dexId` der gecachten Karten (db.cards) statt Namen – sprachunabhängig, kein Netz nötig.
+2. Sprites statt Namen: keine 1025 PokeAPI-Calls, nur lazy Bilder (kostenlos, [[sammelmappe-must-stay-free]]).
+3. Umschalter via Query-Param in bestehender Sets-Route statt neuer Route.
+
+TODO: visuell prüfen (Mobile), ggf. Namen/Tap-Detail, alte Karten ohne `dexId` nachladen (Hinweis zeigt Anzahl), committen/pushen.
+
+Learnings: Karten, die vor dem dexId-Feld gecacht wurden, haben evtl. kein `dexId` → zählen im Pokédex nicht.
